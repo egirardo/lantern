@@ -69,7 +69,7 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
   - Connect the repo to Vercel. Production branch: `main`.
   - Turn on branch protection for `main` in GitHub settings, requiring CI to pass.
 
-- [ ] Done
+- [x] Done
 
 ### Step 3 — Supabase project
 
@@ -125,7 +125,7 @@ The type shapes below are suggestions. Change them however you like.
 - On screens, y grows downward, so north is `y - 1`.
 - Grids are usually indexed `grid[y][x]` (row first). Mixing up x and y is the most common bug here.
 
-- [ ] Phase A done, PR reviewed
+- [x] Phase A done, PR reviewed
 
 ### Phase B — Room schema and Tiled parser (`src/rooms/`)
 
