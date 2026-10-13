@@ -104,6 +104,35 @@ describe('movePlayer', () => {
     })
   })
 
+  // Regression test: x used to be checked against row 0's width, which let the
+  // player move onto a missing tile in a shorter row.
+  it('should not move the player past the end of a shorter row', () => {
+    const raggedGrid: Grid = [
+      ['floor', 'floor', 'floor'],
+      ['floor', 'floor'],
+    ]
+    const playerPosition = { x: 1, y: 1 }
+    const direction = 'east'
+    const result = movePlayer(playerPosition, direction, raggedGrid)
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'edge',
+    })
+  })
+
+  it('should not move the player on an empty grid', () => {
+    const emptyGrid: Grid = []
+    const playerPosition = { x: 0, y: 0 }
+    const direction = 'east'
+    const result = movePlayer(playerPosition, direction, emptyGrid)
+    expect(result).toEqual({
+      newPosition: { x: 0, y: 0 },
+      moved: false,
+      reason: 'edge',
+    })
+  })
+
   it('should not mutate the original player position', () => {
     const playerPosition = { x: 1, y: 1 }
     const direction = 'south'

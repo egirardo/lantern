@@ -29,14 +29,24 @@ export function movePlayer(
   const newX = playerPosition.x + offset.x
   const newY = playerPosition.y + offset.y
 
-  // Check if the new position is out of bounds
-  // Must run before the wall check: grid[newY] is undefined outside the grid.
-  if (newY < 0 || newY >= grid.length || newX < 0 || newX >= grid[0].length) {
+  // Get the row the player is moving into. It's undefined when newY is above
+  // the top or below the bottom of the grid (and always undefined in an empty grid).
+  const targetRow = grid[newY]
+
+  // Check if the new row is outside the grid
+  // Must run before the wall check: we can't look up a tile in a row that doesn't exist.
+  if (targetRow === undefined) {
+    return { moved: false, newPosition: playerPosition, reason: 'edge' }
+  }
+
+  // Check if the new column is outside the target row. Uses the target row's own
+  // length, not the first row's, because rows could have different lengths.
+  if (newX < 0 || newX >= targetRow.length) {
     return { moved: false, newPosition: playerPosition, reason: 'edge' }
   }
 
   // Check if the new position is a wall
-  if (grid[newY][newX] === 'wall') {
+  if (targetRow[newX] === 'wall') {
     return { moved: false, newPosition: playerPosition, reason: 'wall' }
   }
 
