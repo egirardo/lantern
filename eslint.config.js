@@ -23,14 +23,14 @@ export default defineConfig([
   },
   {
     // Architecture rule 1: game logic stays pure TypeScript so it can be unit tested.
-    files: ['src/game/**/*.ts'],
+    files: ['src/game/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              group: ['phaser', 'react', 'react-dom', 'zustand', 'zustand/*'],
+              group: ['phaser', 'react', 'react-dom', 'zustand'],
               message:
                 'src/game/ must not depend on Phaser, React or Zustand (see CLAUDE.md, architecture rule 1).',
             },
