@@ -25,3 +25,8 @@ dist-ssr
 
 # Personal learning notes (not part of the project)
 docs/learning-notes.md
+
+# Environment variables (real values stay local, the example is committed)
+.env
+.env.*
+!.env.example
