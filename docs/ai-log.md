@@ -98,7 +98,7 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **What I asked:** PR review of `movePlayer`.
 - **What I got:** Two claims: an empty grid throws, and a ragged grid allows a move onto a missing tile.
 - **Outcome:** ✏️
-- **Why:** The ragged grid bug was real and is fixed, with regression tests. The empty grid claim was false, because `||` short-circuits before `grid[0].length`. Also turned on `noUncheckedIndexedAccess`, which flagged both risky lookups immediately.
+- **Why:** The ragged grid bug was real and is fixed, with regression tests. The empty grid claim was false, because `||` short-circuits before `grid[0].length`. Also turned on `noUncheckedIndexedAccess`, which flagged both risky lookups immediately. Claude Code first recommended a different fix than Copilot, then changed its recommendation once the flag was on, because the flag made Copilot's approach the clearer one.
 - **How I verified it:** Ran `movePlayer` on both grids before the fix. The regression test failed before the fix and passed after.
 
 #### 2026-10-13 — Supabase project setup
@@ -110,6 +110,66 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Outcome:** ✅
 - **Why:** New tables now need both a grant and RLS policies before anyone can access them.
 - **How I verified it:** Checked that `.env.local` is ignored by Git.
+
+#### 2026-10-13 — Setup troubleshooting
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** Help with an `ERESOLVE` npm error, and what to do about the Node version warning.
+- **What I got:** An explanation of peer dependencies (`jsx-a11y` only supports ESLint ≤ 9), three options with trade-offs, and steps for switching to Node 24 with nvm.fish.
+- **Outcome:** ✅
+- **Why:** Chose to downgrade ESLint to 9 to keep accessibility linting. Claude Code checked how Node was installed on my machine before giving instructions, and noticed that I use the fish shell.
+- **How I verified it:** Installs succeeded and lint runs with `jsx-a11y`.
+
+#### 2026-10-13 — Learning notes and CLAUDE.md instructions
+
+- **Tool:** Claude Code
+- **Category:** Documentation / Learning
+- **What I asked:** A personal, gitignored notes file to keep track of what I learn, and instructions in `CLAUDE.md` so Claude Code keeps it updated.
+- **What I got:** `docs/learning-notes.md` (concepts, gotchas, decisions with reasons, open reminders), updated throughout the session, plus a "Learning notes" section in `CLAUDE.md`.
+- **Outcome:** ✅
+- **Why:** A lot of useful explanations would otherwise get lost in the chat. The "decisions and why" table will help when I defend the project.
+- **How I verified it:** Checked that the file is ignored by Git. Read through the notes.
+
+#### 2026-10-13 — README stub
+
+- **Tool:** Claude Code
+- **Category:** Documentation
+- **What I asked:** Whether to commit Vite's default README.
+- **What I got:** Agreement that it shouldn't be committed as-is, and a short stub README (pitch, status, tech stack, setup, scripts).
+- **Outcome:** ✅
+- **Why:** The default described Vite, not Lantern. The full README comes before submission.
+- **How I verified it:** Read it. Prettier passes.
+
+#### 2026-10-13 — Git and GitHub workflow questions
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** When to merge into `dev` and `main`, which merge method to use, why `main` is "1 commit ahead", whether to delete feature branches, and how to stop Copilot's automatic reviews.
+- **What I got:** Explanations of merge commits vs squash (always a merge commit for `dev` → `main`), why the merge commit makes `main` "ahead", and how to delete branches safely. It also checked my rulesets through the GitHub API, which helped me find that Copilot auto-review was on in my personal settings.
+- **Outcome:** ✏️
+- **Why:** At first Claude Code gave a contradictory explanation of whether "Automatically delete head branches" could delete `dev`. When I asked if it was absolutely sure, it checked GitHub's docs and my ruleset (deletion rule, empty bypass list) and corrected the explanation. A reminder to push back on confident answers.
+- **How I verified it:** GitHub docs, ruleset settings through the API. To do: confirm `dev` survives the next release.
+
+#### 2026-10-13 — Comment convention change
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** To keep my explanatory comments, after Claude Code flagged them as repeating the code.
+- **What I got:** An update to `CLAUDE.md`: comments explaining *what* code does are welcome while I'm learning, aren't flagged in reviews, and Claude Code adds similar ones to its own code.
+- **Outcome:** ✅
+- **Why:** Comments in my own words help me understand and present the code. The original rule ("comment the why, not the what") suits experienced developers more than someone learning the stack.
+- **How I verified it:** Reviewed the `CLAUDE.md` change in the movement PR.
+
+#### 2026-10-13 — PR descriptions and AI log template
+
+- **Tool:** Claude Code
+- **Category:** Documentation
+- **What I asked:** PR descriptions for each PR (#1–#5), and an AI log template based on the project plan.
+- **What I got:** Descriptions with summary, changes, how to test and an AI use section, and this log with a template, Sprint 1 entries, a table for evaluating agent-built rooms and summary headings.
+- **Outcome:** ✏️
+- **Why:** Kept the structure. Each PR description separates my work from AI work, which supports the agent evaluation later. The log entries were drafted by Claude Code, and I review them.
+- **How I verified it:** Read each description before pasting it. Checked the descriptions against the actual changes.
 
 ---
 
@@ -133,6 +193,9 @@ Filled in during Sprint 5.
 
 - **Where AI helped most:**
 - **Where AI was wrong or misleading:** (e.g. confident claims that testing disproved)
+  - Oct 13: Copilot's false claim about subpath imports in the lint rule
+  - Oct 13: Copilot's false claim that an empty grid throws
+  - Oct 13: Claude Code's contradictory explanation of auto-deleting branches, and outdated Vercel instructions
 - **How I verified AI output:**
 - **Agent workflow results:** reference room vs agent-built rooms
 - **What I would do differently:**
