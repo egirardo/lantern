@@ -60,7 +60,7 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
 
 > **Concept:** React StrictMode mounts components twice in development. If the Phaser game isn't destroyed in the effect's cleanup function, you get two canvases.
 
-- [ ] Done
+- [x] Done
 
 ### Step 2 — CI and deploys
 
