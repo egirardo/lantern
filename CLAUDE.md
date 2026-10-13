@@ -107,7 +107,7 @@ tests/        Playwright end-to-end tests
 - Files: `kebab-case.ts`; React components: `PascalCase.tsx`.
 - Room ids, enemy types and item types use `kebab-case` (e.g. `flooded-cellar`, `giant-rat`).
 - Write unit tests for all game logic in `src/game/`.
-- Use clear, descriptive names over comments. Comment the *why*, not the *what*.
+- Use clear, descriptive names. Comment the *why* when it isn't obvious. Comments explaining *what* the code does are welcome too, since I'm learning the stack. Don't flag them in reviews, and add similar ones to code you write.
 
 ## Commands
 

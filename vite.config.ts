@@ -7,7 +7,5 @@ export default defineConfig({
   plugins: [react()],
   test: {
     include: ['src/**/*.test.ts'],
-    // Remove once the first tests exist, so an accidentally empty test run fails CI.
-    passWithNoTests: true,
   },
 })
