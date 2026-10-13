@@ -19,6 +19,26 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Stay in scope.** Follow the MoSCoW priorities in `docs/project-plan.md`. If you have an idea outside the current sprint, mention it instead of building it.
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
 - **End each session with a short summary** of what we did and how AI was used, so I can add it to my AI log (`docs/ai-log.md`).
+- **Keep my learning notes up to date.** See "Learning notes" below.
+
+## Learning notes
+
+`docs/learning-notes.md` is my personal reference for learning the tech stack. It is in `.gitignore`, so if it doesn't exist (e.g. on a new machine), create it.
+
+Add to it when something worth remembering comes up, without waiting to be asked:
+
+- A concept explained for the first time (e.g. a Phaser, Zustand or TypeScript pattern)
+- A gotcha or error we ran into, with its cause and fix
+- A decision we made, and **why**
+- A reminder for later (e.g. a temporary setting to remove), under "Open reminders". Tick it off when done.
+
+Rules:
+
+- Put each note under the matching topic heading. Add a new heading if none fits.
+- Keep notes short and in plain language. Don't copy whole explanations.
+- Don't duplicate tasks from sprint plans. Notes are for understanding, not to-dos.
+- Update or remove notes that become wrong (e.g. after a version upgrade).
+- Mention in your reply when you've updated the notes, so I know to look.
 
 ## Tech stack
 

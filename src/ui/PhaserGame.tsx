@@ -1,0 +1,20 @@
+import { useEffect, useRef } from 'react'
+import { createGame } from '../phaser/create-game'
+
+export function PhaserGame() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const game = createGame(containerRef.current)
+
+    // StrictMode mounts, unmounts and remounts in development. Without this
+    // cleanup, the first game would never be destroyed and two canvases would appear.
+    return () => {
+      game.destroy(true)
+    }
+  }, [])
+
+  return <div ref={containerRef} />
+}
