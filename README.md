@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+# Lantern
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A turn-based pixel-art dungeon crawler for the browser, inspired by tabletop RPGs. Explore a dark dungeon by lantern light, fight monsters with dice-based combat and follow the adventure through a narrated log.
 
-Currently, two official plugins are available:
+Lantern is built to be fully playable with keyboard only and with a screen reader.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> **Status:** in development. This is a thesis project (examensarbete) in the web development program at Yrgo, autumn 2026.
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Phaser, React, TypeScript, Zustand, Vite, Supabase, Tiled and Zod.
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Requires Node 24 (see `.nvmrc`).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command                | What it does                         |
+| ---------------------- | ------------------------------------ |
+| `npm run dev`          | Start the dev server                 |
+| `npm run build`        | Production build                     |
+| `npm test`             | Run unit tests once                  |
+| `npm run test:watch`   | Run unit tests on every save         |
+| `npm run lint`         | Lint with ESLint                     |
+| `npm run typecheck`    | Type-check with TypeScript           |
+| `npm run format`       | Format code with Prettier            |
+| `npm run format:check` | Check formatting without changing it |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+
+See [LICENSE](LICENSE). Asset credits will be added once the asset pack is chosen.
