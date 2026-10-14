@@ -34,4 +34,8 @@ npm run dev
 
 ## License
 
-See [LICENSE](LICENSE). Asset credits will be added once the asset pack is chosen.
+Code: see [LICENSE](LICENSE).
+
+## Asset credits
+
+- **[DungeonTileset II Extended](https://nijikokun.itch.io/dungeontileset-ii-extended)** by nijikokun, an extension of **[DungeonTileset II](https://0x72.itch.io/dungeontileset-ii)** by 0x72. Licensed [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Used for the dungeon tiles and characters.
