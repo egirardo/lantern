@@ -79,7 +79,7 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
 - **Claude:** `.env.example`, and checks that `.env.local` is in `.gitignore`.
 - Don't install `@supabase/supabase-js` or write auth code until Sprint 4.
 
-- [ ] Done
+- [x] Done
 
 ### Step 4 — Asset pack and manifest
 
@@ -89,13 +89,13 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
   - **Try to decide by Oct 15.** Phases D and E depend on it.
 - **Claude:** `src/assets/manifest.ts`, which maps logical names (`player`, `giant-rat`, `floor`) to a file and frame. Phaser's preload step loops over the manifest. Game code never uses file paths (architecture rule 7).
 
-- [ ] Done
+- [x] Done
 
 ### Step 5 — AI log
 
 - Add a template to `docs/ai-log.md` (date, tool, what I asked, what I kept or rejected and why) and log each session.
 
-- [ ] Done
+- [x] Done
 
 ---
 

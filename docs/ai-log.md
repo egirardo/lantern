@@ -171,6 +171,72 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** Kept the structure. Each PR description separates my work from AI work, which supports the agent evaluation later. The log entries were drafted by Claude Code, and I review them.
 - **How I verified it:** Read each description before pasting it. Checked the descriptions against the actual changes.
 
+<!-- Draft entries written by Claude Code from the session on Oct 14. Review and rewrite in your own words. -->
+
+#### 2026-10-14 — Asset pack review: licenses and scope
+
+- **Tool:** Claude Code
+- **Category:** Planning / Learning
+- **What I asked:** How to bring in two asset packs: Tangerine Tavern for a tavern intro, and DungeonTileset II Extended for the dungeon. Also whether a Pixel RPG UI Pack would work.
+- **What I got:** A license check of each pack's itch.io page:
+  - The dungeon pack is CC0.
+  - Tangerine Tavern is **CC BY-SA 4.0**, not CC0 as my plan requires. Credit is required, and a recolored version would have to be shared under the same license.
+  - The UI pack has a custom license that doesn't mention redistribution.
+
+  It also pointed out that the tavern intro is a **Could** item in my MoSCoW, and that building it now would take time from the Musts.
+- **Outcome:** ✅
+- **Why:** Decided to bring in only the dungeon pack now and wait with the tavern until the Could item. That also postpones the license question and the recolor work. For the UI pack, I'll ask the author about redistribution before committing it. I also got accessibility guidance for using it: decoration around real HTML text (WCAG 1.4.5), contrast and a readable font.
+- **How I verified it:** Read the license text on each itch.io page. Checked the MoSCoW in `docs/project-plan.md`.
+
+#### 2026-10-14 — Analysing the dungeon sprite sheet
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** To look through the unzipped packs (kept outside the repo in `lantern-assets/`).
+- **What I got:** The pack is a single 1024×1024 sheet with no list of sprite positions. Claude Code wrote a small script (Node built-ins only) that measured every sprite:
+  - Floor and wall tiles sit on the 16×16 grid, so Tiled can use the sheet directly.
+  - Characters don't fit a 16×16 grid but do fit a **16×32 grid**, with 9 frames per character (idle, run, hit).
+
+  It rendered zoomed crops to identify the two heroes, and explained sprite sheets vs texture atlases.
+- **Outcome:** ✅
+- **Why:** Measuring was faster and more exact than guessing positions or marking them by hand. I chose that over making the atlas in Aseprite for now, since custom Aseprite art is a Could for Sprint 6.
+- **How I verified it:** Looked at the zoomed crops with grid lines. Every frame sits inside its cell.
+
+#### 2026-10-14 — Character choice (idea)
+
+- **Tool:** Claude Code
+- **Category:** Planning / Accessibility
+- **What I asked:** Whether the player could choose between the blond girl and the blond boy.
+- **What I got:** Advice to include both in the atlas now (cheap) and build the choice screen later, together with saves, since the choice has to be saved. Accessibility guidance: a radio group with a text description of each character for screen reader users. Also a note that the log is written in second person ("You step north"), so the choice doesn't require any gendered text.
+- **Outcome:** ✅
+- **Why:** Not in my MoSCoW yet. I need to add it as a Should or a Could.
+- **How I verified it:** Compared against the MoSCoW and the accessibility requirements in `CLAUDE.md`.
+
+#### 2026-10-14 — Asset manifest and atlas (Step 4)
+
+- **Tool:** Claude Code
+- **Category:** Coding
+- **What I asked:** To bring the dungeon pack into the project according to the plan.
+- **What I got:**
+  - The sheet in `public/assets/dungeon/`, with a `LICENSE.txt`
+  - A generated Phaser atlas (`sprites.json`) with 18 hero frames
+  - `src/assets/manifest.ts`, mapping logical names to textures, a tileset and sprite animations
+  - A test that fails if the manifest refers to a frame the atlas doesn't have
+  - Asset credits in the README
+- **Outcome:** ✅
+- **Why:** Follows architecture rule 7 (art referenced by name). The manifest is plain data with no Phaser imports. New TypeScript concepts for me: `as const`, `satisfies` and `keyof typeof`.
+- **How I verified it:** Claude Code rendered three atlas frames to check they match the image, and broke a frame number on purpose to confirm the test fails. All checks pass in CI.
+
+#### 2026-10-14 — Lost uncommitted changes with `git checkout <file>`
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** Why my AI log changes disappeared after I ran `git checkout docs/ai-log.md`.
+- **What I got:** An explanation: `git checkout <file>` resets a file to its last commit and discards uncommitted changes without warning. Claude Code recovered the text from the conversation, and recommended `git switch` (branches) and `git restore` (files), which can't be confused with each other.
+- **Outcome:** ✅
+- **Why:** A good lesson in a Git command with two very different meanings.
+- **How I verified it:** Checked the reflog and status. The changes had never been committed, so only the conversation had a copy.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -192,6 +258,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 Filled in during Sprint 5.
 
 - **Where AI helped most:**
+  - Oct 14: Keeping me in scope and within license requirements (the tavern pack is CC BY-SA, not CC0, and the tavern is a Could item)
 - **Where AI was wrong or misleading:** (e.g. confident claims that testing disproved)
   - Oct 13: Copilot's false claim about subpath imports in the lint rule
   - Oct 13: Copilot's false claim that an empty grid throws
