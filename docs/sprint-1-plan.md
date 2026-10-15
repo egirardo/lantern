@@ -141,7 +141,7 @@ The type shapes below are suggestions. Change them however you like.
 4. **`loadRoom(...)`:** also checks that `playerStart` is inside the grid and on a walkable tile. Zod can't check this alone, because it needs both files.
 5. **Tests:**
    - [ ] A tiny hand-written 3×3 map fixture
-   - [ ] A valid room passes
+   - [x] A valid room passes
    - [ ] A missing field fails
    - [ ] A bad id fails
    - [ ] A start position inside a wall fails

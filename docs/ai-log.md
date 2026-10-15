@@ -237,6 +237,63 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** A good lesson in a Git command with two very different meanings.
 - **How I verified it:** Checked the reflog and status. The changes had never been committed, so only the conversation had a copy.
 
+<!-- Draft entries written by Claude Code from the session on Oct 15. Review and rewrite in your own words. -->
+
+#### 2026-10-15 — Learning Zod
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** Help getting started with the Zod room schema (Phase B), since Zod is new to me.
+- **What I got:** An introduction using a different example (a library book):
+  - why runtime validation is needed (TypeScript types disappear when the code runs)
+  - the building blocks
+  - `safeParse` vs `parse`, and `z.infer`
+  - `z.strictObject`, which rejects misspelled keys
+
+  Claude Code first tested every feature against my installed version (Zod 4.6), because Zod 4 changed some APIs compared to older tutorials.
+- **Outcome:** ✅
+- **Why:** Using a different example meant I still wrote the room schema myself. `strictObject` matters for agent-built rooms: a typo like `descripton` should be an error, not silently ignored.
+- **How I verified it:** Claude Code ran the examples against my installed Zod and showed the real error output.
+
+#### 2026-10-15 — Room schema reviews
+
+- **Tool:** Claude Code
+- **Category:** Review / Learning
+- **What I asked:** Three reviews of `src/rooms/room-schema.ts`, and help with one fix.
+- **What I got:**
+  - First review: empty strings passed (an empty description would make a room silent for screen reader users), and `.trim()` is needed so spaces-only text fails. Also a recommendation for `strictObject`, and the point that `exits` needs a position and a target room. The review suggested extracting reusable schemas (`positionSchema`, `roomIdSchema`).
+  - Second review: object shorthand (`{ positionSchema }` creates a field *named* `positionSchema`), found by reading the inferred type.
+  - Third review: `roomIdSchema` still wrapped the string rule in an object, so `id` became `{ id: string }`. When I was confused, Claude Code showed the before and after and explained that a small schema should describe the value itself, and the field name belongs in the object that uses it.
+- **Outcome:** ✏️
+- **Why:** I wrote the schema and made the fixes, apart from seeing the `roomIdSchema` fix written out. A useful habit: hover over the inferred type to check the schema's shape.
+- **How I verified it:** Hovered over `Room` in VS Code. Typecheck passes.
+
+#### 2026-10-15 — Phase B order and the `Grid` type
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** Whether to write tests or `tiled-schema.ts` next, and whether to import `Grid` from `movement.ts` or define a new grid type.
+- **What I got:**
+  - Write the tests right after each file, and split Phase B into three small PRs: the room schema, the Tiled schema with `buildWalkableGrid`, and `loadRoom`.
+  - Import `Grid`, because `buildWalkableGrid` must produce exactly what `movePlayer` accepts. `src/rooms/` may import from `src/game/`, but not the other way round.
+  - The room schema has no grid at all, since the grid comes from the Tiled map.
+- **Outcome:** ✅
+- **Why:** Smaller PRs are easier to review, and one `Grid` type can't drift apart.
+- **How I verified it:** Checked against architecture rule 1 in `CLAUDE.md`.
+
+#### 2026-10-15 — Room schema tests
+
+- **Tool:** Claude Code
+- **Category:** Review / Coding
+- **What I asked:** Feedback on my unfinished test file, then help writing the first test so I could see how it's done.
+- **What I got:**
+  - Feedback: my test (`expect(validRoom).toBeDefined()`) never called the schema, so it would always pass. The `: Room` annotation is a TypeScript check, not a Zod check. The unused `grid` fixture broke typecheck.
+  - The first real test, written by Claude Code: `roomSchema.safeParse(validRoom)` and `expect(result.success).toBe(true)`, with `validRoom` moved to the top of the file and comments explaining each line. Claude Code also showed the test can fail by changing the id on purpose.
+  - Tips for the failing tests: copy `validRoom` and break one thing, then check the error `path` so each test fails for the intended reason.
+- **Outcome:** ✏️
+- **Why:** I'll write the remaining tests myself, following the first one. I had also added an `'exit'` tile type to `movement.ts`. Claude Code pointed out that exits would then be defined in two places (the room file and the grid). I reverted it. My underlying idea, that exits should be checked against the map, was right. It belongs in `loadRoom`, which has both the room and the grid.
+- **How I verified it:** The test passes with the valid room and fails with a bad id. Typecheck, lint and Prettier pass.
+
 ---
 
 ## Agent-built rooms: evaluation
