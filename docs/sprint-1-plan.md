@@ -112,10 +112,10 @@ The type shapes below are suggestions. Change them however you like.
    - `Direction = 'north' | 'south' | 'east' | 'west'`
    - a walkable grid as `boolean[][]`
 2. **Write the tests first:**
-   - [ ] Moving onto an open tile works
-   - [ ] A wall blocks the move
-   - [ ] The edge of the map blocks the move
-   - [ ] The input position isn't mutated
+   - [x] Moving onto an open tile works
+   - [x] A wall blocks the move
+   - [x] The edge of the map blocks the move
+   - [x] The input position isn't mutated
 3. Return a result like `{ moved: true, position } | { moved: false, reason: 'wall' | 'edge' }`.
 
 > **Concept: discriminated union.** TypeScript makes you handle both cases, and `reason` later becomes log text ("A wall blocks your way").
