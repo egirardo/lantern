@@ -112,10 +112,10 @@ The type shapes below are suggestions. Change them however you like.
    - `Direction = 'north' | 'south' | 'east' | 'west'`
    - a walkable grid as `boolean[][]`
 2. **Write the tests first:**
-   - [ ] Moving onto an open tile works
-   - [ ] A wall blocks the move
-   - [ ] The edge of the map blocks the move
-   - [ ] The input position isn't mutated
+   - [x] Moving onto an open tile works
+   - [x] A wall blocks the move
+   - [x] The edge of the map blocks the move
+   - [x] The input position isn't mutated
 3. Return a result like `{ moved: true, position } | { moved: false, reason: 'wall' | 'edge' }`.
 
 > **Concept: discriminated union.** TypeScript makes you handle both cases, and `reason` later becomes log text ("A wall blocks your way").
@@ -140,11 +140,11 @@ The type shapes below are suggestions. Change them however you like.
 3. **`buildWalkableGrid(map)`:** any non-zero tile in the `walls` layer means blocked.
 4. **`loadRoom(...)`:** also checks that `playerStart` is inside the grid and on a walkable tile. Zod can't check this alone, because it needs both files.
 5. **Tests:**
-   - [ ] A tiny hand-written 3×3 map fixture
-   - [ ] A valid room passes
-   - [ ] A missing field fails
-   - [ ] A bad id fails
-   - [ ] A start position inside a wall fails
+   - [ ] A tiny hand-written 3×3 map fixture (will go in tiled-schema.test.ts)
+   - [x] A valid room passes
+   - [x] A missing field fails
+   - [x] A bad id fails
+   - [ ] A start position inside a wall fails (will go in load-room.test.ts)
 
 > **Concept:** `z.infer<typeof roomSchema>` derives the TypeScript type from the schema, so the type and the validation never drift apart.
 
