@@ -322,6 +322,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I wrote the fixture, the tests and the field rules, and made the object-layer decision. The length check (`.superRefine`) and the final cleanups were written by Claude Code at my request so I could ship the PR. Heads-up for Phase E: the schema strips fields Phaser's tilemap loader needs, so I'll have to decide what data Phaser gets.
 - **How I verified it:** All 22 tests, typecheck, lint and Prettier pass. Claude Code removed each rule on purpose (the length check, the `tilelayer` literal) and added a `.max()`. Each time, exactly the matching test failed (the object-layer test with `expected ['layers', 2, 'data'] to deeply equal ['layers', 2, 'type']`), so each test checks the intended rule.
 
+#### 2026-10-16 — Phase B steps 3–4 guide and buildGrid tests
+
+- **Tool:** Claude Code
+- **Category:** Planning, Learning, Review, Coding
+- **What I asked:** Whether to work on `buildWalkableGrid` and `loadRoom` in parallel, and for a guide to get started. Then several reviews of my first tests in `build-grid.test.ts`, help with a type error, and at the end of the day for Claude Code to make the remaining test changes because I was short on time.
+- **What I got:**
+  - Planning: do them one after the other in the same branch, because `loadRoom` needs the grid. A guide with decisions to make first: return my `Grid` type (`'floor' | 'wall'`) instead of the plan's `boolean[][]`, what happens without a `walls` layer, throw vs result union, and keeping `loadRoom` pure (fetching belongs to Phase E).
+  - Review: my first expected values were tile IDs (the layers drawn on top of each other, which is Phaser's job), not floor/wall. After I changed them, I was passing the expected grid *into* `buildGrid`. Claude Code broke down input (map with numbers) vs output (grid with words) step by step. Later reviews found missing commas between rows (valid JavaScript, read as an index lookup), an unused import, and `layers[0]` being "possibly undefined" (`noUncheckedIndexedAccess`).
+  - Learning: Claude Code showed the spread pattern (`{ ...validMap, layers: [{ ...floorLayer, data }] }`) instead of changing a deep copy, and explained that the `row` "implicitly any" error came from `buildGrid` not existing yet, not from the test.
+  - Review: a 3×3 map can't catch a width/height mix-up or a wrong index formula (`y * height + x`), and all fixtures had `floor` before `walls`, so a function reading `layers[1]` would pass.
+  - Coding: Claude Code made the last changes at my request: removed the pasted guide comments, renamed the flipped tile test and explained `2147483714`, added a "finds the walls layer by name" test, and replaced the length checks with a full `toEqual` on a 4×2 map with a wall in the corner. I wrote the other tests, the shared fixture file (`testing-map.ts` with `newMap()`), and decided that a missing `walls` layer means all floor.
+- **Outcome:** ✏️
+- **Why:** The guide and reviews kept me on track, but I needed the input/output breakdown before the tests made sense. The last test changes were written by Claude Code, not me, so I need to read them before writing `buildGrid`.
+- **How I verified it:** Claude Code ran the checks after its changes: Prettier and ESLint pass, the `tiled-schema` tests still pass after moving the fixture, and all 5 `buildGrid` tests fail with "not a function", as expected before the function exists (TDD red). Typecheck only reports the missing `buildGrid` export.
+
 ---
 
 ## Agent-built rooms: evaluation
