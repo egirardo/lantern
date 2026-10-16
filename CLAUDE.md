@@ -20,6 +20,7 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
 - **Keep my AI log up to date.** Add entries to `docs/ai-log.md` yourself, without waiting to be asked. See "AI log" below.
 - **Keep my learning notes up to date.** See "Learning notes" below.
+- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar). Give it to me as a Markdown block I can paste into GitHub, in the same format as earlier PRs: **Summary** (sprint, phase and part), **Changes** (per file), **Notes** (decisions, what's left for later PRs) and **How to test**. Check `git status` so every changed file is listed, and only claim checks you actually ran.
 
 ## AI log
 
