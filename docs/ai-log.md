@@ -294,6 +294,19 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I'll write the remaining tests myself, following the first one. I had also added an `'exit'` tile type to `movement.ts`. Claude Code pointed out that exits would then be defined in two places (the room file and the grid). I reverted it. My underlying idea, that exits should be checked against the map, was right. It belongs in `loadRoom`, which has both the room and the grid.
 - **How I verified it:** The test passes with the valid room and fails with a bad id. Typecheck, lint and Prettier pass.
 
+#### 2026-10-16 — Room schema tests, round two
+
+- **Tool:** Claude Code
+- **Category:** Review / Coding / Learning
+- **What I asked:** A review of my failing-case tests, why my earlier 3×3 grid fixture was wrong, and help writing the `expect` that checks which field failed.
+- **What I got:**
+  - Review: the missing-field and bad-id tests were correct. The "start inside a wall" test failed because Zod only sees the room file and has no idea where the walls are. That check belongs in the `loadRoom` tests. Also fixed: trailing spaces (Prettier) and a sprint checklist copied into the test file.
+  - The 3×3 grid was in the wrong place, not a bad idea. It is a fake Tiled map (flat `data` array, `walls` layer), so it goes in the `tiled-schema` / `buildWalkableGrid` tests in the next PR. Claude Code gave hints but didn't write it.
+  - Claude Code wrote the bad-id assertion `expect(result.error?.issues[0]?.path).toEqual(['id'])` and explained each part (`?.`, `issues[0]`, why `path` is an array, `toEqual` vs `toBe`). I wrote the same check for the missing-field test myself (`['name']`).
+- **Outcome:** ✏️
+- **Why:** I removed the wall test from the schema tests, to add it again in `loadRoom`. I kept the `path` assertion and reused the pattern myself.
+- **How I verified it:** All tests, typecheck, lint and Prettier pass. Claude Code broke each test on purpose (wrong field in the fixture) and both failed with `Expected "id"/"name", Received ...`, so they check the intended rule.
+
 ---
 
 ## Agent-built rooms: evaluation

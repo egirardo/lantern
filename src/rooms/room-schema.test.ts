@@ -27,4 +27,33 @@ describe('roomSchema', () => {
     // Assert: success is true when the data matches every rule
     expect(result.success).toBe(true)
   })
+
+  it('rejects a room with a missing field', () => {
+    // Arrange: copy the valid room and delete one field
+    const invalidRoom: Partial<Room> = { ...validRoom }
+    delete invalidRoom.name
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the room is rejected, and the issue points at the missing name field
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['name'])
+  })
+
+  it('rejects a room with a bad id', () => {
+    // Arrange: copy the valid room and change the id to an invalid value
+    const invalidRoom: Room = { ...validRoom, id: 'Room 1' }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the room is rejected...
+    expect(result.success).toBe(false)
+    // ...and the first issue points at the id field, not some other field.
+    // `?.` is needed because `error` only exists when parsing fails, and
+    // `issues[0]` could be missing (noUncheckedIndexedAccess).
+    // `path` is an array (nested fields give e.g. ['exits', 0, 'to']), so we use toEqual.
+    expect(result.error?.issues[0]?.path).toEqual(['id'])
+  })
 })

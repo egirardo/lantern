@@ -18,8 +18,22 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Ask before** adding dependencies, changing the architecture, or deviating from this file.
 - **Stay in scope.** Follow the MoSCoW priorities in `docs/project-plan.md`. If you have an idea outside the current sprint, mention it instead of building it.
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
-- **End each session with a short summary** of what we did and how AI was used, so I can add it to my AI log (`docs/ai-log.md`).
+- **Keep my AI log up to date.** Add entries to `docs/ai-log.md` yourself, without waiting to be asked. See "AI log" below.
 - **Keep my learning notes up to date.** See "Learning notes" below.
+
+## AI log
+
+`docs/ai-log.md` is part of my thesis. Add an entry for each meaningful use of AI in a session, at the end of the session or when a task is finished.
+
+Rules:
+
+- Follow the entry template and categories at the top of the log. Put entries under the current sprint, newest at the bottom.
+- Write in first person from my point of view ("What I asked"), in the same plain style as the existing entries.
+- Be honest: include where you were wrong, changed your mind, or where I rejected your suggestion.
+- Record who wrote what: code I wrote vs code you wrote or changed.
+- **Outcome**, **Why** and **How I verified it** are my judgments. Fill them in from what happened in the session, then tell me to check them.
+- Group small related requests into one entry instead of logging every message.
+- Mention in your reply when you've updated the log, so I know to review it.
 
 ## Learning notes
 
