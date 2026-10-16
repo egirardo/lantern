@@ -307,6 +307,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I removed the wall test from the schema tests, to add it again in `loadRoom`. I kept the `path` assertion and reused the pattern myself.
 - **How I verified it:** All tests, typecheck, lint and Prettier pass. Claude Code broke each test on purpose (wrong field in the fixture) and both failed with `Expected "id"/"name", Received ...`, so they check the intended rule.
 
+#### 2026-10-16 — Learning Tiled and the Tiled schema
+
+- **Tool:** Claude Code
+- **Category:** Learning / Review / Coding
+- **What I asked:** A getting-started checklist for Tiled and `tiled-schema.ts`, feedback on my exported practice map, several reviews of the schema and tests, my object-layer decision, and in the end help placing the length check.
+- **What I got:**
+  - Learning: a checklist for a 3×3 practice map (orthogonal, CSV layer format, fixed size, embedded tileset, layers named `floor` and `walls`). `.tmj` is Tiled's default extension for JSON maps. The review of my export caught that the layer order drew walls under the floor and that the tileset name didn't match the manifest (`dungeon`).
+  - Review: `{ ...validMap }` is a shallow copy, so my tests changed the shared `layers` array. A later test then failed because of an earlier test's `-1`, not the object layer it was meant to test. My object-layer fixture also had `data: []`, so it could fail on length instead of type. Fixed with `structuredClone`, named layer constants, a realistic object layer, and a `path` assertion in every test.
+  - Learning: `z.object` strips unknown fields, which is what a Tiled export needs (`strictObject` would reject every real file). `\/` in the copied fixture caused `no-useless-escape`, since JSON may escape slashes but JavaScript doesn't need it.
+  - Object layers: I decided to reject them. Claude Code agreed (validate only what's used, fail loudly, it helps catch agent mistakes in Sprint 3) and suggested doing it on purpose with `type: z.literal('tilelayer')`. Before that, the test only passed because object layers have no `data`.
+  - Coding: Claude Code's first `.refine` sketch had a comment as the function body, which is a syntax error, and that was why my attempt failed. Claude Code then placed a working `.refine`, and later replaced it with `.superRefine` so the error points at the exact layer (`['layers', i, 'data']`). It also wrote the schema's explanatory comment, the "accepts a flipped tile ID" test, and tidied test names and comment placement.
+- **Outcome:** ✏️
+- **Why:** I wrote the fixture, the tests and the field rules, and made the object-layer decision. The length check (`.superRefine`) and the final cleanups were written by Claude Code at my request so I could ship the PR. Heads-up for Phase E: the schema strips fields Phaser's tilemap loader needs, so I'll have to decide what data Phaser gets.
+- **How I verified it:** All 22 tests, typecheck, lint and Prettier pass. Claude Code removed each rule on purpose (the length check, the `tilelayer` literal) and added a `.max()`. Each time, exactly the matching test failed (the object-layer test with `expected ['layers', 2, 'data'] to deeply equal ['layers', 2, 'type']`), so each test checks the intended rule.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -333,6 +348,7 @@ Filled in during Sprint 5.
   - Oct 13: Copilot's false claim about subpath imports in the lint rule
   - Oct 13: Copilot's false claim that an empty grid throws
   - Oct 13: Claude Code's contradictory explanation of auto-deleting branches, and outdated Vercel instructions
+  - Oct 16: Claude Code's `.refine` sketch wasn't valid code (a comment as the function body)
 - **How I verified AI output:**
 - **Agent workflow results:** reference room vs agent-built rooms
 - **What I would do differently:**
