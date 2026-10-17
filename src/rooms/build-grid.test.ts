@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { buildGrid } from './build-grid'
 import { floorLayer, wallsLayer, validMap } from './testing-map'
+import { tiledSchema } from './tiled-schema'
 
 describe('buildGrid', () => {
   it('builds a grid from a valid map', () => {
-    const result = buildGrid(validMap)
+    const result = buildGrid(tiledSchema.parse(validMap))
     expect(result).toEqual([
       ['wall', 'wall', 'wall'],
       ['floor', 'floor', 'floor'],
@@ -17,10 +18,30 @@ describe('buildGrid', () => {
       ...validMap,
       layers: [floorLayer],
     }
-    const result = buildGrid(mapWithoutWalls)
+    const result = buildGrid(tiledSchema.parse(mapWithoutWalls))
     expect(result).toEqual([
       ['floor', 'floor', 'floor'],
       ['floor', 'floor', 'floor'],
+      ['floor', 'floor', 'floor'],
+    ])
+  })
+
+  it('treats a tile with no floor and no wall as a wall', () => {
+    // The centre tile (index 4) is empty in both layers, like a spot the
+    // room builder forgot to paint. It blocks, so a buggy map can't let the
+    // player walk onto empty darkness. It must also still become exactly one
+    // tile, or the row gets shorter and every tile after it shifts left.
+    const mapWithGap = {
+      ...validMap,
+      layers: [
+        { ...floorLayer, data: [258, 258, 258, 259, 0, 324, 323, 266, 258] },
+        wallsLayer,
+      ],
+    }
+    const result = buildGrid(tiledSchema.parse(mapWithGap))
+    expect(result).toEqual([
+      ['wall', 'wall', 'wall'],
+      ['floor', 'wall', 'floor'],
       ['floor', 'floor', 'floor'],
     ])
   })
@@ -35,7 +56,7 @@ describe('buildGrid', () => {
         { ...wallsLayer, data: [2147483714, 67, 132, 0, 0, 0, 0, 0, 0] },
       ],
     }
-    const result = buildGrid(mapWithFlippedWall)
+    const result = buildGrid(tiledSchema.parse(mapWithFlippedWall))
     expect(result).toEqual([
       ['wall', 'wall', 'wall'],
       ['floor', 'floor', 'floor'],
@@ -50,7 +71,7 @@ describe('buildGrid', () => {
       ...validMap,
       layers: [wallsLayer, floorLayer],
     }
-    const result = buildGrid(mapWithWallsFirst)
+    const result = buildGrid(tiledSchema.parse(mapWithWallsFirst))
     expect(result).toEqual([
       ['wall', 'wall', 'wall'],
       ['floor', 'floor', 'floor'],
@@ -72,10 +93,20 @@ describe('buildGrid', () => {
         { ...wallsLayer, data: [0, 0, 0, 0, 0, 0, 0, 66] },
       ],
     }
-    const result = buildGrid(nonSquareMap)
+    const result = buildGrid(tiledSchema.parse(nonSquareMap))
     expect(result).toEqual([
       ['floor', 'floor', 'floor', 'floor'],
       ['floor', 'floor', 'floor', 'wall'],
     ])
+  })
+
+  it('throws if the map has no floor layer', () => {
+    const mapWithoutFloor = {
+      ...validMap,
+      layers: [wallsLayer],
+    }
+    expect(() => buildGrid(tiledSchema.parse(mapWithoutFloor))).toThrow(
+      'Map is missing a floor layer',
+    )
   })
 })

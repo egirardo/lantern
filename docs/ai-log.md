@@ -337,6 +337,16 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The guide and reviews kept me on track, but I needed the input/output breakdown before the tests made sense. The last test changes were written by Claude Code, not me, so I need to read them before writing `buildGrid`.
 - **How I verified it:** Claude Code ran the checks after its changes: Prettier and ESLint pass, the `tiled-schema` tests still pass after moving the fixture, and all 5 `buildGrid` tests fail with "not a function", as expected before the function exists (TDD red). Typecheck only reports the missing `buildGrid` export.
 
+#### 2026-10-17 — Final review of buildGrid
+
+- **Tool:** Claude Code
+- **Category:** Review
+- **What I asked:** A last look over `build-grid.ts` and `build-grid.test.ts` after I finished them.
+- **What I got:** No changes needed. `buildGrid` finds both layers by name, throws if `floor` is missing, treats a missing `walls` layer as all floor, and turns a tile that is empty in both layers into a wall. The tests now run every fixture through `tiledSchema.parse` first, so `buildGrid` gets the same typed data it will get in `loadRoom`. Two new tests cover the empty-tile case and the missing floor layer. Small things to think about, not bugs: two layers with the same name would silently use the first one (the schema doesn't stop that), and the missing-floor check could live in the schema instead of `buildGrid`.
+- **Outcome:** ✅
+- **Why:** I wrote `buildGrid`, the two new tests and the `tiledSchema.parse` change myself. The review confirmed it was ready, so I kept it as it was.
+- **How I verified it:** Claude Code ran the checks: all 7 `buildGrid` tests pass (TDD green, after they all failed yesterday), 29 tests in total, and typecheck, ESLint and Prettier pass.
+
 ---
 
 ## Agent-built rooms: evaluation
