@@ -347,6 +347,44 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I wrote `buildGrid`, the two new tests and the `tiledSchema.parse` change myself. The review confirmed it was ready, so I kept it as it was.
 - **How I verified it:** Claude Code ran the checks: all 7 `buildGrid` tests pass (TDD green, after they all failed yesterday), 29 tests in total, and typecheck, ESLint and Prettier pass.
 
+## Sprint 2 (Oct 19–25): Reference room, core gameplay
+
+#### 2026-10-19 — Re-planning after Sprint 1 ran over
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** Help making the Sprint 2 plan, with Sprint 1 running behind (I was on Phase B step 4), and updating the Sprint 1 plan.
+- **What I got:** An estimate of what was left from Sprint 1 (about 3–4 days), a proposal to finish Sprint 1 first, then add the live-region log and the lantern visibility rules, and move combat, dice, action menus and lantern rendering to Sprint 3. It also suggested what to show at the Oct 21 supervision, and pointed out the knock-on effects on Sprint 3. Claude Code then wrote `docs/sprint-2-plan.md`, a "Status at end of sprint" section in the Sprint 1 plan, a "Plan changes" section in the project plan, and updated "Current status" in `CLAUDE.md`.
+- **Outcome:** ✏️
+- **Why:** The first proposal planned work on Saturday and Sunday. I said weekends should be left out of planning, since I rarely have time then, so the dice and lantern rendering moved to Sprint 3 and became a stretch list. I chose to keep the submitted sprint plan unchanged and add a "Plan changes" section instead. I went with the recommendation of lantern before combat.
+- **How I verified it:** Compared against the MoSCoW and sprint plan in `docs/project-plan.md`, and my open reminders for Phase B and E.
+
+#### 2026-10-19 — loadRoom tests: reviews and cleanup
+
+- **Tool:** Claude Code
+- **Category:** Review / Coding
+- **What I asked:** Two reviews of my `load-room.test.ts`, whether `checkPositions` should get its own file, and finally for Claude Code to fix the remaining problems so I could move on to writing the function due to being behind and needing to move on.
+- **What I got:**
+  - Review 1: my tests called `loadRoom(grid, start, exits)`, which only checks positions, while the plan says `loadRoom` validates both files. Claude Code suggested splitting out a position helper (`checkPositions`) so my tests could stay, and pointed out missing cases: the off-by-one edge, more than one exit, and asserting what `loadRoom` returns.
+  - Review 2: `checkPositions` was called three different ways (one position, an array of exits, three arguments). My `roomData` didn't match the room schema (`startPosition` instead of `playerStart`, the whole map instead of its name). Two `loadRoom` tests did `loadRoom`'s job inside the test, one never called `loadRoom`, the multiple-exits test asserted the opposite of its name, and `y: 4` missed the edge (height 3, so `y: 3`). Recommendation: keep `checkPositions` in `load-room.ts`, in its own `describe` block.
+  - Coding: Claude Code rewrote `load-room.test.ts` with the signatures `checkPositions(grid, room)` and `loadRoom(roomData, mapData)` returning `{ room, grid }`. It uses a hand-written expected grid, copies of `validRoom` with one field changed, a "checks every exit" test, edge tests at `x: 3` and `y: 3`, and `toThrow(ZodError)` for a bad room file. It also changed `validRoom` in `testing-map.ts` so its start and exits are on floor tiles in `validMap` (before, both were on walls), and moved the fixture comment there from `room-schema.test.ts`.
+- **Outcome:** ✏️
+- **Why:** I moved `validRoom` to `testing-map.ts`, renamed the fields, fixed the edge test name and switched to `checkPositions(grid, room)` myself. The final test file was written by Claude Code at my request, so I need to read it before writing the functions. The two-argument `loadRoom` was Claude Code's suggestion, which I accepted.
+- **How I verified it:** Claude Code ran the checks: Prettier and ESLint pass, the 29 existing tests still pass after changing `validRoom`, and all 10 `loadRoom` tests fail with "not a function" (TDD red). Typecheck only reports the two missing exports.
+
+#### 2026-10-19 — loadRoom and checkPositions: reviews
+
+- **Tool:** Claude Code
+- **Category:** Review / Learning
+- **What I asked:** Three reviews of `load-room.ts` while I wrote it, help with a "possibly undefined" error I couldn't fix, and a final check before shipping.
+- **What I got:**
+  - Review 1: `checkPositions` was correct (all 6 tests green), and checking "inside the grid" before "is a wall" is the right order. But my `loadRoom(grid, room)` only took already-validated data, while the tests give it the two raw JSON files. Claude Code listed the steps (parse both, build the grid, check positions, return), suggested `unknown` parameters and a written return type, and explained "parse, don't validate". Also: two `noUncheckedIndexedAccess` errors, use the existing `Position` type, a clearer name than `isPositionValid`, and Prettier.
+  - Review 2: `loadRoom` now parsed both files, but returned `map` instead of `grid`. My return type made typecheck catch it right away. For the error I was stuck on, Claude Code explained that TypeScript only narrows the variable you check: `position.y < grid.length` doesn't prove that `positionY` exists. It showed the fix (`const row = grid[position.y]`, then `row !== undefined && …`), and pointed out that `grid?.` in `isWall` wasn't needed.
+  - Final check: everything passes. Two tiny leftovers, not blockers: `position.x >= 0` is written twice in `isInsideGrid`, and `isWall` still writes `{ x: number; y: number }` instead of `Position`.
+- **Outcome:** ✏️
+- **Why:** I wrote both functions and made all the fixes myself. The `row !== undefined` line follows the pattern Claude Code showed me, because I couldn't solve that error on my own. I kept the type annotations on `room`, `map` and `grid` as documentation.
+- **How I verified it:** Claude Code ran all 39 tests, typecheck, lint and Prettier, and all pass. It also broke the code on purpose on a backup copy: `x <= width`, checking only the first exit, and `loadRoom` skipping `checkPositions` each made exactly the matching test fail. Removing `row !== undefined` didn't fail a test, because the extra `y` checks still guard at runtime, but typecheck rejects it. The file was restored afterwards and all tests pass.
+
 ---
 
 ## Agent-built rooms: evaluation

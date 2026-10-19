@@ -1,3 +1,5 @@
+import type { Room } from './room-schema'
+
 export const floorLayer = {
   data: [258, 258, 258, 259, 260, 324, 323, 266, 258],
   height: 3,
@@ -71,4 +73,20 @@ export const validMap = {
 
 export function newMap() {
   return structuredClone(validMap)
+}
+
+// A room that should pass every rule. Each failing test copies it and breaks
+// exactly one thing, so we know which rule caused the failure.
+// The Room annotation makes TypeScript warn us if this fixture drifts from the schema.
+// Its positions fit validMap: the start and both exits are on floor tiles.
+export const validRoom: Room = {
+  id: 'room-1',
+  name: 'Room 1',
+  map: 'map-1',
+  playerStart: { x: 1, y: 1 },
+  description: 'A simple room.',
+  exits: [
+    { position: { x: 0, y: 1 }, to: 'room-2' },
+    { position: { x: 2, y: 2 }, to: 'room-3' },
+  ],
 }

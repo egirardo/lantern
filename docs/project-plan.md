@@ -262,3 +262,15 @@ flowchart LR
         **Illness or lost time**
         - Mitigation: Musts are prioritized in Sprints 1–4, so Sprint 5 can absorb delays, and Sprint 6 works as a buffer before the presentation.
         - Plan B: Reduce the dungeon size and move remaining Shoulds to "future improvements" in the report.
+
+### Plan changes
+
+Changes to the sprint plan above, with the date and reason. The original plan is kept as it was submitted.
+
+**Oct 19 — Sprint 1 ran over**
+
+- **What happened:** Sprint 1's goal (moving around the first room on the deployed site) wasn't reached by Oct 18. The room loader, store, Tiled room and Phaser rendering were carried over to Sprint 2. Learning Zod and Tiled took longer than planned.
+- **Sprint 2 (Oct 19–25):** first finishes Sprint 1, then adds the adventure log as an ARIA live region and the lantern visibility rules (logic and tests only).
+- **Moved from Sprint 2 to Sprint 3:** lantern rendering and narration of surroundings, dice, combat with 3 enemy types, keyboard action menus. Action menus fit well with focus management, which was already in Sprint 3.
+- **Knock-on effects (to be re-planned at the start of Sprint 3):** guest mode with local saves will probably move to Sprint 4, since it uses the same save layer as account sync. Agents may start building rooms 2–5 early in Sprint 4 instead of at the end of Sprint 3. Sprint 5 is the planned buffer for delays.
+- **Planning rule from now on:** sprints are planned on weekdays only. Weekend work is a bonus.
