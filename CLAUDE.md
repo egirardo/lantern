@@ -139,17 +139,24 @@ npm run typecheck   # TypeScript check
 
 ## Current status
 
-**Sprint 1 (Oct 12–18): Foundation**
-Goal: a deployed project skeleton where the player can move around the first room with the keyboard.
+**Sprint 2 (Oct 19–25): Reference room, core gameplay**
+Goal: the player moves around the reference room on the deployed site, every move is announced in the adventure log, and the lantern visibility rules are written and tested. Full plan: `docs/sprint-2-plan.md`.
 
-- [ ] Set up repo, Vite, React, TypeScript, Phaser, ESLint and Prettier
-- [ ] Set up GitHub Actions and Vercel deploys
-- [ ] Create the Supabase project
-- [ ] Choose a CC0 asset pack and set up the asset manifest
-- [ ] Build the first room in Tiled and load it in Phaser
-- [ ] Shared game state and grid-based keyboard movement
-- [ ] Room data format and Zod schema
-- [ ] Start the AI log
+Sprint 1 ran over, so this sprint first finishes it:
+
+- [ ] Phase B step 4: `loadRoom`
+- [ ] Phase C: narration and store
+- [ ] Phase D: the reference room in Tiled
+- [ ] Phase E: Phaser rendering and keyboard input
+- [ ] Deployed to `dev` and released to `main`
+
+Then the new Sprint 2 work:
+
+- [ ] Phase F: adventure log as an ARIA live region (Must)
+- [ ] Phase G: lantern visibility rules, logic and tests only (Must)
+- **Supervision Oct 21**
+
+Moved to Sprint 3: lantern rendering and narration, dice, combat, action menus. Sprints are planned on weekdays only.
 
 *Update this section at the start of each sprint.*
 

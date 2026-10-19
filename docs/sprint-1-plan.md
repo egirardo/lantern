@@ -144,7 +144,7 @@ The type shapes below are suggestions. Change them however you like.
    - [x] A valid room passes
    - [x] A missing field fails
    - [x] A bad id fails
-   - [ ] A start position inside a wall fails (will go in load-room.test.ts)
+   - [x] A start position inside a wall fails (will go in load-room.test.ts)
 
 > **Concept:** `z.infer<typeof roomSchema>` derives the TypeScript type from the schema, so the type and the validation never drift apart.
 
@@ -205,6 +205,22 @@ The type shapes below are suggestions. Change them however you like.
 | Oct 16    | Asset manifest (Step 4)              | Phase C                                 |
 | Oct 17    | Reviews                              | Phases D and E                          |
 | Oct 18    | AI log summary                       | Buffer, deploy check, release to `main` |
+
+---
+
+## Status at end of sprint (Oct 18)
+
+The sprint goal wasn't reached. Steps 1–5 and Phase A are done, and Phase B is done up to step 3 (`buildGrid`). Learning Zod and Tiled, and getting the schema tests right, took longer than the timeline above planned for.
+
+**Carried over to Sprint 2** (tracked in `docs/sprint-2-plan.md`):
+
+- Phase B step 4: `loadRoom` and the "start inside a wall" test
+- Phase C: narration and store
+- Phase D: the reference room in Tiled
+- Phase E: Phaser rendering and keyboard input
+- Deploy to `dev` and release to `main`
+
+The timeline above is kept as it was planned, as a record.
 
 ## Getting help without getting solutions
 
