@@ -6,9 +6,11 @@ export type Tile = 'floor' | 'wall'
 
 export type Grid = Tile[][]
 
+export type BlockedReason = 'wall' | 'edge'
+
 export type MoveResult =
   | { moved: true; newPosition: Position }
-  | { moved: false; newPosition: Position; reason: 'wall' | 'edge' }
+  | { moved: false; newPosition: Position; reason: BlockedReason }
 
 // Record requires an entry for every Direction, so adding a new direction
 // without an offset is a type error instead of a silent zero-step move.
