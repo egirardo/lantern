@@ -20,7 +20,7 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
 - **Keep my AI log up to date.** Add entries to `docs/ai-log.md` yourself, without waiting to be asked. See "AI log" below.
 - **Keep my learning notes up to date.** See "Learning notes" below.
-- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar). Give it to me as a Markdown block I can paste into GitHub, in the same format as earlier PRs: **Summary** (sprint, phase and part), **Changes** (per file), **Notes** (decisions, what's left for later PRs) and **How to test**. Check `git status` so every changed file is listed, and only claim checks you actually ran.
+- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar), using the `pr-description` skill.
 
 ## AI log
 
@@ -93,28 +93,6 @@ These apply to every feature. Target: **WCAG 2.2 AA**.
 - Use **semantic HTML first**, and ARIA only when HTML can't do the job.
 - **Login and sign-up** must meet WCAG 2.2 Accessible Authentication: allow pasting and password managers, no puzzles or memory tests.
 - No time limits on turns. The game waits for the player.
-
-## Proposed folder structure
-
-This is a starting point. Update it as the project takes shape.
-
-```
-src/
-  game/       Pure TypeScript game logic (movement, visibility, combat, dice)
-  state/      Zustand store
-  phaser/     Phaser scenes and rendering
-  ui/         React components (log, menus, settings, account)
-  rooms/      Room engine and Zod schemas
-  save/       Save layer (localStorage and Supabase sync)
-  assets/     Asset manifest
-public/
-  assets/     Sprites and tilesets
-  maps/       Tiled maps
-  rooms/      Room configuration files (JSON)
-docs/
-  ai-log.md   AI log for the thesis
-tests/        Playwright end-to-end tests
-```
 
 ## Code conventions
 

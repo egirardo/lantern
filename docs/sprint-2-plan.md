@@ -17,11 +17,11 @@ This sprint starts behind schedule: Phase B step 4 and Phases C–E from Sprint 
 
 The steps are described in `docs/sprint-1-plan.md`. Tick them off here.
 
-- [ ] **Phase B step 4: `loadRoom`.** Also check that every exit is inside the grid and on a walkable tile (from my open reminders). Decide where the missing-floor check lives while writing it.
+- [x] **Phase B step 4: `loadRoom`.** Also check that every exit is inside the grid and on a walkable tile (from my open reminders). Decide where the missing-floor check lives while writing it.
   - [x] Test: a start position inside a wall fails
   - [x] Test: a start position outside the grid fails
   - [x] Test: an exit inside a wall or outside the grid fails
-  - [ ] Phase B done, PR reviewed
+  - [x] Phase B done, PR reviewed
 - [ ] **Phase C: narration and store**, PR reviewed
 - [ ] **Phase D: the reference room in Tiled**
 - [ ] **Phase E: Phaser rendering and keyboard input**, PR reviewed. First decide what data Phaser gets (open reminder: `tiledSchema` strips fields Phaser needs). Ask Claude.

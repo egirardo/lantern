@@ -385,6 +385,39 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I wrote both functions and made all the fixes myself. The `row !== undefined` line follows the pattern Claude Code showed me, because I couldn't solve that error on my own. I kept the type annotations on `room`, `map` and `grid` as documentation.
 - **How I verified it:** Claude Code ran all 39 tests, typecheck, lint and Prettier, and all pass. It also broke the code on purpose on a backup copy: `x <= width`, checking only the first exit, and `loadRoom` skipping `checkPositions` each made exactly the matching test fail. Removing `row !== undefined` didn't fail a test, because the extra `y` checks still guard at runtime, but typecheck rejects it. The file was restored afterwards and all tests pass.
 
+#### 2026-10-19 — Getting started with Zustand (Phase C)
+
+- **Tool:** Claude Code
+- **Category:** Learning
+- **What I asked:** Help getting started with Phase C, since I haven't used Zustand before.
+- **What I got:** An explanation of a vanilla Zustand store (`getState`, `setState`, `subscribe` returning an unsubscribe function, `getInitialState`), checked against the installed version (5.0.15). It used an example from another domain (a thermostat store) to show `createStore<State>()(...)`, `set` only merging the top level, immutable updates (`[...log, entry]`, never `push`), and a factory function so every test gets a fresh store. It also gave me a list of questions to decide before writing the store: name clashes with `movePlayer` and `loadRoom`, what the store's `loadRoom` receives, that the plan's state list is missing the grid, what happens before a room is loaded, how to make log ids, whether loading a room should produce a log entry (rule 5), and how to make `describeMove` exhaustive. Plus a list of store tests to write. Claude Code added the Zustand concepts to my learning notes.
+- **Outcome:** ✅
+- **Why:** It gave me concepts and questions instead of the store code, so I can still write Phase C myself. I started with `narration.ts`, as suggested.
+- **How I verified it:** Claude Code checked the API against the type definitions in `node_modules/zustand/vanilla.d.ts`. The store questions are still open until I write `game-store.ts`.
+
+#### 2026-10-19 — describeMove: reviews
+
+- **Tool:** Claude Code
+- **Category:** Review / Learning
+- **What I asked:** Three reviews of `narration.ts` and `narration.test.ts` while I wrote them, help with a `Record` lookup I knew was wrong, and a check that I updated `movement.ts` correctly.
+- **What I got:**
+  - Review 1: both tests and typecheck failed. My `describeMove` loaded the test room from `testing-map.ts`, made the move itself and compared positions. Claude Code explained that it should only turn an existing `MoveResult` into text, and the store calls `movePlayer` first. Importing test fixtures and `rooms/` into `game/` also reversed the dependency direction. Also: `result: string` threw away `moved`/`reason`, `parseDirection` returned its own input, wall and edge got the same message, and the messages were wordy for a screen reader. My tests passed sentences where a `Direction` was expected, and Vitest ran them anyway because it doesn't check types.
+  - Review 2: the function now took a `MoveResult`, but my `Record` listed only the keys (`{ 'wall', 'edge' }`), so nothing parsed. Claude Code explained `Record<Keys, Value>` as a lookup table with a traffic-light example, and gave three ways to get the `'wall' | 'edge'` type. It tested in a temporary file that `MoveResult['reason']` gives an error and that a missing entry is a type error. It recommended exporting a named type from `movement.ts`. Also: the copied comment, the name `REASON_OFFSETS`, a missing edge test, and the "Reason:" label.
+  - Review 3: `movement.ts` was correct (`BlockedReason` exported and used in `MoveResult`). Two tests failed because the template added a period after a sentence that already ended with one ("path.."). The tests were right and the function was wrong.
+- **Outcome:** ✏️
+- **Why:** I wrote all the code and fixes myself. I chose the `BlockedReason` option for the type. For the double period, I removed the periods from the table sentences instead of from the template. I dropped "Reason:" and renamed the table `BLOCKED_TEXT`. The first test is still called "describes a move from one room to another", which I can rename later.
+- **How I verified it:** Claude Code ran the tests, typecheck, lint and Prettier after each review. After my last fixes, all 42 tests, typecheck, lint and Prettier pass.
+
+#### 2026-10-19 — Claude Code setup check (/doctor)
+
+- **Tool:** Claude Code
+- **Category:** Documentation
+- **What I asked:** A health check of my Claude Code setup with `/doctor`.
+- **What I got:** A report saying the install was up to date and healthy. It suggested turning off an unused design plugin and four unused claude.ai connectors, and cutting the "Commands" and "Proposed folder structure" sections from `CLAUDE.md`, since Claude can read those from `package.json` and the folders. It also suggested moving the PR-description instructions into a skill that only loads when needed, and making auto mode my default permission mode.
+- **Outcome:** ✏️
+- **Why:** I only accepted cutting the folder structure, moving the PR-description format into `.claude/skills/pr-description/SKILL.md` (Claude Code wrote it, and `CLAUDE.md` now points to it), and making auto mode my default. I kept the Commands section, the plugin and the connectors.
+- **How I verified it:** Reviewed the `CLAUDE.md` change in `git diff`.
+
 ---
 
 ## Agent-built rooms: evaluation

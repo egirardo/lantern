@@ -150,7 +150,7 @@ The type shapes below are suggestions. Change them however you like.
 
 **Pitfall:** Tiled stores `data` as a flat array. The tile at (x, y) is `data[y * width + x]`, and tile `0` means empty.
 
-- [ ] Phase B done, PR reviewed
+- [x] Phase B done, PR reviewed
 
 ### Phase C — Store and narration (`src/state/`, `src/game/narration.ts`)
 
