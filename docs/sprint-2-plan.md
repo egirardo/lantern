@@ -22,7 +22,7 @@ The steps are described in `docs/sprint-1-plan.md`. Tick them off here.
   - [x] Test: a start position outside the grid fails
   - [x] Test: an exit inside a wall or outside the grid fails
   - [x] Phase B done, PR reviewed
-- [ ] **Phase C: narration and store**, PR reviewed
+- [x] **Phase C: narration and store**, PR reviewed
 - [ ] **Phase D: the reference room in Tiled**
 - [ ] **Phase E: Phaser rendering and keyboard input**, PR reviewed. First decide what data Phaser gets (open reminder: `tiledSchema` strips fields Phaser needs). Ask Claude.
 - [ ] **Deployed to `dev`, then released to `main`.** This is the Sprint 1 goal.

@@ -418,6 +418,24 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I only accepted cutting the folder structure, moving the PR-description format into `.claude/skills/pr-description/SKILL.md` (Claude Code wrote it, and `CLAUDE.md` now points to it), and making auto mode my default. I kept the Commands section, the plugin and the connectors.
 - **How I verified it:** Reviewed the `CLAUDE.md` change in `git diff`.
 
+#### 2026-10-20 — game-store.ts: hints, reviews and final fixes
+
+- **Tool:** Claude Code
+- **Category:** Review, Coding
+- **What I asked:** Hints on how to start the store, then four reviews of `game-store.ts`. At the end I asked Claude Code to fix the mistakes I was missing. Then two reviews of `game-store.test.ts` and a check before opening the PR.
+- **What I got:**
+  - Hints: write the `GameState` type first, decide what "nothing loaded yet" looks like, let the store's `loadRoom` take raw JSON and call my `rooms/loadRoom`, use one `get()` → call `game/` → one `set()` pattern per action, log ids (counter vs `randomUUID`, not `log.length`), a factory plus one shared instance, and a list of store tests.
+  - Review 1: the basic pattern was right, but there was no log (rule 5), no factory, and fake starting values (`{ x: 0, y: 0 }`, `grid: []`) that would make a move before loading narrate "the edge of the world". Also: store the whole `room`, reuse `Position` and `Direction`.
+  - Review 2: my factory had the store inside the parameter list instead of a function body, and I read `describeMove.result`, which doesn't exist. Claude Code explained that the starting values run once and that a function's return value has to be saved by the caller.
+  - Review 3: `loadRoom` was right. A leftover comma after `return` was a syntax error that hid all other errors. Claude Code removed it in a backup-and-restore check to find the three errors underneath: `log: []` as a type means "always empty", `set` got two objects (the second argument is the `replace` flag), and `null` was on `x`/`y` instead of the whole field.
+  - Review 4: I chose to do the `null` change right away instead of Claude Code's suggestion to get green first. It explained narrowing with an early return and said the `room` placeholder should become `null` too.
+  - Final fixes (Claude Code wrote these): `grid: Grid | null` starting as `null`, the early return in `movePlayer`, the curried `createStore<GameState>()(...)`, the exported `gameStore` instance, comments, and Prettier. It also removed two lines I'd added at the top of the factory (`if (loadRoomFromFiles === null) return`), which checked the imported functions instead of the state, and made the function's return type include `undefined`.
+  - Test review 1: all 6 tests passed, but Claude Code broke the store on purpose to check them. "Always move east" was only caught by the wall test, and a wrong log text wasn't caught at all, because I used `not.toEqual` and only checked `log.length`. It suggested exact positions, checking the log text, checking that store 2 is empty directly, and a test for invalid data.
+  - Test review 2: a TS error on line 50 was two mistakes in one object: the expected position was read from the store (`Position | null`) and `reason` was missing, which showed up as "undefined" in the failing test. Also a typo (`state1` instead of `state2`), and `toThrow()` instead of `toThrow(ZodError)`.
+- **Outcome:** ✏️
+- **Why:** I wrote the store, the factory, the log entries in both actions and the `null` types myself. Claude Code wrote the last store fixes when I asked, so I need to be able to explain the early return and why the guards I added were wrong. I wrote all the tests and the test fixes myself, except the exact `grid` check in the `loadRoom` test, which Claude Code added when I asked. I chose to call `describeMove` in the tests for the expected text instead of writing out the sentences.
+- **How I verified it:** Typecheck, lint, Prettier, all 49 tests and the build pass. Claude Code reran the broken versions on a backup (always move east, wrong log text, no grid saved, no early return): each one now makes at least one store test fail. The file was restored afterwards.
+
 ---
 
 ## Agent-built rooms: evaluation

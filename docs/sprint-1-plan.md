@@ -163,7 +163,7 @@ The type shapes below are suggestions. Change them however you like.
 
 > **Concept:** a vanilla Zustand store works outside React, so Phaser can subscribe to it directly. React uses the same store through a hook.
 
-- [ ] Phase C done, PR reviewed
+- [x] Phase C done, PR reviewed
 
 ### Phase D — The room in Tiled (needs the asset pack)
 

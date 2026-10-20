@@ -20,7 +20,7 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
 - **Keep my AI log up to date.** Add entries to `docs/ai-log.md` yourself, without waiting to be asked. See "AI log" below.
 - **Keep my learning notes up to date.** See "Learning notes" below.
-- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar), using the `pr-description` skill.
+- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar), using the `pr-description` skill. Don't add a "Generated with Claude Code" line or any other attribution line to PR descriptions.
 
 ## AI log
 
@@ -122,8 +122,8 @@ Goal: the player moves around the reference room on the deployed site, every mov
 
 Sprint 1 ran over, so this sprint first finishes it:
 
-- [ ] Phase B step 4: `loadRoom`
-- [ ] Phase C: narration and store
+- [x] Phase B step 4: `loadRoom`
+- [x] Phase C: narration and store
 - [ ] Phase D: the reference room in Tiled
 - [ ] Phase E: Phaser rendering and keyboard input
 - [ ] Deployed to `dev` and released to `main`
