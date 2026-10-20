@@ -172,7 +172,7 @@ The type shapes below are suggestions. Change them however you like.
 - Name the layers exactly `floor` and `walls` so they match your parser.
 - Export to `public/maps/<room-id>.json` and write `public/rooms/<room-id>.json`.
 
-- [ ] Phase D done
+- [x] Phase D done
 
 ### Phase E — Phaser rendering and keyboard input
 
