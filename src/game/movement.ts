@@ -14,7 +14,7 @@ export type MoveResult =
 
 // Record requires an entry for every Direction, so adding a new direction
 // without an offset is a type error instead of a silent zero-step move.
-const DIRECTION_OFFSETS: Record<Direction, Position> = {
+export const DIRECTION_OFFSETS: Record<Direction, Position> = {
   north: { x: 0, y: -1 },
   south: { x: 0, y: 1 },
   east: { x: 1, y: 0 },

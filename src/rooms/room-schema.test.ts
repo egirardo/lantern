@@ -42,4 +42,19 @@ describe('roomSchema', () => {
     // `path` is an array (nested fields give e.g. ['exits', 0, 'to']), so we use toEqual.
     expect(result.error?.issues[0]?.path).toEqual(['id'])
   })
+
+  it('rejects an exit with no tiles', () => {
+    // Arrange: copy the valid room and give its exit an empty tiles array
+    const invalidRoom: Room = {
+      ...validRoom,
+      exits: [{ tiles: [], to: 'room-2' }],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the tiles of the first exit
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['exits', 0, 'tiles'])
+  })
 })

@@ -18,7 +18,7 @@ export const roomSchema = z.strictObject({
   description: z.string().trim().min(1),
   exits: z.array(
     z.strictObject({
-      position: positionSchema,
+      tiles: z.array(positionSchema).min(1),
       to: roomIdSchema,
     }),
   ),

@@ -1,0 +1,16 @@
+{
+  "id": "entrance-hall",
+  "name": "The Entrance Hall",
+  "map": "entrance-hall",
+  "playerStart": { "x": 5, "y": 8 },
+  "description": "You stand on a red carpet in an ancient, dust-covered hall that no one has touched in decades. A heavy door in the north wall leads down to a dingy basement. The air is thick with the smell of mildew and decay.",
+  "exits": [
+    {
+      "tiles": [
+        { "x": 5, "y": 1 },
+        { "x": 6, "y": 1 }
+      ],
+      "to": "dingy-basement"
+    }
+  ]
+}
