@@ -122,7 +122,7 @@ Goal: the player moves around the reference room on the deployed site, every mov
 
 Sprint 1 ran over, so this sprint first finishes it:
 
-- [ ] Phase B step 4: `loadRoom`
+- [x] Phase B step 4: `loadRoom`
 - [ ] Phase C: narration and store
 - [ ] Phase D: the reference room in Tiled
 - [ ] Phase E: Phaser rendering and keyboard input
