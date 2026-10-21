@@ -6,15 +6,15 @@ import { buildGrid } from './build-grid'
 export function loadRoom(
   roomData: unknown,
   mapData: unknown,
-): { grid: Grid; room: Room } {
+): { grid: Grid; room: Room; tiledMap: TiledMap } {
   // Parse the JSON data
   const room: Room = roomSchema.parse(roomData)
-  const map: TiledMap = tiledSchema.parse(mapData)
-  const grid: Grid = buildGrid(map)
+  const tiledMap: TiledMap = tiledSchema.parse(mapData)
+  const grid: Grid = buildGrid(tiledMap)
 
   // Check that the player start and exit positions are valid
   checkPositions(grid, room)
-  return { grid, room }
+  return { grid, room, tiledMap }
 }
 
 export function checkPositions(grid: Grid, room: Room) {

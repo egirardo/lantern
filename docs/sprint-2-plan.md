@@ -25,6 +25,11 @@ The steps are described in `docs/sprint-1-plan.md`. Tick them off here.
 - [x] **Phase C: narration and store**, PR reviewed
 - [x] **Phase D: the reference room in Tiled**
 - [ ] **Phase E: Phaser rendering and keyboard input**, PR reviewed. First decide what data Phaser gets (open reminder: `tiledSchema` strips fields Phaser needs). Ask Claude.
+  - [x] Decide what data Phaser gets: option B, the tilemap is built from validated data (see Decisions in my learning notes)
+  - [x] PR 1a: `tiledSchema` validates `tilesets`, `loadRoom` returns the validated `tiledMap`, the store keeps it
+  - [ ] PR 1b: fetch the room and map in React, show load errors in the DOM
+  - [ ] PR 2: the room scene draws the tilemap and the player sprite, and follows the store
+  - [ ] PR 3: keyboard input on a focusable game region, log as a plain `<ol>`
 - [ ] **Deployed to `dev`, then released to `main`.** This is the Sprint 1 goal.
 
 ---

@@ -124,7 +124,7 @@ Sprint 1 ran over, so this sprint first finishes it:
 
 - [x] Phase B step 4: `loadRoom`
 - [x] Phase C: narration and store
-- [ ] Phase D: the reference room in Tiled
+- [x] Phase D: the reference room in Tiled
 - [ ] Phase E: Phaser rendering and keyboard input
 - [ ] Deployed to `dev` and released to `main`
 

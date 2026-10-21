@@ -67,4 +67,53 @@ describe('tiledSchema', () => {
     const result = tiledSchema.safeParse(flippedMap)
     expect(result.success).toBe(true)
   })
+
+  it('rejects an invalid tileset name', () => {
+    const invalidMap = {
+      ...newMap(),
+      tilesets: [
+        { firstgid: 1, name: 'dungeon' },
+        { firstgid: 100, name: 'castle' },
+      ],
+    }
+    const result = tiledSchema.safeParse(invalidMap)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['tilesets', 1, 'name'])
+  })
+
+  it('rejects a tileset with a non-positive firstgid', () => {
+    const invalidMap = {
+      ...newMap(),
+      tilesets: [
+        { firstgid: 1, name: 'dungeon' },
+        { firstgid: 0, name: 'dungeon' },
+      ],
+    }
+    const result = tiledSchema.safeParse(invalidMap)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['tilesets', 1, 'firstgid'])
+  })
+
+  it('rejects a tileset with the name "name"', () => {
+    const invalidMap = {
+      ...newMap(),
+      tilesets: [
+        { firstgid: 1, name: 'dungeon' },
+        { firstgid: 100, name: 'name' },
+      ],
+    }
+    const result = tiledSchema.safeParse(invalidMap)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['tilesets', 1, 'name'])
+  })
+
+  it('rejects a map with tiles and no tilesets', () => {
+    const invalidMap = {
+      ...newMap(),
+      tilesets: [],
+    }
+    const result = tiledSchema.safeParse(invalidMap)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['tilesets'])
+  })
 })

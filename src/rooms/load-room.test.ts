@@ -163,8 +163,11 @@ describe('loadRoom', () => {
   // Fetching them is Phase E's job, so loadRoom stays pure and easy to test.
   it('returns the validated room and its grid', () => {
     const result = loadRoom(validRoom, validMap)
+    const tiledMap = result.tiledMap
     expect(result.room).toEqual(validRoom)
     expect(result.grid).toEqual(grid)
+    expect(tiledMap).toHaveProperty(['tilesets', 0, 'firstgid'], 1)
+    expect(tiledMap).not.toHaveProperty(['tilesets', 0, 'image'])
   })
 
   it('fails when the room file is invalid', () => {

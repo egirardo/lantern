@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TILESETS, type TilesetName } from '../assets/manifest'
 
 // Validates only the parts of Tiled's JSON export that the room engine uses.
 // z.object (not strictObject) on purpose: extra Tiled fields (tiledversion,
@@ -11,6 +12,14 @@ export const tiledSchema = z
     height: z.number().int().positive(),
     tilewidth: z.number().int().positive(),
     tileheight: z.number().int().positive(),
+    tilesets: z
+      .array(
+        z.object({
+          firstgid: z.number().int().positive(),
+          name: z.enum(Object.keys(TILESETS) as TilesetName[]),
+        }),
+      )
+      .min(1),
     layers: z.array(
       z.object({
         type: z.literal('tilelayer'),
