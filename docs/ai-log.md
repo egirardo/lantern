@@ -467,6 +467,25 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I wrote the room file, picked the names (`entrance-hall`, `dingy-basement`) and the description, and renamed the map. Claude Code wrote `room-files.test.ts`. I still need to decide on the description changes.
 - **How I verified it:** Claude Code broke my room file on purpose on a backup: wrong id, missing map, start in a wall, exit with no walkable neighbor, missing name, and an empty `public/rooms/`. Each one failed the test with a clear message. Restoring after the empty-folder check went wrong at first (a copy of the room ended up in `public/rooms/rooms-moved/`), but Claude Code compared both copies with the backup and removed the extra folder. Typecheck, lint, Prettier and all 59 tests pass.
 
+#### 2026-10-21 — Phase E start: what data Phaser gets, and validated map in the store
+
+- **Tool:** Claude Code
+- **Category:** Planning, Learning, Review
+- **What I asked:** How to start Phase E and in what order. Then how to make the tileset name a key in `TILESETS`, why my return value "needed a type", and reviews of my changes to `tiled-schema.ts`, `loadRoom`, the store and the tests. I also asked what the yellow arrow next to two test files in Vitest meant.
+- **What I got:**
+  - An order for Phase E split into three small PRs (data path, rendering, keyboard and log), with pitfalls: StrictMode loading the room twice, the hero sprite being 16×32, unsubscribing on `DESTROY` as well as `SHUTDOWN`, and setting `input: { keyboard: false }` so Phaser doesn't listen on `window`. It flagged `role="application"` and screen reader arrow keys as an accessibility question to decide together, not now.
+  - Two options for the open reminder about Phaser's data: (A) give Phaser the raw Tiled JSON after it passes validation, or (B) validate `tilesets` too and build the tilemap from validated data. Claude Code recommended B. I chose B.
+  - Hints instead of code: `z.enum` with the object's keys and a cast, because `Object.keys` is typed `string[]`; and why `.refine` would leave the type as `string`.
+  - Reviews that found bugs in my code, each proven with a temporary test that was deleted afterwards:
+    - I had added `name: 'dungeon'` to `TILESETS` in the manifest. That made `"name"` a valid tileset name.
+    - I saved `mapData as TiledMap` in the store. That stored the raw, unvalidated map, and the `as` hid the type error that pointed at the bug.
+    - My first tests used `toContain` on an object, and then `toHaveProperty` at the top level. The `image` check passed even with the bug, because `image` is inside the tileset.
+  - The return value error was object shorthand: `{ tiledMap }` needs a variable named `tiledMap`. Mine was called `map`, and `tiledMap: map` is key: value, not a type.
+  - The yellow arrow: Claude Code read Vitest's source and found that a yellow ❯ means a file is still running (red ❯ means failed). It couldn't reproduce what I saw, so this is likely but not confirmed.
+- **Outcome:** ✏️
+- **Why:** I wrote all the code and tests: the `tilesets` schema with `.min(1)`, `tiledMap` in `loadRoom` and the store, and the new tests. Claude Code didn't change my code. It gave hints and reviews, ticked off the plans, and wrote my learning notes and this entry. I fixed each bug it found myself.
+- **How I verified it:** Typecheck, lint, Prettier and all 63 tests pass. Claude Code put the `mapData as TiledMap` bug back for a moment in both `loadRoom` and the store: the `tilesets.0.image` test failed both times, then my files were restored.
+
 ---
 
 ## Agent-built rooms: evaluation

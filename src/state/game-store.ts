@@ -8,11 +8,13 @@ import {
 import { loadRoom as loadRoomFromFiles } from '../rooms/load-room'
 import type { Room } from '../rooms/room-schema'
 import { describeMove } from '../game/narration'
+import type { TiledMap } from '../rooms/tiled-schema'
 
 export type GameState = {
   playerPosition: Position | null
   grid: Grid | null
   room: Room | null
+  tiledMap: TiledMap | null
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   log: { id: string; text: string }[]
@@ -27,14 +29,16 @@ export function createGameStore() {
     playerPosition: null,
     grid: null,
     room: null,
+    tiledMap: null,
     loadRoom: (roomData, mapData) => {
-      const { grid, room } = loadRoomFromFiles(roomData, mapData)
+      const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
       const { log } = get()
       set({
         grid,
         playerPosition: room.playerStart,
         room,
+        tiledMap,
         log: [...log, { id: crypto.randomUUID(), text }],
       })
     },

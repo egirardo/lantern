@@ -30,6 +30,8 @@ describe('gameStore', () => {
     expect(state.room).toEqual(validRoom)
     expect(state.log.length).toBe(1)
     expect(state.log[0]?.text).toBe(validRoom.description)
+    expect(state.tiledMap).toHaveProperty(['tilesets', 0, 'firstgid'], 1)
+    expect(state.tiledMap).not.toHaveProperty(['tilesets', 0, 'image'])
   })
 
   it('movePlayer onto floor updates the position and logs it', () => {
@@ -96,5 +98,6 @@ describe('gameStore', () => {
     expect(state.grid).toBeNull()
     expect(state.room).toBeNull()
     expect(state.log.length).toBe(0)
+    expect(state.tiledMap).toBeNull()
   })
 })
