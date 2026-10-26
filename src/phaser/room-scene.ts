@@ -16,13 +16,18 @@ export class RoomScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(0, 0, 'dungeon', 'hero-boy-0').setOrigin(0, 0) //this line is temporary, remove in step 4
     const tiledMap = gameStore.getState().tiledMap
     if (tiledMap) {
       this.drawRoom(tiledMap)
-    } else {
-        console.log('No Tiled map found in game store')
     }
+    const unsubscribe = gameStore.subscribe((state, previousState) => {
+      // draw the room if tiledMap has just changed to a map
+      if (state.tiledMap !== previousState.tiledMap && state.tiledMap) {
+        this.drawRoom(state.tiledMap)
+      }
+    })
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)
+    this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe)
   }
 
   private drawRoom(tiledMap: TiledMap) {
