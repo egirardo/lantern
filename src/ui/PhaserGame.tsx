@@ -1,8 +1,7 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { createGame } from '../phaser/create-game'
 
 export function PhaserGame() {
-  const hintId = useId()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,14 +18,13 @@ export function PhaserGame() {
 
   return (
     <>
-      <p id={hintId}>Use the arrow keys to move.</p>
+      <p>Use the arrow keys to move.</p>
       <div
         id="phaser-game"
         ref={containerRef}
         role="application"
         tabIndex={0}
-        aria-label="Dungeon map"
-        aria-describedby={hintId}
+        aria-label="Dungeon map. Use the arrow keys to move."
       />
     </>
   )
