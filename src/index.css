@@ -4,3 +4,16 @@ body {
   background: #111;
   color: #eee;
 }
+
+#phaser-game {
+  width: fit-content;
+}
+
+#phaser-game canvas {
+  display: block;
+}
+
+#phaser-game:focus {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}

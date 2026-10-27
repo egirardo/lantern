@@ -27,9 +27,9 @@ The steps are described in `docs/sprint-1-plan.md`. Tick them off here.
 - [ ] **Phase E: Phaser rendering and keyboard input**, PR reviewed. First decide what data Phaser gets (open reminder: `tiledSchema` strips fields Phaser needs). Ask Claude.
   - [x] Decide what data Phaser gets: option B, the tilemap is built from validated data (see Decisions in my learning notes)
   - [x] PR 1a: `tiledSchema` validates `tilesets`, `loadRoom` returns the validated `tiledMap`, the store keeps it
-  - [ ] PR 1b: fetch the room and map in React, show load errors in the DOM
-  - [ ] PR 2: the room scene draws the tilemap and the player sprite, and follows the store
-  - [ ] PR 3: keyboard input on a focusable game region, log as a plain `<ol>`
+  - [x] PR 1b: fetch the room and map in React, show load errors in the DOM
+  - [x] PR 2: the room scene draws the tilemap and the player sprite, and follows the store
+  - [x] PR 3: keyboard input on a focusable game region, log as a plain `<ol>`
 - [ ] **Deployed to `dev`, then released to `main`.** This is the Sprint 1 goal.
 
 ---
@@ -84,6 +84,13 @@ Pure logic only, test-first. Rendering in Phaser comes in Sprint 3.
 - **Dice** (`rollDie` with an injectable random function, so tests can control the result).
 - **Combat rules and enemy types.** Once combat works for one enemy, the other two are mostly room data (rule 6).
 - **Keyboard action menus.** They go together with focus management, which is already in Sprint 3.
+- **Turn structure (idea, to decide in Sprint 3).** D&D gives most classes 30 ft of movement per turn. Questions to settle first:
+  - **Tile scale.** In 5e a square is 5 ft, so 30 ft = 6 tiles. 3 tiles per turn would mean 10 ft per tile. Pick one, since it also decides the lantern radius.
+  - **Free movement while exploring, strict turns only in combat?** (How D&D does it.) Keeps today's one-key-one-step behaviour outside fights.
+  - **Log noise.** 3 steps per turn = 3 announcements. Maybe summarise ("You walk three tiles north") depending on log verbosity.
+  - **Accessibility.** "End turn" must be a keyboard action, with moves remaining announced in text (never by a bar or colour alone), and still no time limit.
+  - **Architecture.** Turn state lives in the Zustand store, the rules in pure TypeScript in `src/game/` with tests.
+  - **Diagonal movement (idea).** Today two arrow keys pressed together are two separate one-tile steps (two log entries), and each step is checked against the walls. True diagonal movement is one step with its own rules: can the player cut a corner past a wall? What does a diagonal cost (5e counts it as 5 ft; some tables use 5/10/5)? How is it narrated ("northeast"), and which keys trigger it? It matters most together with movement per turn, so decide it with the turn structure.
 
 Sprint 3 gets heavier because of this. The knock-on changes are listed under "Plan changes" in `docs/project-plan.md`.
 

@@ -18,14 +18,21 @@ export const TEXTURES = {
 
 export type TextureName = keyof typeof TEXTURES
 
+type TilesetDefinition = {
+  // The texture (from TEXTURES) that Phaser cuts into tiles.
+  texture: TextureName
+  tileWidth: number
+  tileHeight: number
+}
+
 // Tilesets used by Tiled maps. The name must match the tileset name in Tiled.
 export const TILESETS = {
   dungeon: {
-    image: TEXTURES.dungeon.image,
+    texture: 'dungeon',
     tileWidth: 16,
     tileHeight: 16,
   },
-} as const
+} as const satisfies Record<string, TilesetDefinition>
 
 export type TilesetName = keyof typeof TILESETS
 
