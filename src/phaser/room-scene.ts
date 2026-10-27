@@ -50,10 +50,8 @@ export class RoomScene extends Phaser.Scene {
         state.playerPosition
       ) {
         // ?. does nothing if the sprite doesn't exist yet
-        this.playerSprite?.setPosition(
-          this.tileToPixel(state.playerPosition.x),
-          this.tileToPixel(state.playerPosition.y),
-        )
+        const { x, y } = this.tileToSpritePosition(state.playerPosition)
+        this.playerSprite?.setPosition(x, y)
       }
     })
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)
@@ -107,18 +105,28 @@ export class RoomScene extends Phaser.Scene {
 
   private drawPlayer(position: Position) {
     const hero = SPRITES[this.PLAYER_SPRITE]
+    const { x, y } = this.tileToSpritePosition(position)
     const sprite = this.add.sprite(
-      this.tileToPixel(position.x),
-      this.tileToPixel(position.y),
+      x,
+      y,
       hero.texture,
       `${hero.framePrefix}0`, // start with the first frame
     )
+    // The hero frame is 16×32, twice as tall as a tile. Anchor it at the
+    // bottom centre (its feet), so tileToSpritePosition can place the feet in
+    // the middle of the tile and let the head stick up into the tile above.
+    sprite.setOrigin(0.5, 1)
     this.playerSprite = sprite
   }
 
-  // Tile coordinate -> pixel. A sprite's origin is its centre by default, so we
-  // add half a tile to centre it on the tile instead of on its top-left corner.
-  private tileToPixel(tileCoord: number): number {
-    return tileCoord * this.tileSize + this.tileSize / 2
+  // Tile position -> where the sprite's anchor (bottom centre, its feet) goes in
+  // pixels: the middle of the tile both ways, so the feet stand in the centre of
+  // the tile. With the default centred origin, a 32px-tall sprite would hang
+  // half a tile too low.
+  private tileToSpritePosition(position: Position): { x: number; y: number } {
+    return {
+      x: position.x * this.tileSize + this.tileSize / 2,
+      y: position.y * this.tileSize + this.tileSize / 2,
+    }
   }
 }
