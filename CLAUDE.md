@@ -125,12 +125,12 @@ Sprint 1 ran over, so this sprint first finishes it:
 - [x] Phase B step 4: `loadRoom`
 - [x] Phase C: narration and store
 - [x] Phase D: the reference room in Tiled
-- [ ] Phase E: Phaser rendering and keyboard input
-- [ ] Deployed to `dev` and released to `main`
+- [x] Phase E: Phaser rendering and keyboard input
+- [x] Deployed to `dev` and released to `main`
 
 Then the new Sprint 2 work:
 
-- [ ] Phase F: adventure log as an ARIA live region (Must)
+- [x] Phase F: adventure log as an ARIA live region (Must)
 - [ ] Phase G: lantern visibility rules, logic and tests only (Must)
 - **Supervision Oct 21**
 
