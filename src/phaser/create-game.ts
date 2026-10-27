@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { RoomScene } from './room-scene'
 
 const TILE_SIZE = 16
 
@@ -12,7 +13,9 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     // Keeps 16×16 pixel art sharp when scaled up, instead of blurring it.
     pixelArt: true,
     backgroundColor: '#000000',
-    // Scenes are added in Phase E.
-    scene: [],
+    scene: [RoomScene],
+    input: {
+      mouse: false, // Phaser's mouse manager calls preventDefault() on mousedown, which blocks focusing the canvas by click
+    },
   })
 }

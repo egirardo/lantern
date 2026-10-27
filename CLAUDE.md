@@ -18,8 +18,23 @@ This is my examensarbete (thesis project) in the web development program at Yrgo
 - **Ask before** adding dependencies, changing the architecture, or deviating from this file.
 - **Stay in scope.** Follow the MoSCoW priorities in `docs/project-plan.md`. If you have an idea outside the current sprint, mention it instead of building it.
 - **Never weaken accessibility** to make something easier to build. If an accessibility requirement is hard to meet, say so and we'll decide together.
-- **End each session with a short summary** of what we did and how AI was used, so I can add it to my AI log (`docs/ai-log.md`).
+- **Keep my AI log up to date.** Add entries to `docs/ai-log.md` yourself, without waiting to be asked. See "AI log" below.
 - **Keep my learning notes up to date.** See "Learning notes" below.
+- **Write the PR description when I say I'm ready to ship** (or open a PR, or similar), using the `pr-description` skill. Don't add a "Generated with Claude Code" line or any other attribution line to PR descriptions.
+
+## AI log
+
+`docs/ai-log.md` is part of my thesis. Add an entry for each meaningful use of AI in a session, at the end of the session or when a task is finished.
+
+Rules:
+
+- Follow the entry template and categories at the top of the log. Put entries under the current sprint, newest at the bottom.
+- Write in first person from my point of view ("What I asked"), in the same plain style as the existing entries.
+- Be honest: include where you were wrong, changed your mind, or where I rejected your suggestion.
+- Record who wrote what: code I wrote vs code you wrote or changed.
+- **Outcome**, **Why** and **How I verified it** are my judgments. Fill them in from what happened in the session, then tell me to check them.
+- Group small related requests into one entry instead of logging every message.
+- Mention in your reply when you've updated the log, so I know to review it.
 
 ## Learning notes
 
@@ -79,35 +94,13 @@ These apply to every feature. Target: **WCAG 2.2 AA**.
 - **Login and sign-up** must meet WCAG 2.2 Accessible Authentication: allow pasting and password managers, no puzzles or memory tests.
 - No time limits on turns. The game waits for the player.
 
-## Proposed folder structure
-
-This is a starting point. Update it as the project takes shape.
-
-```
-src/
-  game/       Pure TypeScript game logic (movement, visibility, combat, dice)
-  state/      Zustand store
-  phaser/     Phaser scenes and rendering
-  ui/         React components (log, menus, settings, account)
-  rooms/      Room engine and Zod schemas
-  save/       Save layer (localStorage and Supabase sync)
-  assets/     Asset manifest
-public/
-  assets/     Sprites and tilesets
-  maps/       Tiled maps
-  rooms/      Room configuration files (JSON)
-docs/
-  ai-log.md   AI log for the thesis
-tests/        Playwright end-to-end tests
-```
-
 ## Code conventions
 
 - TypeScript in **strict mode**. Avoid `any`.
 - Files: `kebab-case.ts`; React components: `PascalCase.tsx`.
 - Room ids, enemy types and item types use `kebab-case` (e.g. `flooded-cellar`, `giant-rat`).
 - Write unit tests for all game logic in `src/game/`.
-- Use clear, descriptive names over comments. Comment the *why*, not the *what*.
+- Use clear, descriptive names. Comment the *why* when it isn't obvious. Comments explaining *what* the code does are welcome too, since I'm learning the stack. Don't flag them in reviews, and add similar ones to code you write.
 
 ## Commands
 
@@ -124,17 +117,24 @@ npm run typecheck   # TypeScript check
 
 ## Current status
 
-**Sprint 1 (Oct 12–18): Foundation**
-Goal: a deployed project skeleton where the player can move around the first room with the keyboard.
+**Sprint 2 (Oct 19–25): Reference room, core gameplay**
+Goal: the player moves around the reference room on the deployed site, every move is announced in the adventure log, and the lantern visibility rules are written and tested. Full plan: `docs/sprint-2-plan.md`.
 
-- [ ] Set up repo, Vite, React, TypeScript, Phaser, ESLint and Prettier
-- [ ] Set up GitHub Actions and Vercel deploys
-- [ ] Create the Supabase project
-- [ ] Choose a CC0 asset pack and set up the asset manifest
-- [ ] Build the first room in Tiled and load it in Phaser
-- [ ] Shared game state and grid-based keyboard movement
-- [ ] Room data format and Zod schema
-- [ ] Start the AI log
+Sprint 1 ran over, so this sprint first finishes it:
+
+- [x] Phase B step 4: `loadRoom`
+- [x] Phase C: narration and store
+- [x] Phase D: the reference room in Tiled
+- [ ] Phase E: Phaser rendering and keyboard input
+- [ ] Deployed to `dev` and released to `main`
+
+Then the new Sprint 2 work:
+
+- [ ] Phase F: adventure log as an ARIA live region (Must)
+- [ ] Phase G: lantern visibility rules, logic and tests only (Must)
+- **Supervision Oct 21**
+
+Moved to Sprint 3: lantern rendering and narration, dice, combat, action menus. Sprints are planned on weekdays only.
 
 *Update this section at the start of each sprint.*
 

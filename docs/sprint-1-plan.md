@@ -69,7 +69,7 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
   - Connect the repo to Vercel. Production branch: `main`.
   - Turn on branch protection for `main` in GitHub settings, requiring CI to pass.
 
-- [ ] Done
+- [x] Done
 
 ### Step 3 — Supabase project
 
@@ -79,7 +79,7 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
 - **Claude:** `.env.example`, and checks that `.env.local` is in `.gitignore`.
 - Don't install `@supabase/supabase-js` or write auth code until Sprint 4.
 
-- [ ] Done
+- [x] Done
 
 ### Step 4 — Asset pack and manifest
 
@@ -89,13 +89,13 @@ Optional: `npm install -D eslint-config-prettier` turns off ESLint formatting ru
   - **Try to decide by Oct 15.** Phases D and E depend on it.
 - **Claude:** `src/assets/manifest.ts`, which maps logical names (`player`, `giant-rat`, `floor`) to a file and frame. Phaser's preload step loops over the manifest. Game code never uses file paths (architecture rule 7).
 
-- [ ] Done
+- [x] Done
 
 ### Step 5 — AI log
 
 - Add a template to `docs/ai-log.md` (date, tool, what I asked, what I kept or rejected and why) and log each session.
 
-- [ ] Done
+- [x] Done
 
 ---
 
@@ -112,10 +112,10 @@ The type shapes below are suggestions. Change them however you like.
    - `Direction = 'north' | 'south' | 'east' | 'west'`
    - a walkable grid as `boolean[][]`
 2. **Write the tests first:**
-   - [ ] Moving onto an open tile works
-   - [ ] A wall blocks the move
-   - [ ] The edge of the map blocks the move
-   - [ ] The input position isn't mutated
+   - [x] Moving onto an open tile works
+   - [x] A wall blocks the move
+   - [x] The edge of the map blocks the move
+   - [x] The input position isn't mutated
 3. Return a result like `{ moved: true, position } | { moved: false, reason: 'wall' | 'edge' }`.
 
 > **Concept: discriminated union.** TypeScript makes you handle both cases, and `reason` later becomes log text ("A wall blocks your way").
@@ -125,7 +125,7 @@ The type shapes below are suggestions. Change them however you like.
 - On screens, y grows downward, so north is `y - 1`.
 - Grids are usually indexed `grid[y][x]` (row first). Mixing up x and y is the most common bug here.
 
-- [ ] Phase A done, PR reviewed
+- [x] Phase A done, PR reviewed
 
 ### Phase B — Room schema and Tiled parser (`src/rooms/`)
 
@@ -140,17 +140,17 @@ The type shapes below are suggestions. Change them however you like.
 3. **`buildWalkableGrid(map)`:** any non-zero tile in the `walls` layer means blocked.
 4. **`loadRoom(...)`:** also checks that `playerStart` is inside the grid and on a walkable tile. Zod can't check this alone, because it needs both files.
 5. **Tests:**
-   - [ ] A tiny hand-written 3×3 map fixture
-   - [ ] A valid room passes
-   - [ ] A missing field fails
-   - [ ] A bad id fails
-   - [ ] A start position inside a wall fails
+   - [x] A tiny hand-written 3×3 map fixture (will go in tiled-schema.test.ts)
+   - [x] A valid room passes
+   - [x] A missing field fails
+   - [x] A bad id fails
+   - [x] A start position inside a wall fails (will go in load-room.test.ts)
 
 > **Concept:** `z.infer<typeof roomSchema>` derives the TypeScript type from the schema, so the type and the validation never drift apart.
 
 **Pitfall:** Tiled stores `data` as a flat array. The tile at (x, y) is `data[y * width + x]`, and tile `0` means empty.
 
-- [ ] Phase B done, PR reviewed
+- [x] Phase B done, PR reviewed
 
 ### Phase C — Store and narration (`src/state/`, `src/game/narration.ts`)
 
@@ -163,7 +163,7 @@ The type shapes below are suggestions. Change them however you like.
 
 > **Concept:** a vanilla Zustand store works outside React, so Phaser can subscribe to it directly. React uses the same store through a hook.
 
-- [ ] Phase C done, PR reviewed
+- [x] Phase C done, PR reviewed
 
 ### Phase D — The room in Tiled (needs the asset pack)
 
@@ -172,7 +172,7 @@ The type shapes below are suggestions. Change them however you like.
 - Name the layers exactly `floor` and `walls` so they match your parser.
 - Export to `public/maps/<room-id>.json` and write `public/rooms/<room-id>.json`.
 
-- [ ] Phase D done
+- [x] Phase D done
 
 ### Phase E — Phaser rendering and keyboard input
 
@@ -205,6 +205,22 @@ The type shapes below are suggestions. Change them however you like.
 | Oct 16    | Asset manifest (Step 4)              | Phase C                                 |
 | Oct 17    | Reviews                              | Phases D and E                          |
 | Oct 18    | AI log summary                       | Buffer, deploy check, release to `main` |
+
+---
+
+## Status at end of sprint (Oct 18)
+
+The sprint goal wasn't reached. Steps 1–5 and Phase A are done, and Phase B is done up to step 3 (`buildGrid`). Learning Zod and Tiled, and getting the schema tests right, took longer than the timeline above planned for.
+
+**Carried over to Sprint 2** (tracked in `docs/sprint-2-plan.md`):
+
+- Phase B step 4: `loadRoom` and the "start inside a wall" test
+- Phase C: narration and store
+- Phase D: the reference room in Tiled
+- Phase E: Phaser rendering and keyboard input
+- Deploy to `dev` and release to `main`
+
+The timeline above is kept as it was planned, as a record.
 
 ## Getting help without getting solutions
 
