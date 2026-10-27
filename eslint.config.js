@@ -39,6 +39,19 @@ export default defineConfig([
     },
   },
   {
+    // Same reason: the game region listens for keydown. This rule's exceptions
+    // are keyed by element type (not role), so allowing 'div' everywhere would be
+    // too broad. Limit it to the one file that has the game region. Any other
+    // handler on a non-interactive element is still an error.
+    files: ['src/ui/PhaserGame.tsx'],
+    rules: {
+      'jsx-a11y/no-noninteractive-element-interactions': [
+        'error',
+        { div: ['onKeyDown'] },
+      ],
+    },
+  },
+  {
     // Architecture rule 1: game logic stays pure TypeScript so it can be unit tested.
     files: ['src/game/**/*.{ts,tsx}'],
     rules: {
