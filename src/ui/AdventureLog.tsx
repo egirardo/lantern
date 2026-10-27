@@ -7,11 +7,13 @@ export function AdventureLog() {
   return (
     <>
       <h2 id="adventure-log">Adventure log</h2>
-      <ol aria-labelledby="adventure-log">
-        {log.map((entry) => (
-          <li key={entry.id}>{entry.text}</li>
-        ))}
-      </ol>
+      <div role="log" aria-labelledby="adventure-log">
+        <ol>
+          {log.map((entry) => (
+            <li key={entry.id}>{entry.text}</li>
+          ))}
+        </ol>
+      </div>
     </>
   )
 }
