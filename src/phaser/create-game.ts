@@ -14,5 +14,8 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     pixelArt: true,
     backgroundColor: '#000000',
     scene: [RoomScene],
+    input: {
+      mouse: false, // Phaser's mouse manager calls preventDefault() on mousedown, which blocks focusing the canvas by click
+    },
   })
 }
