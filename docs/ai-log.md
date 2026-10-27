@@ -580,6 +580,35 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept the breakdowns and the lint exceptions, and changed my code after each review point. I rejected nothing, but I corrected Claude Code's two wrong lint claims by testing, and the VoiceOver result showed that `aria-describedby` can't be relied on for essential information.
 - **How I verified it:** Claude Code ran typecheck, lint, Prettier, all 82 tests and the build before the PR: all pass. By hand: arrows move the hero one tile with a log entry each (also into walls), holding a key doesn't repeat, the page doesn't scroll, Tab leaves the region, clicking the canvas focuses it, and VoiceOver reads the name, role and hint. Not yet tested: announcements of moves (Phase F).
 
+#### 2026-10-27 — Review, commits and PR descriptions for the room scene and the release
+
+- **Tool:** Claude Code
+- **Category:** Review, Documentation
+- **What I asked:** A last check of the branch, the commits in order with messages, the PR description for the room scene (#17), and the description for the release from `dev` to `main` (#18).
+- **What I got:**
+  - Typecheck, lint, Prettier, all 82 tests and the build run, and a list of small review points (a missing comment on `mouse: false`, heading case, an unused id), which I fixed.
+  - Seven commits, split so each one passes lint on its own (the ESLint exception before the handler that needs it), with the commits already on the branch left out.
+  - The two PR descriptions, in the format of my earlier PRs. Claude Code looked at the merged PRs and `git log origin/main..origin/dev` to list everything the release included (#4 to #17), and told me not to claim two manual checks (click focus, held key) until I'd run them.
+  - A VoiceOver and keyboard question about `fn` + arrow and Cmd/Option + arrow scrolling the page. Claude Code's explanation: those are browser shortcuts that my handler leaves alone on purpose, and the scroll shortcuts only seemed to start once the page was tall enough to scroll. I tested and agreed.
+  - Ticked Phase E and the release boxes in `CLAUDE.md` and `docs/sprint-2-plan.md`.
+- **Outcome:** ✅
+- **Why:** The descriptions and commit messages are what I merged, with edits to the manual-check lines so they only list what I ran. I did the merges and the commits myself.
+- **How I verified it:** CI on both PRs, and the manual checks listed in each description. Claude Code could not see the deployed site, so the checks on `lantern-wine.vercel.app` after the release were mine.
+
+#### 2026-10-27 — Phase F: adventure log as a live region
+
+- **Tool:** Claude Code
+- **Category:** Planning, Review, Accessibility
+- **What I asked:** A breakdown of Phase F, a name for the branch, and a review of my change to `AdventureLog.tsx`.
+- **What I got:**
+  - Breakdown: Claude Code read the plan and my code first and found that the heading, `aria-labelledby`, the `key={entry.id}` and the empty-list-before-the-first-message were already done in Phase E. Only `role="log"` was missing.
+  - Decision: `role="log"` directly on the `<ol>` (option A) replaces the list semantics, so Claude Code gave me two options and recommended B, a `<div role="log">` around the `<ol>`.
+  - Branch name: `feature/adventure-log-live-region`, matching `feature/room-scene`.
+  - Review: my change was correct. Claude Code said I should not add `aria-live` myself (`role="log"` already means `polite`, and implies `aria-atomic="false"`, so only new entries are read). It flagged that keeping `aria-labelledby` on both the div and the `<ol>` might make VoiceOver say "Adventure log" twice, and left that for me to test. It also warned that the first "You enter the room" entry might not be announced during page load.
+- **Outcome:** ✏️
+- **Why:** I chose B and wrote the change myself. Claude Code's "might read twice" was a guess, so I tested it. VoiceOver did read the name twice, so I removed `aria-labelledby` from the `<ol>`. The div is the named region and the `<ol>` is just the list.
+- **How I verified it:** VoiceOver: walking into a wall or the edge twice announces the message both times. Not yet checked (Claude Code listed them): that old entries aren't read again when a new one is added, that focus stays on the game region, and whether the first entry is announced on load.
+
 ---
 
 ## Agent-built rooms: evaluation
