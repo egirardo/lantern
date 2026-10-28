@@ -1,5 +1,5 @@
 // Helpers shared by the game logic tests. Only tests import this file.
-import type { Combatant } from './combat'
+import { PLAYER_ID, type Combatant, type CombatState } from './combat'
 
 // A combatant with sensible defaults, so a test only spells out what matters
 // for it, e.g. makeCombatant({ armorClass: 30 }).
@@ -8,10 +8,29 @@ export function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
     name: 'Goblin',
     currentHealth: 5,
     maxHealth: 5,
+    initiativeBonus: 0,
     armorClass: 12,
     attackBonus: 3,
     damageDie: 6,
     ...overrides,
+  }
+}
+
+// A helper to create a combat state with sensible defaults, so a test only spells out what matters
+// for it, e.g. makeState({ enemies: [] }).
+export function makeState({
+  player,
+  enemies,
+  turnOrder,
+  turnIndex,
+}: Partial<CombatState> = {}): CombatState {
+  return {
+    player: player ?? makeCombatant({ name: 'Hero' }),
+    enemies: enemies ?? [
+      { id: 'e1', combatant: makeCombatant({ name: 'Goblin 1' }) },
+    ],
+    turnOrder: turnOrder ?? [PLAYER_ID, 'e1'],
+    turnIndex: turnIndex ?? 0,
   }
 }
 

@@ -1,6 +1,57 @@
 import { describe, it, expect, vi } from 'vitest'
-import { attackRoll, applyDamage } from './combat'
-import { makeCombatant, rollOf, sequence } from './test-helpers'
+import { attackRoll, applyDamage, getCombatStatus } from './combat'
+import { makeCombatant, makeState, rollOf, sequence } from './test-helpers'
+
+describe('getCombatStatus', () => {
+  it('returns "ongoing" when the player and at least one enemy are alive', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 3 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('ongoing')
+  })
+
+  it('returns "victory" when all enemies are defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 0 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('victory')
+  })
+
+  it('returns "defeat" when the player is defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 0 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 3 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('defeat')
+  })
+
+  it('returns "defeat" when both the player and last enemy are defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 0 }),
+      enemies: [{ id: 'e1', combatant: makeCombatant({ currentHealth: 0 }) }],
+    })
+    expect(getCombatStatus(state)).toBe('defeat')
+  })
+
+  it('returns "victory" when there are no enemies', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [],
+    })
+    expect(getCombatStatus(state)).toBe('victory')
+  })
+})
 
 describe('attackRoll', () => {
   const attacker = makeCombatant({ name: 'Hero', attackBonus: 3, damageDie: 6 })
