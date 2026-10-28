@@ -191,8 +191,8 @@ The type shapes below are suggestions. Change them however you like.
 
 **Pitfall:** unsubscribe from the store when the scene shuts down, or you get duplicate listeners and memory leaks.
 
-- [ ] Phase E done, PR reviewed
-- [ ] Deployed to `dev`, then released to `main`
+- [x] Phase E done, PR reviewed
+- [x] Deployed to `dev`, then released to `main`
 
 ---
 

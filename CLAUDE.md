@@ -131,7 +131,7 @@ Sprint 1 ran over, so this sprint first finishes it:
 Then the new Sprint 2 work:
 
 - [x] Phase F: adventure log as an ARIA live region (Must)
-- [ ] Phase G: lantern visibility rules, logic and tests only (Must)
+- [x] Phase G: lantern visibility rules, logic and tests only (Must)
 - **Supervision Oct 21**
 
 Moved to Sprint 3: lantern rendering and narration, dice, combat, action menus. Sprints are planned on weekdays only.
