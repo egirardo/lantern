@@ -136,3 +136,51 @@ export function resolvePlayerAttack(
     events,
   }
 }
+
+export function resolveEnemyTurns(
+  state: CombatState,
+  random: () => number = Math.random,
+): CombatUpdate {
+  if (getCombatStatus(state) !== 'ongoing') {
+    throw new Error('Combat is already over')
+  }
+
+  // `current` is replaced by a new state after every attack, so the state that
+  // was passed in is never changed. The loop always ends: the player is alive
+  // and in turnOrder, so nextLivingIndex reaches the player at the latest.
+  // If it's already the player's turn, the loop doesn't run: no events, no dice.
+  let current = state
+  const events: CombatEvent[] = []
+
+  while (current.turnOrder[current.turnIndex] !== PLAYER_ID) {
+    const attackerId = current.turnOrder[current.turnIndex]
+    const attacker = current.enemies.find((enemy) => enemy.id === attackerId)
+    if (attackerId === undefined || attacker === undefined) {
+      throw new Error('Unknown combatant in the turn order')
+    }
+
+    const result = attackRoll(attacker.combatant, current.player, random)
+    const hurtPlayer = result.hit
+      ? applyDamage(current.player, result.damage)
+      : current.player
+    current = { ...current, player: hurtPlayer }
+    events.push({
+      type: 'attack',
+      attackerId,
+      targetId: PLAYER_ID,
+      result,
+    })
+
+    if (hurtPlayer.currentHealth <= 0) {
+      // The combat is over, so the other enemies don't act and turnIndex stays
+      // on the enemy that struck the last blow.
+      events.push({ type: 'defeated', combatantId: PLAYER_ID })
+      events.push({ type: 'combat-ended', outcome: 'defeat' })
+      return { state: current, events }
+    }
+
+    current = { ...current, turnIndex: nextLivingIndex(current) }
+  }
+
+  return { state: current, events }
+}

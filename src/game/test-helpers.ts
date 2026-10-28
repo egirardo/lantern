@@ -71,8 +71,14 @@ export function makeFight(...enemyHealth: number[]): CombatState {
   })
 }
 
-// The random values for a hit (a 15 + 2 = 17 beats armor class 12) that does
-// `damage` damage.
+// Like makeFight, but it's the first enemy's turn: the order is the player,
+// e1, e2, ... and turnIndex is 1.
+export function makeEnemyTurn(...enemyHealth: number[]): CombatState {
+  return { ...makeFight(...enemyHealth), turnIndex: 1 }
+}
+
+// The random values for a hit (a 15 beats armor class 12, with +2 or +3 to
+// hit) that does `damage` damage. It works for the player and for enemies.
 export function hitRoll(damage: number): () => number {
   return sequence(rollOf(15, 20), rollOf(damage, 6))
 }
@@ -87,6 +93,28 @@ export function hitEvent(targetId: string, damage: number, naturalRoll = 15) {
       hit: true,
       naturalRoll,
       total: naturalRoll + 2,
+      opposingArmorClass: 12,
+      damage,
+      natural20: naturalRoll === 20,
+    },
+  }
+}
+
+// The attack event for an enemy's hit on the player. Enemies have +3 to hit
+// and the player has armor class 12.
+export function enemyHitEvent(
+  attackerId: string,
+  damage: number,
+  naturalRoll = 15,
+) {
+  return {
+    type: 'attack',
+    attackerId,
+    targetId: PLAYER_ID,
+    result: {
+      hit: true,
+      naturalRoll,
+      total: naturalRoll + 3,
       opposingArmorClass: 12,
       damage,
       natural20: naturalRoll === 20,

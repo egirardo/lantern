@@ -60,6 +60,13 @@ export type CombatStatus = 'ongoing' | 'victory' | 'defeat'
 //   attack, turnIndex moves to the next living combatant, wrapping around the
 //   end of turnOrder. If the attack ended the combat, turnIndex stays.
 // - Event order for one attack: attack, then defeated, then combat-ended.
+// - resolveEnemyTurns runs from the current turn until it's the player's turn
+//   again. If it already is, it returns the state unchanged with no events and
+//   rolls no dice, so the UI can call it after every action. It throws when
+//   the combat is over.
+// - If an enemy defeats the player, the events are attack, defeated (the
+//   player) and combat-ended (defeat). The other enemies don't act and
+//   turnIndex stays on the enemy that struck the last blow.
 export type CombatState = {
   player: Combatant
   enemies: CombatEntry[]

@@ -1,11 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { PLAYER_ID, type CombatEntry, type CombatState } from './combat'
-import { startCombat, resolvePlayerAttack } from './combat-turns'
 import {
+  startCombat,
+  resolvePlayerAttack,
+  resolveEnemyTurns,
+} from './combat-turns'
+import {
+  enemyHitEvent,
   hitEvent,
   hitRoll,
   healths,
   makeCombatant,
+  makeEnemyTurn,
   makeFight,
   rollOf,
   sequence,
@@ -298,6 +304,150 @@ describe('resolvePlayerAttack', () => {
     const fightBefore = structuredClone(fight)
 
     resolvePlayerAttack(fight, 'e2', hitRoll(5))
+
+    expect(fight).toEqual(fightBefore)
+  })
+})
+
+describe('resolveEnemyTurns', () => {
+  // A 5 + 3 = 8 misses the player's armor class 12, and no damage die is rolled.
+  const miss = rollOf(5, 20)
+
+  // Matches an attack event by its attacker only, for tests about who acted.
+  const attackBy = (attackerId: string) =>
+    expect.objectContaining({ type: 'attack', attackerId })
+
+  it('lowers the player on a hit and emits an attack event', () => {
+    const { state, events } = resolveEnemyTurns(makeEnemyTurn(5), hitRoll(3))
+
+    expect(state.player.currentHealth).toBe(2)
+    expect(events).toEqual([enemyHitEvent('e1', 3)])
+  })
+
+  it('does not lower health on a miss, but still emits an attack event', () => {
+    const { state, events } = resolveEnemyTurns(
+      makeEnemyTurn(5),
+      sequence(miss),
+    )
+
+    expect(state.player.currentHealth).toBe(5)
+    expect(events).toEqual([
+      {
+        type: 'attack',
+        attackerId: 'e1',
+        targetId: PLAYER_ID,
+        result: {
+          hit: false,
+          naturalRoll: 5,
+          total: 8,
+          opposingArmorClass: 12,
+          natural1: false,
+        },
+      },
+    ])
+  })
+
+  it('has the enemies act in order, then hands the turn to the player', () => {
+    const { state, events } = resolveEnemyTurns(
+      makeEnemyTurn(5, 5),
+      sequence(miss, miss),
+    )
+
+    expect(events).toEqual([attackBy('e1'), attackBy('e2')])
+    expect(state.turnIndex).toBe(0)
+  })
+
+  it('stops at the player after the first enemy acts', () => {
+    // Order is e1, player, e2, and it's e1's turn.
+    const fight: CombatState = {
+      ...makeFight(5, 5),
+      turnOrder: ['e1', PLAYER_ID, 'e2'],
+      turnIndex: 0,
+    }
+
+    const { state, events } = resolveEnemyTurns(fight, sequence(miss))
+
+    expect(events).toEqual([attackBy('e1')])
+    expect(state.turnIndex).toBe(1)
+  })
+
+  it('wraps around the end of the order', () => {
+    // Order is e1, player, e2, and it's e2's turn. After e2 the turn wraps
+    // around to e1, and then reaches the player.
+    const fight: CombatState = {
+      ...makeFight(5, 5),
+      turnOrder: ['e1', PLAYER_ID, 'e2'],
+      turnIndex: 2,
+    }
+
+    const { state, events } = resolveEnemyTurns(fight, sequence(miss, miss))
+
+    expect(events).toEqual([attackBy('e2'), attackBy('e1')])
+    expect(state.turnIndex).toBe(1)
+  })
+
+  it('skips a defeated enemy', () => {
+    // Order is player, e1, e2, e3, and e2 is already defeated.
+    const { state, events } = resolveEnemyTurns(
+      makeEnemyTurn(5, 0, 5),
+      sequence(miss, miss),
+    )
+
+    expect(events).toEqual([attackBy('e1'), attackBy('e3')])
+    expect(state.turnIndex).toBe(0)
+  })
+
+  it('ends the combat with a defeat when the player falls', () => {
+    // 6 damage on 5 health: health stops at 0, not -1. Only e1's dice are
+    // given, so if e2 acted, `sequence` would throw.
+    const { state, events } = resolveEnemyTurns(makeEnemyTurn(5, 5), hitRoll(6))
+
+    expect(events).toEqual([
+      enemyHitEvent('e1', 6),
+      { type: 'defeated', combatantId: PLAYER_ID },
+      { type: 'combat-ended', outcome: 'defeat' },
+    ])
+    expect(state.player.currentHealth).toBe(0)
+    // The combat is over, so the turn stays on the enemy that struck the last
+    // blow. Moving on would have given e2's turn (index 2).
+    expect(state.turnIndex).toBe(1)
+  })
+
+  it("does nothing when it's already the player's turn", () => {
+    // No random is passed on purpose: no dice may be rolled.
+    const fight = makeFight(5, 5)
+
+    const { state, events } = resolveEnemyTurns(fight)
+
+    expect(state).toEqual(fight)
+    expect(events).toEqual([])
+  })
+
+  it.each([
+    { name: 'all enemies are defeated', fight: makeEnemyTurn(0, 0) },
+    {
+      name: 'the player is defeated',
+      fight: {
+        ...makeEnemyTurn(5),
+        player: makeCombatant({ currentHealth: 0 }),
+      },
+    },
+  ])('throws when $name', ({ fight }) => {
+    expect(() => resolveEnemyTurns(fight)).toThrow('Combat is already over')
+  })
+
+  it('does not change the state passed in', () => {
+    // Two enemies who both hit for 1, so that editing or reordering would show.
+    const random = sequence(
+      rollOf(15, 20),
+      rollOf(1, 6),
+      rollOf(15, 20),
+      rollOf(1, 6),
+    )
+    const fight = makeEnemyTurn(5, 3)
+    const fightBefore = structuredClone(fight)
+
+    resolveEnemyTurns(fight, random)
 
     expect(fight).toEqual(fightBefore)
   })
