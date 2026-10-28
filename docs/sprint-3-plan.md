@@ -50,7 +50,7 @@ Pure logic, test-first. No Phaser, no React (rule 1).
 - Don't mutate the state you receive. Return a new object (same rule as `movePlayer`).
 - A "miss" and a "hit for 0" are different events. Keep them separate so narration can describe them differently.
 
-- [ ] Phase H done, PR reviewed
+- [x] Phase H done, PR reviewed
 
 ---
 
