@@ -609,6 +609,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I chose B and wrote the change myself. Claude Code's "might read twice" was a guess, so I tested it. VoiceOver did read the name twice, so I removed `aria-labelledby` from the `<ol>`. The div is the named region and the `<ol>` is just the list.
 - **How I verified it:** VoiceOver: walking into a wall or the edge twice announces the message both times. Not yet checked (Claude Code listed them): that old entries aren't read again when a new one is added, that focus stays on the game region, and whether the first entry is announced on load.
 
+#### 2026-10-28 — Phase G: lantern visibility rules
+
+- **Tool:** Claude Code
+- **Category:** Planning, Learning, Review, Coding
+- **What I asked:** A breakdown of Phase G and a branch name, whether the light could fade into a gradient so the player knows where to investigate, then reviews of my tests and `getVisibleTiles`, and help with the errors and the one failing test.
+- **What I got:**
+  - Breakdown: the three decisions to make first (shape, function shape, walls), five tests to write first, and the red/green/break-on-purpose steps. I chose the round shape and `getVisibleTiles`. Branch name: `feature/lantern-visibility`.
+  - Gradient question: Claude Code split it into logic and rendering. A gradient on the canvas alone would break rule 5, so a dim ring needs a log line with a direction. It recommended keeping Phase G bright or dark and parking a `dim` level for Sprint 3, and added it to "Moved to Sprint 3" in the sprint plan.
+  - Test review: the "just outside" test used a tile outside the grid, so it passed for the wrong reason. No test checked the round shape. `grid[0].length` failed typecheck. The edge test passed on an empty result. `as Grid` hid mistakes. Claude Code fixed the ones I missed (the exact-list test, the comments, the edge test with `toHaveLength(11)` and `toBeDefined`), and added the "light goes through walls" test at my request.
+  - Function review: correct, with a typecheck error on `grid[y].length` and some cleanup. Claude Code broke the function on a backup copy and restored it. A square and `<` instead of `<=` failed tests, but a diamond passed all of them. Claude Code fixed my inner loop (`for (let x = 0; …)`) after a bad edit left it broken, and fixed my radius 3 test (the list was missing `(0, 3)` and `(4, 3)`).
+  - **Claude Code was wrong:** its first breakdown said a round light at radius 2 covers 21 tiles. It covers 13, the same as a diamond. So no radius 2 test can tell the shapes apart, and the first set of tests couldn't enforce the shape I chose. A radius 3 test could, and fixed it.
+- **Outcome:** ✏️
+- **Why:** I wrote the tests (apart from the walls test) and `getVisibleTiles`, and made the other fixes. Claude Code's wrong tile count was the reason for the radius 3 test. I kept Phase G binary and moved the dim ring to Sprint 3, because it's a Should-level addition that depends on things that don't exist yet (enemies and items on tiles).
+- **How I verified it:** Typecheck, lint, Prettier and all 90 tests pass (Claude Code ran them). On a backup copy, a square light, `<=` changed to `<` and a diamond light each make a test fail (the diamond only since the radius 3 test), and the file was restored afterwards.
+
 ---
 
 ## Agent-built rooms: evaluation

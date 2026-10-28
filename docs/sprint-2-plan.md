@@ -64,23 +64,28 @@ Pure logic only, test-first. Rendering in Phaser comes in Sprint 3.
    - **Function shape.** For example `isVisible(from, to, radius)`, or `getVisibleTiles(grid, position, radius)` that returns a list of positions.
    - **Walls:** v1 doesn't check line of sight, so the light shines "through" walls. That's a deliberate simplification. Raycasting is an idea for later, not this sprint.
 2. **Write the tests first:**
-   - [ ] The player's own tile is visible
-   - [ ] A tile exactly at the radius is visible
-   - [ ] A tile just outside the radius isn't visible
-   - [ ] Near the edge of the map, no positions outside the grid are returned
-   - [ ] The input position isn't mutated
+   - [x] The player's own tile is visible
+   - [x] A tile exactly at the radius is visible
+   - [x] A tile just outside the radius isn't visible
+   - [x] Near the edge of the map, no positions outside the grid are returned
+   - [x] The input position isn't mutated
 
 > **Concept: derived state.** What the player can see follows directly from their position and the radius, so it doesn't need to be stored in the Zustand store. Phaser and React can calculate it from the state when they need it. Storing it would mean two values that can drift apart (rule 2, one source of truth). Tiles the player has *already seen* are different: that's memory, not something you can calculate, so it would be real state. Decide in Sprint 3 if the game remembers explored tiles.
 
 **Pitfall:** like movement, grids are `grid[y][x]`. A test with a non-square map catches a mix-up.
 
-- [ ] Phase G done, PR reviewed
+- [x] Phase G done, PR reviewed
 
 ---
 
 ## Moved to Sprint 3
 
 - **Lantern rendering in Phaser** (darkness outside the light) and **narration of what the light reveals.** Both build on Phase G.
+- **Dim ring around the lantern (idea).** Phase G is bright or dark. A second threshold (`radius + 1`) would give a `dim` level: the player can tell something is there but not what, so they know which way to investigate. To decide in Sprint 3:
+  - **Logic.** A `getLightLevel` returning `'bright' | 'dim' | 'dark'`, built on the same distance helper as Phase G (keep the radius a parameter, so this needs no rewrite).
+  - **Accessibility.** Never by brightness alone: a dim tile must also produce a log line with a direction ("You sense something to the north"). Announce only when something new enters the ring, so the log isn't flooded, and tie it to the log verbosity setting.
+  - **Rendering.** A fade by distance in Phaser must respect reduced motion and high contrast (maybe a hard edge with a pattern instead).
+  - **Dependencies.** Only useful once tiles can hold something to glimpse (enemies, items).
 - **Dice** (`rollDie` with an injectable random function, so tests can control the result).
 - **Combat rules and enemy types.** Once combat works for one enemy, the other two are mostly room data (rule 6).
 - **Keyboard action menus.** They go together with focus management, which is already in Sprint 3.
