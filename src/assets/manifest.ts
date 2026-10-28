@@ -60,6 +60,13 @@ const HERO_ANIMATIONS = {
   hit: { frames: [8], frameRate: 1, repeat: 0 },
 } as const
 
+// Animations shared by the enemies. Their rows have 8 frames: 0–3 idle and
+// 4–7 run. Unlike the heroes they have no hit frame.
+const ENEMY_ANIMATIONS = {
+  idle: { frames: [0, 1, 2, 3], frameRate: 6, repeat: -1 },
+  run: { frames: [4, 5, 6, 7], frameRate: 10, repeat: -1 },
+} as const
+
 // Characters, enemies and items, by logical name (kebab-case).
 export const SPRITES = {
   'hero-girl': {
@@ -71,6 +78,21 @@ export const SPRITES = {
     texture: 'dungeon',
     framePrefix: 'hero-boy-',
     animations: HERO_ANIMATIONS,
+  },
+  skeleton: {
+    texture: 'dungeon',
+    framePrefix: 'skeleton-',
+    animations: ENEMY_ANIMATIONS,
+  },
+  demon: {
+    texture: 'dungeon',
+    framePrefix: 'demon-',
+    animations: ENEMY_ANIMATIONS,
+  },
+  orc: {
+    texture: 'dungeon',
+    framePrefix: 'orc-',
+    animations: ENEMY_ANIMATIONS,
   },
 } as const satisfies Record<string, SpriteDefinition>
 

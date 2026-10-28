@@ -117,24 +117,19 @@ npm run typecheck   # TypeScript check
 
 ## Current status
 
-**Sprint 2 (Oct 19–25): Reference room, core gameplay**
-Goal: the player moves around the reference room on the deployed site, every move is announced in the adventure log, and the lantern visibility rules are written and tested. Full plan: `docs/sprint-2-plan.md`.
+**Sprint 3 (Oct 26–Nov 1): Reference room, combat and accessibility**
+Goal: the reference room is a playable game with a lantern, three enemy types, dice-based combat and keyboard action menus. Full plan: `docs/sprint-3-plan.md`.
 
-Sprint 1 ran over, so this sprint first finishes it:
+Sprints 1 and 2 are finished. Sprint 3 effectively starts Wed Oct 28 (5 working days, including the weekend):
 
-- [x] Phase B step 4: `loadRoom`
-- [x] Phase C: narration and store
-- [x] Phase D: the reference room in Tiled
-- [x] Phase E: Phaser rendering and keyboard input
-- [x] Deployed to `dev` and released to `main`
+- [ ] Decisions (turn structure, light radius, enemy stats)
+- [ ] Phase H: dice and combat rules, logic and tests
+- [ ] Phase I: enemies as data, combat in the store, combat narration
+- [ ] Phase J: keyboard action menus and focus management
+- [ ] Phase K: lantern rendering and narration of what the light reveals
+- [ ] Phase L: accessibility settings (reduced motion, high contrast, text size, log verbosity)
 
-Then the new Sprint 2 work:
-
-- [x] Phase F: adventure log as an ARIA live region (Must)
-- [x] Phase G: lantern visibility rules, logic and tests only (Must)
-- **Supervision Oct 21**
-
-Moved to Sprint 3: lantern rendering and narration, dice, combat, action menus. Sprints are planned on weekdays only.
+Does not fit and moves to the start of Sprint 4 (decided Oct 28: Sprint 5 is the buffer, so Inventory and colorblind design are the first Shoulds to cut): full-room screen reader test, guest saves, Playwright and axe-core, the "Building rooms" section below, exits and room changes.
 
 *Update this section at the start of each sprint.*
 

@@ -274,3 +274,9 @@ Changes to the sprint plan above, with the date and reason. The original plan is
 - **Moved from Sprint 2 to Sprint 3:** lantern rendering and narration of surroundings, dice, combat with 3 enemy types, keyboard action menus. Action menus fit well with focus management, which was already in Sprint 3.
 - **Knock-on effects (to be re-planned at the start of Sprint 3):** guest mode with local saves will probably move to Sprint 4, since it uses the same save layer as account sync. Agents may start building rooms 2–5 early in Sprint 4 instead of at the end of Sprint 3. Sprint 5 is the planned buffer for delays.
 - **Planning rule from now on:** sprints are planned on weekdays only. Weekend work is a bonus.
+
+**Oct 28 — Sprint 3 plan**
+
+- **What happened:** Sprints 1 and 2 were only finished by Oct 28, so Sprint 3 has 5 working days left (Wed–Fri plus Sat and Sun), not the usual 5 weekdays, with the weekend counted in.
+- **Sprint 3 (Oct 26–Nov 1):** the core game loop (dice, combat with 3 enemy types, action menus with focus management, lantern rendering and narration, accessibility settings). See `docs/sprint-3-plan.md`.
+- **Moved to the start of Sprint 4:** the full-room screen reader test, guest mode with local saves, Playwright and axe-core, the agent specification in `CLAUDE.md`, and exits between rooms. **Decided Oct 28:** Sprint 5 is used as the buffer. The screen reader pass and agent spec go first in Sprint 4, accounts follow, and the dungeon stays at 3–5 rooms. If time runs short, inventory and colorblind design (Should) are cut first, as the risks section says.
