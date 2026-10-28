@@ -654,6 +654,23 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I wrote the types, tests and functions, and Claude Code fixed the tests that I got wrong. I added the critical hit myself. Claude Code recommended rolling the damage die twice and adding, as D&D does, instead of multiplying by 2, and I kept that. I decided negative damage does 0 damage and doesn't heal.
 - **How I verified it:** Typecheck, lint, Prettier and all 128 tests pass (Claude Code ran them). On backup copies, many wrong versions of `rollDie`, `attackRoll` and `applyDamage` each make at least one test fail, and the files were restored afterwards.
 
+#### 2026-10-28 — Phase H part 2: initiative and turn logic
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review
+- **What I asked:** To add initiative to combat (everyone rolls d20 + a bonus once, the player wins ties), to review my turn types and tests for gaps, and to write the implementation of `startCombat`, `resolvePlayerAttack` and `resolveEnemyTurns` after I wrote the tests. Later I also asked it to condense my tests and to fix the mistakes it found in my enemy turn tests.
+- **What I got:**
+  - **Code I wrote:** the turn types in `combat.ts` (`CombatState`, `CombatEvent`, `CombatEntry`, `CombatStatus`, `CombatUpdate`), `getCombatStatus` and its tests, `makeState`, and the first version of every test.
+  - **Code Claude Code wrote:** the three functions and their two private helpers (`isAlive`, `nextLivingIndex`) in `combat-turns.ts`, the shared test helpers `makeFight`, `makeEnemyTurn`, `hitRoll`, `hitEvent` and `enemyHitEvent`, and the condensed version of the `startCombat` and `resolvePlayerAttack` tests. It also rewrote the enemy turn tests after its review.
+  - **Review of my types:** I had no ids on the enemies, although events and `turnOrder` use ids. I also stored `status` in the state, which went against my own decision that it's calculated from health. The result type, `PLAYER_ID` and an outcome on `combat-ended` were missing too.
+  - **Review of my `startCombat` tests:** the bonus test could not fail, because the player wins a tie anyway. The `0.75` I used for a 15 is really a 16, and two tests were duplicates. Nothing checked the `initiative` events or more than two combatants.
+  - **Review of my `resolvePlayerAttack` tests:** the throws test reused one `sequence` for several calls, two throws used identical states, and the "skip and wrap" test passed for a different reason than its name. Claude Code then condensed the file from 483 to 336 lines with helpers and tables.
+  - **Review of my `resolveEnemyTurns` tests:** most started on the player's turn, so the function would do nothing. They also checked the wrong health and used the player's attack bonus for enemies. One used a damage roll that makes `rollDie` throw, and one "combat over" state wasn't over. Claude Code fixed all of them.
+  - **Claude Code was wrong:** its first condensed test table used tuples, which failed typecheck under `noUncheckedIndexedAccess`. Its first rewrite was refused because it had not opened the file with the Read tool, and in between it ran `prettier --write` on my original file (only the formatting changed). In the `resolveEnemyTurns` mutation script it also left in a placeholder that made no sense.
+- **Outcome:** ✏️
+- **Why:** I kept the whole design: initiative rolled once, a stable sort so the player wins ties and tied enemies keep their order, defeated combatants stay in the order and are skipped, and a bad call throws. For `resolveEnemyTurns` I kept "does nothing on the player's turn", so the UI can call it after every action. I also kept that a defeat stops the other enemies at once. I changed my types after the review. I reviewed the code Claude Code wrote, which is why the plan notes that the turn logic is not entirely hand-built.
+- **How I verified it:** Typecheck, lint, Prettier and all 168 tests pass (Claude Code ran them). On copies of the functions, wrong versions each make at least one test fail: 5 for `startCombat`, 10 for `resolvePlayerAttack` and 8 for `resolveEnemyTurns`. Two survived. Reversing the caller's `enemies` in place got through my first `startCombat` test, because it used one enemy, so I used two. Ignoring that the combat is over for `turnIndex` can't be told apart by any test, since only the player is left alive. The files were restored afterwards.
+
 ---
 
 ## Agent-built rooms: evaluation
