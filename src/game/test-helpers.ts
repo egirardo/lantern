@@ -55,3 +55,46 @@ export function sequence(...values: number[]): () => number {
     return value
   }
 }
+
+// A fight where it's the player's turn, with enemies e1, e2, ... that have the
+// given health, e.g. makeFight(5, 3). The player has +2 to hit and a d6, and
+// every enemy has armor class 12.
+export function makeFight(...enemyHealth: number[]): CombatState {
+  const enemies = enemyHealth.map((currentHealth, index) => ({
+    id: `e${index + 1}`,
+    combatant: makeCombatant({ currentHealth }),
+  }))
+  return makeState({
+    player: makeCombatant({ attackBonus: 2, damageDie: 6 }),
+    enemies,
+    turnOrder: [PLAYER_ID, ...enemies.map((enemy) => enemy.id)],
+  })
+}
+
+// The random values for a hit (a 15 + 2 = 17 beats armor class 12) that does
+// `damage` damage.
+export function hitRoll(damage: number): () => number {
+  return sequence(rollOf(15, 20), rollOf(damage, 6))
+}
+
+// The attack event for that hit (or, with a natural roll of 20, a critical).
+export function hitEvent(targetId: string, damage: number, naturalRoll = 15) {
+  return {
+    type: 'attack',
+    attackerId: PLAYER_ID,
+    targetId,
+    result: {
+      hit: true,
+      naturalRoll,
+      total: naturalRoll + 2,
+      opposingArmorClass: 12,
+      damage,
+      natural20: naturalRoll === 20,
+    },
+  }
+}
+
+// The health of each enemy in order, e.g. [5, 0].
+export function healths(state: CombatState): number[] {
+  return state.enemies.map((enemy) => enemy.combatant.currentHealth)
+}

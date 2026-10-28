@@ -1,70 +1,72 @@
 import { describe, it, expect } from 'vitest'
-import { PLAYER_ID, type CombatEntry } from './combat'
-import { startCombat } from './combat-turns'
-import { makeCombatant, rollOf, sequence } from './test-helpers'
+import { PLAYER_ID, type CombatEntry, type CombatState } from './combat'
+import { startCombat, resolvePlayerAttack } from './combat-turns'
+import {
+  hitEvent,
+  hitRoll,
+  healths,
+  makeCombatant,
+  makeFight,
+  rollOf,
+  sequence,
+} from './test-helpers'
 
-// An enemy entry with just the id, name and initiative bonus a test cares about.
+// An enemy entry with just the id and initiative bonus a test cares about.
 function makeEnemy(id: string, initiativeBonus = 0): CombatEntry {
-  return {
-    id,
-    combatant: makeCombatant({ name: `Enemy ${id}`, initiativeBonus }),
-  }
+  return { id, combatant: makeCombatant({ initiativeBonus }) }
 }
 
 // startCombat rolls one d20 per combatant: the player first, then the enemies
 // in the order of the array. So in every test, the values given to `sequence`
 // are: player, first enemy, second enemy, and so on.
 describe('startCombat', () => {
-  it('puts the highest initiative first', () => {
-    // player rolls 10, e1 rolls 15
-    const random = sequence(rollOf(10, 20), rollOf(15, 20))
-    const player = makeCombatant({ name: 'Player' })
+  // Each row: the player and e1 roll a d20 and add a bonus, as { roll, bonus }.
+  // `order` is the expected turn order. The bonus rows are built so that the
+  // order would be different if the bonus were ignored.
+  it.each([
+    {
+      name: 'puts the highest initiative first',
+      player: { roll: 10, bonus: 0 },
+      e1: { roll: 15, bonus: 0 },
+      order: ['e1', PLAYER_ID],
+    },
+    {
+      name: 'resolves a tie in favor of the player',
+      player: { roll: 10, bonus: 0 },
+      e1: { roll: 10, bonus: 0 },
+      order: [PLAYER_ID, 'e1'],
+    },
+    {
+      name: "lets the player's bonus decide (8 + 4 beats 10)",
+      player: { roll: 8, bonus: 4 },
+      e1: { roll: 10, bonus: 0 },
+      order: [PLAYER_ID, 'e1'],
+    },
+    {
+      name: "lets an enemy's bonus decide (8 + 4 beats 10)",
+      player: { roll: 10, bonus: 0 },
+      e1: { roll: 8, bonus: 4 },
+      order: ['e1', PLAYER_ID],
+    },
+  ])('$name', ({ player, e1, order }) => {
+    const random = sequence(rollOf(player.roll, 20), rollOf(e1.roll, 20))
 
-    const { state } = startCombat(player, [makeEnemy('e1')], random)
+    const { state } = startCombat(
+      makeCombatant({ initiativeBonus: player.bonus }),
+      [makeEnemy('e1', e1.bonus)],
+      random,
+    )
 
-    expect(state.turnOrder).toEqual(['e1', PLAYER_ID])
+    expect(state.turnOrder).toEqual(order)
     expect(state.turnIndex).toBe(0)
-  })
-
-  it('resolves a tie in favor of the player', () => {
-    // player rolls 10, e1 rolls 10
-    const random = sequence(rollOf(10, 20), rollOf(10, 20))
-    const player = makeCombatant({ name: 'Player' })
-
-    const { state } = startCombat(player, [makeEnemy('e1')], random)
-
-    expect(state.turnOrder).toEqual([PLAYER_ID, 'e1'])
-  })
-
-  it("lets the player's bonus decide the order", () => {
-    // player rolls 8 + 4 = 12, e1 rolls 10 + 0 = 10. Without the bonus, e1
-    // would go first.
-    const random = sequence(rollOf(8, 20), rollOf(10, 20))
-    const player = makeCombatant({ name: 'Player', initiativeBonus: 4 })
-
-    const { state } = startCombat(player, [makeEnemy('e1')], random)
-
-    expect(state.turnOrder).toEqual([PLAYER_ID, 'e1'])
-  })
-
-  it("lets an enemy's bonus decide the order", () => {
-    // player rolls 10 + 0 = 10, e1 rolls 8 + 4 = 12. Without the bonus, the
-    // player would go first.
-    const random = sequence(rollOf(10, 20), rollOf(8, 20))
-    const player = makeCombatant({ name: 'Player' })
-
-    const { state } = startCombat(player, [makeEnemy('e1', 4)], random)
-
-    expect(state.turnOrder).toEqual(['e1', PLAYER_ID])
   })
 
   it('sorts three combatants', () => {
     // player rolls 12, e1 rolls 5, e2 rolls 18
     const random = sequence(rollOf(12, 20), rollOf(5, 20), rollOf(18, 20))
-    const player = makeCombatant({ name: 'Player' })
 
     const { state } = startCombat(
-      player,
+      makeCombatant(),
       [makeEnemy('e1'), makeEnemy('e2')],
       random,
     )
@@ -75,10 +77,9 @@ describe('startCombat', () => {
   it('keeps the original order when two enemies tie', () => {
     // player rolls 5, e1 rolls 14, e2 rolls 14
     const random = sequence(rollOf(5, 20), rollOf(14, 20), rollOf(14, 20))
-    const player = makeCombatant({ name: 'Player' })
 
     const { state } = startCombat(
-      player,
+      makeCombatant(),
       [makeEnemy('e1'), makeEnemy('e2')],
       random,
     )
@@ -89,9 +90,12 @@ describe('startCombat', () => {
   it('returns one initiative event per combatant, in turn order', () => {
     // player rolls 10 + 2 = 12, e1 rolls 15 + 1 = 16
     const random = sequence(rollOf(10, 20), rollOf(15, 20))
-    const player = makeCombatant({ name: 'Player', initiativeBonus: 2 })
 
-    const { events } = startCombat(player, [makeEnemy('e1', 1)], random)
+    const { events } = startCombat(
+      makeCombatant({ initiativeBonus: 2 }),
+      [makeEnemy('e1', 1)],
+      random,
+    )
 
     expect(events).toEqual([
       {
@@ -109,7 +113,7 @@ describe('startCombat', () => {
 
   it('keeps the player and enemies as they were passed in', () => {
     const random = sequence(rollOf(10, 20), rollOf(15, 20))
-    const player = makeCombatant({ name: 'Player' })
+    const player = makeCombatant()
     const enemies = [makeEnemy('e1')]
 
     const { state } = startCombat(player, enemies, random)
@@ -121,16 +125,15 @@ describe('startCombat', () => {
   it('throws when there are no enemies', () => {
     // No random is passed on purpose: the check has to happen before any dice
     // are rolled.
-    const player = makeCombatant({ name: 'Player' })
-
-    expect(() => startCombat(player, [])).toThrow(
+    expect(() => startCombat(makeCombatant(), [])).toThrow(
       'Cannot start combat with no enemies',
     )
   })
 
   it('does not change the player or enemies passed in', () => {
+    // Two enemies, so that reordering the array would show.
     const random = sequence(rollOf(10, 20), rollOf(15, 20), rollOf(18, 20))
-    const player = makeCombatant({ name: 'Player' })
+    const player = makeCombatant()
     const enemies = [makeEnemy('e1'), makeEnemy('e2')]
     const playerBefore = structuredClone(player)
     const enemiesBefore = structuredClone(enemies)
@@ -139,5 +142,163 @@ describe('startCombat', () => {
 
     expect(player).toEqual(playerBefore)
     expect(enemies).toEqual(enemiesBefore)
+  })
+})
+
+describe('resolvePlayerAttack', () => {
+  it('lowers only the targeted enemy by the damage rolled', () => {
+    const { state, events } = resolvePlayerAttack(
+      makeFight(5, 5),
+      'e2',
+      hitRoll(3),
+    )
+
+    expect(healths(state)).toEqual([5, 2])
+    expect(events).toEqual([hitEvent('e2', 3)])
+  })
+
+  it('does not lower health on a miss, but still emits an attack event', () => {
+    // A 5 + 2 = 7 misses armor class 12, and no damage die is rolled.
+    const random = sequence(rollOf(5, 20))
+
+    const { state, events } = resolvePlayerAttack(makeFight(5, 5), 'e2', random)
+
+    expect(healths(state)).toEqual([5, 5])
+    expect(events).toEqual([
+      {
+        type: 'attack',
+        attackerId: PLAYER_ID,
+        targetId: 'e2',
+        result: {
+          hit: false,
+          naturalRoll: 5,
+          total: 7,
+          opposingArmorClass: 12,
+          natural1: false,
+        },
+      },
+    ])
+  })
+
+  it('does double damage on a natural 20', () => {
+    // 20, then two damage dice: 3 + 4 = 7
+    const random = sequence(rollOf(20, 20), rollOf(3, 6), rollOf(4, 6))
+
+    const { state, events } = resolvePlayerAttack(makeFight(10), 'e1', random)
+
+    expect(healths(state)).toEqual([3])
+    expect(events).toEqual([hitEvent('e1', 7, 20)])
+  })
+
+  it('defeats an enemy at 0 health and keeps it in the state', () => {
+    // 5 damage on an enemy with 3 health: health stops at 0, not -2.
+    const { state, events } = resolvePlayerAttack(
+      makeFight(5, 3),
+      'e2',
+      hitRoll(5),
+    )
+
+    expect(healths(state)).toEqual([5, 0])
+    expect(state.enemies).toHaveLength(2)
+    expect(state.turnOrder).toEqual([PLAYER_ID, 'e1', 'e2'])
+    // One enemy is still alive, so there is no combat-ended.
+    expect(events).toEqual([
+      hitEvent('e2', 5),
+      { type: 'defeated', combatantId: 'e2' },
+    ])
+  })
+
+  it('ends the combat with a victory when the last enemy is defeated', () => {
+    const { state, events } = resolvePlayerAttack(
+      makeFight(5),
+      'e1',
+      hitRoll(5),
+    )
+
+    expect(events).toEqual([
+      hitEvent('e1', 5),
+      { type: 'defeated', combatantId: 'e1' },
+      { type: 'combat-ended', outcome: 'victory' },
+    ])
+    // The player is the only one left, so any rule for the next turn gives 0.
+    // This only shows that the index stays valid, not that it "stays".
+    expect(state.turnIndex).toBe(0)
+  })
+
+  describe('moving the turn on', () => {
+    it('goes to the next combatant in the order', () => {
+      const { state } = resolvePlayerAttack(makeFight(5, 5), 'e2', hitRoll(3))
+
+      expect(state.turnIndex).toBe(1)
+    })
+
+    it('skips a defeated combatant', () => {
+      // e1 is already at 0 health, so the turn goes from the player to e2.
+      const { state } = resolvePlayerAttack(makeFight(0, 5), 'e2', hitRoll(3))
+
+      expect(state.turnIndex).toBe(2)
+    })
+
+    it('wraps around the end of the order', () => {
+      // Order is e1, player, e2. The turn goes past the defeated e2 and
+      // wraps around to e1.
+      const fight: CombatState = {
+        ...makeFight(5, 0),
+        turnOrder: ['e1', PLAYER_ID, 'e2'],
+        turnIndex: 1,
+      }
+
+      const { state } = resolvePlayerAttack(fight, 'e1', hitRoll(3))
+
+      expect(state.turnIndex).toBe(0)
+    })
+  })
+
+  // No random is passed on purpose: every check has to happen before any dice
+  // are rolled. The checks run in this order: combat over, the player's turn,
+  // then the target.
+  it.each([
+    {
+      name: 'an unknown target id',
+      fight: makeFight(5),
+      targetId: 'unknown',
+      message: 'Unknown target id',
+    },
+    {
+      name: 'a defeated target',
+      fight: makeFight(0, 5),
+      targetId: 'e1',
+      message: 'Target is already defeated',
+    },
+    {
+      name: "when it isn't the player's turn",
+      fight: { ...makeFight(5), turnIndex: 1 },
+      targetId: 'e1',
+      message: "It's not the player's turn",
+    },
+    {
+      name: 'when all enemies are defeated',
+      fight: makeFight(0),
+      targetId: 'e1',
+      message: 'Combat is already over',
+    },
+    {
+      name: 'when the player is defeated',
+      fight: { ...makeFight(5), player: makeCombatant({ currentHealth: 0 }) },
+      targetId: 'e1',
+      message: 'Combat is already over',
+    },
+  ])('throws on $name', ({ fight, targetId, message }) => {
+    expect(() => resolvePlayerAttack(fight, targetId)).toThrow(message)
+  })
+
+  it('does not change the state passed in', () => {
+    // Two enemies, so that reordering or editing them would show.
+    const fight = makeFight(5, 3)
+    const fightBefore = structuredClone(fight)
+
+    resolvePlayerAttack(fight, 'e2', hitRoll(5))
+
+    expect(fight).toEqual(fightBefore)
   })
 })

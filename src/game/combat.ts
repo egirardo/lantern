@@ -54,6 +54,12 @@ export type CombatStatus = 'ongoing' | 'victory' | 'defeat'
 //   enemy.
 // - An unknown or already defeated target id throws, like rollDie does. It
 //   means a bug in the caller, because the menu only offers living enemies.
+// - resolvePlayerAttack also throws when it isn't the player's turn or the
+//   combat is already over. Same reason: the UI should never allow it.
+// - It does not run the enemies' turns (that is resolveEnemyTurns). After the
+//   attack, turnIndex moves to the next living combatant, wrapping around the
+//   end of turnOrder. If the attack ended the combat, turnIndex stays.
+// - Event order for one attack: attack, then defeated, then combat-ended.
 export type CombatState = {
   player: Combatant
   enemies: CombatEntry[]
