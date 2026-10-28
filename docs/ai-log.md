@@ -626,6 +626,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 
 ---
 
+## Sprint 3 (Oct 26–Nov 1): Reference room, combat and accessibility
+
+#### 2026-10-28 — Sprint 3 plan
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I had caught up on Sprints 1 and 2. I asked for a Sprint 3 plan that includes weekend work, so I'm back on track for Sprint 4 on Monday. First I asked for one weekend day, then added the second.
+- **What I got:** `docs/sprint-3-plan.md`: 5 working days (Wed, Thu, Fri, Sat and Sun), with six decisions to make first, then Phase H (dice and combat rules), Phase I (enemies as data, combat in the store, narration), Phase J (action menus and focus) and Phase K (lantern rendering and narration). With the second weekend day, Claude Code added Phase L (accessibility settings). It said plainly that the original Sprint 3 scope plus the work moved from Sprint 2 still doesn't fit. The full-room screen reader test, guest saves, Playwright and axe-core, the agent spec and room exits are listed as not fitting, with three options for Sprint 4.
+- **Also that day:** I picked the three enemies (`skeleton`, `demon`, `orc`) from the tileset and sent Claude Code screenshots of each sprite set. It found their positions on the sheet by cropping and enlarging regions of the PNG, and added 24 frames to `public/assets/dungeon/sprites.json` (data only, no code). Its first crops with `sips` were wrong (the offsets landed in the wrong area), so it wrote a small throwaway PNG cropper instead. It checked the result by rendering the three rows and comparing them with my screenshots.
+- **Outcome:** ⏳ (to fill in after I review it)
+- **Why:** ✏️ (to fill in: what I kept or changed, and I chose option A for Sprint 4: use Sprint 5 as the buffer)
+- **How I verified it:** ✏️ (to fill in)
+
+---
+
 ## Agent-built rooms: evaluation
 
 Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.
