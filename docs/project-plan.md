@@ -280,3 +280,9 @@ Changes to the sprint plan above, with the date and reason. The original plan is
 - **What happened:** Sprints 1 and 2 were only finished by Oct 28, so Sprint 3 has 5 working days left (Wed–Fri plus Sat and Sun), not the usual 5 weekdays, with the weekend counted in.
 - **Sprint 3 (Oct 26–Nov 1):** the core game loop (dice, combat with 3 enemy types, action menus with focus management, lantern rendering and narration, accessibility settings). See `docs/sprint-3-plan.md`.
 - **Moved to the start of Sprint 4:** the full-room screen reader test, guest mode with local saves, Playwright and axe-core, the agent specification in `CLAUDE.md`, and exits between rooms. **Decided Oct 28:** Sprint 5 is used as the buffer. The screen reader pass and agent spec go first in Sprint 4, accounts follow, and the dungeon stays at 3–5 rooms. If time runs short, inventory and colorblind design (Should) are cut first, as the risks section says.
+
+**Oct 28 — Initiative added to Sprint 3, and what "hand-built" means for the reference room**
+
+- **What happened:** I decided to add initiative rolls to combat in Sprint 3, even though they're not in the MoSCoW. Building the turn model once avoids reshaping the combat code, enemy schema and menu focus later.
+- **Effect on the method:** the plan says I build the reference room completely by hand. For initiative I write the tests and Claude Code writes the implementation, which I review. This is logged in `docs/ai-log.md` as code Claude Code wrote. Dice, the attack roll, applying damage and the combat types are my own code. I'll say this in the evaluation, so the comparison with the agent-built rooms is honest about which parts of the reference room were AI-written.
+- **Schedule:** Phase L (settings) is still the first thing to slip if time runs short.
