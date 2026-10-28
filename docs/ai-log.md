@@ -639,6 +639,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** ✏️ (to fill in: what I kept or changed, and I chose option A for Sprint 4: use Sprint 5 as the buffer)
 - **How I verified it:** ✏️ (to fill in)
 
+#### 2026-10-28 — Phase H part 1: dice, attack roll and damage
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review
+- **What I asked:** To talk me through the six decisions at the start of Sprint 3, then to guide me through `rollDie`, the attack roll and `applyDamage`, and to review my tests and code at each step. I wrote the types, the tests and the functions. I also asked for a natural 20 to deal double damage, after the plan had left it out.
+- **What I got:**
+  - Decisions: a recommendation for each (free movement while exploring, melee only, light radius 3, no explored-tile memory). I changed the enemies (`skeleton`, `demon`, `orc`) to match the sprites I picked.
+  - Review of `rollDie`: the tests passed, but a wrong version (`Math.round(random() * (sides - 1)) + 1`) also passed them, because they only checked the ends and the middle. Claude Code fixed my tests: a loop over every face of d4, d6 and d20, a boundary test, `NaN` and `Infinity` as bad input, and a test of the default `Math.random`. I decided on the throw when `random` is outside 0 to under 1, and it added that.
+  - Review of the combat types and tests: no discriminant on `CombatResult`, and several tests had wrong numbers. For example, `0.5` on a d20 rolls 11, not 3. Two of my natural 20 and natural 1 tests would have passed without the rule. Claude Code rewrote the tests with `rollOf` and `sequence` helpers, so the d20 and the damage die can be controlled separately.
+  - Review of my `attackRoll`: correct. Claude Code found a gap by breaking it on a backup copy: a critical hit with a fixed d6 passed every test, so it added a d4 critical hit test.
+  - **Claude Code was wrong:** it said `1 - Number.EPSILON` is the closest number under 1. It isn't (`1 - Number.EPSILON / 2` is), so it changed the test constant. Its first mutation check also did nothing, because the `sed` pattern didn't match, and it only noticed because every version passed.
+- **Outcome:** ✏️
+- **Why:** I wrote the types, tests and functions, and Claude Code fixed the tests that I got wrong. I added the critical hit myself. Claude Code recommended rolling the damage die twice and adding, as D&D does, instead of multiplying by 2, and I kept that. I decided negative damage does 0 damage and doesn't heal.
+- **How I verified it:** Typecheck, lint, Prettier and all 128 tests pass (Claude Code ran them). On backup copies, many wrong versions of `rollDie`, `attackRoll` and `applyDamage` each make at least one test fail, and the files were restored afterwards.
+
 ---
 
 ## Agent-built rooms: evaluation

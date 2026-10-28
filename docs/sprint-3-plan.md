@@ -33,10 +33,10 @@ Write the answers in `docs/learning-notes.md` under Decisions. Ask Claude to tal
 Pure logic, test-first. No Phaser, no React (rule 1).
 
 1. **Dice.** `rollDie(sides, random)`, where `random` is injected (defaults to `Math.random`) so tests can control the result.
-   - [ ] Test: with `random` returning 0 the result is 1, and just under 1 gives `sides`
-   - [ ] Test: a `d20` never returns 0 or 21 over many fixed inputs
-2. **Attack roll.** D&D style: roll a d20 + attack bonus, hit if it's at least the target's armor class. A natural 20 always hits, a natural 1 always misses. Damage is the weapon die.
-   - [ ] Tests: hit, miss, natural 20, natural 1, damage never below 1, hit points never below 0
+   - [x] Test: with `random` returning 0 the result is 1, and just under 1 gives `sides`
+   - [x] Test: a `d20` never returns 0 or 21 (done as one test that checks every face of d4, d6 and d20)
+2. **Attack roll.** D&D style: roll a d20 + attack bonus, hit if it's at least the target's armor class. A natural 20 always hits and is a critical hit: the damage die is rolled twice and the results added (D&D style, decided Oct 28). A natural 1 always misses. Damage is the weapon die.
+   - [x] Tests: hit, miss, natural 20 (critical, double damage), natural 1, hit points never below 0 (damage below 1 does nothing, decided Oct 28)
 3. **Combat state and turn order.** Player acts, then each living enemy acts. Combat ends when all enemies are at 0 or the player is at 0 (or flees).
    - [ ] Tests: the turn passes to enemies after a player action, a dead enemy doesn't act, combat ends when the last enemy dies
 4. **Events, not text.** Each function returns events like `{ type: 'attack', attacker, target, roll, hit, damage }`. Turning events into sentences is narration's job (next phase).
