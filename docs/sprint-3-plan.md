@@ -21,8 +21,9 @@ Write the answers in `docs/learning-notes.md` under Decisions. Ask Claude to tal
 2. **Who can fight whom.** **Melee only: the player and an enemy must be on adjacent tiles.** Ranged attacks are not planned.
 3. **Light radius.** Pick a number for the reference room (the room is about 11×9, so 3 or 4). It stays a parameter.
 4. **Explored tiles.** Does the game remember tiles the player has seen? **No for v1: only what the lantern lights right now is visible.** Remembering is real state (see the concept in the Sprint 2 plan) and can come later.
-5. **Enemy stats.** Three types, written as data (rule 6), each with hit points, armor class, attack bonus and damage die. Keep the numbers small (decided: `skeleton` HP 4, AC 10, +2, d4; `demon` HP 8, AC 12, +3, d6; `orc` HP 6, AC 13, +4, d6). The sprites are in the tileset image but not yet in `sprites.json` or the asset manifest, so adding them is the first step of Phase I.
+5. **Enemy stats.** Three types, written as data (rule 6), each with hit points, armor class, attack bonus, an initiative bonus (values to pick in Phase I) and damage die. Keep the numbers small (decided: `skeleton` HP 4, AC 10, +2, d4; `demon` HP 8, AC 12, +3, d6; `orc` HP 6, AC 13, +4, d6). The sprites are in the tileset image but not yet in `sprites.json` or the asset manifest, so adding them is the first step of Phase I.
 6. **Where combat state lives.** In the Zustand store (rule 2), with the rules as pure functions in `src/game/` that take the state and a random function and return the new state plus a list of events.
+7. **Initiative** (added Oct 28). Everyone rolls d20 + an initiative bonus once at the start of combat, and a tie goes to the player. See Phase H step 3.
 
 - [x] Decisions written down (in `docs/learning-notes.md`)
 
@@ -37,9 +38,10 @@ Pure logic, test-first. No Phaser, no React (rule 1).
    - [x] Test: a `d20` never returns 0 or 21 (done as one test that checks every face of d4, d6 and d20)
 2. **Attack roll.** D&D style: roll a d20 + attack bonus, hit if it's at least the target's armor class. A natural 20 always hits and is a critical hit: the damage die is rolled twice and the results added (D&D style, decided Oct 28). A natural 1 always misses. Damage is the weapon die.
    - [x] Tests: hit, miss, natural 20 (critical, double damage), natural 1, hit points never below 0 (damage below 1 does nothing, decided Oct 28)
-3. **Combat state and turn order.** Player acts, then each living enemy acts. Combat ends when all enemies are at 0 or the player is at 0 (or flees).
-   - [ ] Tests: the turn passes to enemies after a player action, a dead enemy doesn't act, combat ends when the last enemy dies
-4. **Events, not text.** Each function returns events like `{ type: 'attack', attacker, target, roll, hit, damage }`. Turning events into sentences is narration's job (next phase).
+3. **Combat state, initiative and turn order** (initiative added Oct 28). Everyone, including the player, rolls a d20 plus an `initiativeBonus` once at the start of combat. A tie goes to the player. The state holds the turn order as a list of ids and the index of whose turn it is. Combat ends when all enemies are at 0 or the player is at 0 (or flees). The status is calculated from health, not stored. Enemies are wrapped as `{ id, combatant }` in the state, and events refer to combatants by id.
+   - Functions: `startCombat(player, enemies, random)` rolls initiative and returns `{ state, events }`, `resolvePlayerAttack(state, targetId, random)`, and `resolveEnemyTurns(state, random)`, which runs enemy turns until it's the player's turn again or combat ends. If enemies go first, they act before the player's menu appears.
+   - [x] Tests: initiative order, a tie goes to the player, the player can go first or last, the turn passes to enemies after a player action, a dead enemy doesn't act, combat ends when the last enemy dies, the player reaching 0 ends combat, unknown or dead target id, the input state is never changed
+4. **Events, not text.** Each function returns events like `{ type: 'attack', attacker, target, roll, hit, damage }`, plus an `initiative` event per combatant (id, roll, total), `defeated` and `combat-ended`. Turning events into sentences is narration's job (next phase).
 
 > **Concept: injecting randomness.** A function that calls `Math.random()` inside can't be tested reliably. If the random function is a parameter, a test passes in a fake one that always returns the same number, so the result is predictable. This is called dependency injection, and it's the simplest kind.
 
@@ -48,7 +50,7 @@ Pure logic, test-first. No Phaser, no React (rule 1).
 - Don't mutate the state you receive. Return a new object (same rule as `movePlayer`).
 - A "miss" and a "hit for 0" are different events. Keep them separate so narration can describe them differently.
 
-- [ ] Phase H done, PR reviewed
+- [x] Phase H done, PR reviewed
 
 ---
 
@@ -78,7 +80,8 @@ Pure logic, test-first. No Phaser, no React (rule 1).
 2. **Focus rules** (from CLAUDE.md): when the menu opens, focus moves into it; when combat ends, focus returns to the game region so the arrow keys work again. Never leave focus on a button that disappeared.
 3. **Targeting.** If more than one enemy is adjacent, the player chooses the target from a list of names (not by clicking the canvas).
 4. **Disabled actions.** Say why in text ("Flee isn't available yet"), not only by greying out.
-5. **Test with VoiceOver:** run a whole fight with the keyboard only. Is every roll and result announced, once, in a sensible order? Does focus end up where you expect?
+5. **Enemies first.** If initiative lets enemies act before the player, the log must say "It's your turn" when the player's turn starts, and focus must land in the action menu only after that.
+6. **Test with VoiceOver:** run a whole fight with the keyboard only. Is every roll and result announced, once, in a sensible order? Does focus end up where you expect?
 
 > **Concept: focus management.** Browsers keep one focused element. If it's removed from the page, focus drops to the top of the document, which is disorienting for a screen reader user. Save the element that had focus before the menu opened, and call `.focus()` on it when the menu closes.
 

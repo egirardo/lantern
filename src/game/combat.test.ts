@@ -1,40 +1,57 @@
 import { describe, it, expect, vi } from 'vitest'
-import { attackRoll, applyDamage } from './combat'
-import type { Combatant } from './combat'
+import { attackRoll, applyDamage, getCombatStatus } from './combat'
+import { makeCombatant, makeState, rollOf, sequence } from './test-helpers'
 
-function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
-  return {
-    name: 'Goblin',
-    currentHealth: 5,
-    maxHealth: 5,
-    armorClass: 12,
-    attackBonus: 3,
-    damageDie: 6,
-    ...overrides,
-  }
-}
+describe('getCombatStatus', () => {
+  it('returns "ongoing" when the player and at least one enemy are alive', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 3 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('ongoing')
+  })
 
-// The random value that makes rollDie give exactly `face` on a die with
-// `sides` sides, e.g. rollOf(20, 20) = 0.975 gives a 20. It's the middle of
-// that face's range, so it doesn't depend on exact boundaries.
-function rollOf(face: number, sides: number): number {
-  return (face - 0.5) / sides
-}
+  it('returns "victory" when all enemies are defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 0 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('victory')
+  })
 
-// A fake random that returns the given values one after another, so a test
-// can control the d20 first and then the damage die. It throws if the code
-// rolls more often than the test expects.
-function sequence(...values: number[]): () => number {
-  let next = 0
-  return () => {
-    const value = values[next]
-    next++
-    if (value === undefined) {
-      throw new Error('random was called more often than the test expected')
-    }
-    return value
-  }
-}
+  it('returns "defeat" when the player is defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 0 }),
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ currentHealth: 3 }) },
+        { id: 'e2', combatant: makeCombatant({ currentHealth: 0 }) },
+      ],
+    })
+    expect(getCombatStatus(state)).toBe('defeat')
+  })
+
+  it('returns "defeat" when both the player and last enemy are defeated', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 0 }),
+      enemies: [{ id: 'e1', combatant: makeCombatant({ currentHealth: 0 }) }],
+    })
+    expect(getCombatStatus(state)).toBe('defeat')
+  })
+
+  it('returns "victory" when there are no enemies', () => {
+    const state = makeState({
+      player: makeCombatant({ currentHealth: 5 }),
+      enemies: [],
+    })
+    expect(getCombatStatus(state)).toBe('victory')
+  })
+})
 
 describe('attackRoll', () => {
   const attacker = makeCombatant({ name: 'Hero', attackBonus: 3, damageDie: 6 })
