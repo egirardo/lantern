@@ -1,0 +1,26 @@
+{
+  "skeleton": {
+    "displayName": "skeleton",
+    "maxHealth": 4,
+    "armorClass": 10,
+    "attackBonus": 2,
+    "damageDie": 4,
+    "initiativeBonus": 1
+  },
+  "demon": {
+    "displayName": "demon",
+    "maxHealth": 8,
+    "armorClass": 12,
+    "attackBonus": 3,
+    "damageDie": 6,
+    "initiativeBonus": 2
+  },
+  "orc": {
+    "displayName": "orc",
+    "maxHealth": 6,
+    "armorClass": 13,
+    "attackBonus": 4,
+    "damageDie": 6,
+    "initiativeBonus": 0
+  }
+}

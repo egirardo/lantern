@@ -14,6 +14,7 @@ const validRoom = {
       to: 'another-room',
     },
   ],
+  enemies: [],
 }
 
 function fakeFetch(files: Record<string, unknown>) {
