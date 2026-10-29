@@ -12,5 +12,10 @@
       ],
       "to": "dingy-basement"
     }
+  ],
+  "enemies": [
+    { "id": "skeleton-1", "type": "skeleton", "position": { "x": 2, "y": 5 } },
+    { "id": "orc-1", "type": "orc", "position": { "x": 9, "y": 4 } },
+    { "id": "demon-1", "type": "demon", "position": { "x": 6, "y": 3 } }
   ]
 }
