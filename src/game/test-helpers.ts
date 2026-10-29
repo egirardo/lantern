@@ -5,7 +5,7 @@ import { PLAYER_ID, type Combatant, type CombatState } from './combat'
 // for it, e.g. makeCombatant({ armorClass: 30 }).
 export function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
   return {
-    name: 'Goblin',
+    name: 'Demon',
     currentHealth: 5,
     maxHealth: 5,
     initiativeBonus: 0,
@@ -27,7 +27,7 @@ export function makeState({
   return {
     player: player ?? makeCombatant({ name: 'Hero' }),
     enemies: enemies ?? [
-      { id: 'e1', combatant: makeCombatant({ name: 'Goblin 1' }) },
+      { id: 'e1', combatant: makeCombatant({ name: 'demon 1' }) },
     ],
     turnOrder: turnOrder ?? [PLAYER_ID, 'e1'],
     turnIndex: turnIndex ?? 0,

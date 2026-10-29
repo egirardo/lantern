@@ -686,6 +686,20 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept the split into three branches, the location of the stats file and `Object.hasOwn`. I decided to write the schema before the tests this time, because it made more sense to me, and Claude Code agreed as long as the tests were written before moving on. I added the enemy `id` myself, which the plan didn't have, and Claude Code suggested the uniqueness and `player` rules. I picked the initiative bonuses (skeleton +1, demon +2, orc 0). Claude Code suggested the enemy positions (away from the player start so a fight doesn't start at once, and not on the door tiles) and I used them as they were.
 - **How I verified it:** Typecheck, lint, Prettier and all 188 tests pass. On a backup copy, changing `samePosition` back to `===` made exactly the two tests for the player start and the same tile fail, and the file was restored afterwards. `room-files.test.ts` loads the real `entrance-hall.json` with its three enemies.
 
+#### 2026-10-29 — Phase I part 2: combat narration
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a guide to writing combat narration, with Claude Code's recommendations for the open choices, then to fix my `getName` and `describeCombatEvent`. I was short on time, so I asked Claude Code to finish the function and the tests.
+- **What I got:**
+  - **Code I wrote:** `isPlayer`, `getName` and `describeRoll` (with the minus sign for a negative bonus), and a first version of `describeCombatEvent` for attacks and initiative.
+  - **Code Claude Code wrote:** the `subject`, `object` and `verb` helpers, the final `describeCombatEvent` with all four event types, "against armor class" in the roll text, and all 20 tests in `narration.test.ts`.
+  - **Review findings:** `getName` used the store's `GameState` instead of `CombatState`, and the initiative numbers are in `event.initiativeRoll`, not on the event. The `defeated` and `combat-ended` cases were missing (TypeScript's missing return error). The sentences used the raw names, so the player was "Hero".
+  - **Claude Code was wrong or unclear:** its first guide proposed longer sentences ("You attack the skeleton: ...") that I didn't prefer. Its own mutation check showed that its first set of tests had no zero bonus case, so it added one.
+- **Outcome:** ✏️
+- **Why:** I kept my shorter sentence structure over Claude Code's longer one, but asked for "you" instead of "Hero" and for the armor class to be in the brackets, because the roll alone didn't say what it had to beat. I kept "armor class" in full because screen readers read "AC" as two letters.
+- **How I verified it:** Typecheck, lint, Prettier and all 205 tests pass (Claude Code ran them). On a backup copy, using "hit" for enemies, leaving out the armor class number and using "Hero" for the player each made tests fail. The `bonus > 0` change survived until I added a zero bonus test. The file was restored afterwards. `+` and `=` still need a VoiceOver check in Phase J.
+
 ---
 
 ## Agent-built rooms: evaluation
