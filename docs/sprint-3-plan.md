@@ -57,8 +57,8 @@ Pure logic, test-first. No Phaser, no React (rule 1).
 ## Thu Oct 29 — Phase I: enemies as data, combat in the store, combat narration
 
 1. **Enemies in the room format.** Add `enemies` to `room-schema.ts` (type, position) and the enemy stat table (a Zod-validated data file, not code). Add the three enemies to `entrance-hall.json`. Sprites are looked up by logical name through the manifest (rule 7).
-   - [ ] Test: an enemy outside the grid or on a wall tile fails in `loadRoom`
-   - [ ] Test: an unknown enemy type fails the schema
+   - [x] Test: an enemy outside the grid or on a wall tile fails in `loadRoom` (also on the player start and on another enemy)
+   - [x] Test: an unknown enemy type fails the schema
 2. **Combat in the store.** Starting combat when the player moves next to an enemy (or presses an "attack" key), actions that call the Phase H functions, and the events pushed to the log.
 3. **Narration (`narration.ts`).** Events become sentences ("You swing at the giant rat and hit for 3 damage."). Every combat event produces text (rule 5), including enemy deaths and the roll results. Keep the roll numbers in the text so a screen reader user gets the same information as someone watching.
    - [ ] Tests for each event type
