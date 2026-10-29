@@ -61,7 +61,7 @@ Pure logic, test-first. No Phaser, no React (rule 1).
    - [x] Test: an unknown enemy type fails the schema
 2. **Combat in the store.** Starting combat when the player moves next to an enemy (or presses an "attack" key), actions that call the Phase H functions, and the events pushed to the log.
 3. **Narration (`narration.ts`).** Events become sentences ("You swing at the giant rat and hit for 3 damage."). Every combat event produces text (rule 5), including enemy deaths and the roll results. Keep the roll numbers in the text so a screen reader user gets the same information as someone watching.
-   - [ ] Tests for each event type
+   - [x] Tests for each event type
 4. **Low health.** The one `assertive` announcement planned for this project. Decide the threshold (e.g. a quarter of max hit points) and announce once when crossing it, not on every hit.
 
 **Pitfalls**
