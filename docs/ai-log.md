@@ -700,6 +700,20 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept my shorter sentence structure over Claude Code's longer one, but asked for "you" instead of "Hero" and for the armor class to be in the brackets, because the roll alone didn't say what it had to beat. I kept "armor class" in full because screen readers read "AC" as two letters.
 - **How I verified it:** Typecheck, lint, Prettier and all 205 tests pass (Claude Code ran them). On a backup copy, using "hit" for enemies, leaving out the armor class number and using "Hero" for the player each made tests fail. The `bonus > 0` change survived until I added a zero bonus test. The file was restored afterwards. `+` and `=` still need a VoiceOver check in Phase J.
 
+#### 2026-11-01 — Phase I part 3: enemies in the store
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a guide to getting the enemies into the store, with Claude Code's recommendations for the player stats, how combat starts, solid enemies and duplicate names. Then to review each piece as I wrote it: the player constant, `spawnEnemies`, `getAdjacentEnemies`, the enemy check in `movePlayer` and the store tests. I also asked for the extra `samePosition` tests and for help with the store's `movePlayer`.
+- **What I got:**
+  - **Code I wrote:** `player.ts`, `spawn-enemies.ts` (including the two counts for numbering duplicates), `adjacency.ts`, the enemy check and the new blocked reason in `movement.ts`, the move of `samePosition` out of `load-room.ts`, the store changes in `loadRoom`, and the tests for all of it.
+  - **Code Claude Code wrote:** the `readonly` on the `spawnEnemies` parameter (to fix a type error in my test), the fix to `movePlayer` in the store (positions read before `computeMove` and not set back), and the four `samePosition` tests. It also deleted the blocks of guide text I had pasted at the top of two test files and ran Prettier on several files.
+  - **Review findings:** `PLAYER.currentHealth` was typed as `12` twice (now one constant); `RoomEnemy` had no type; `StoreEnemy` wasn't exported; the first `movePlayer` enemy check was before the edge and wall checks; the store's `set` replaced `enemies` with positions and the positions were calculated after `computeMove`; my `toBe` change went into the wrong adjacency test; and the "move next to an enemy" store test was a diagonal move, which doesn't count as adjacent.
+  - **Claude Code was wrong or unclear:** my first mutation check of the store did nothing, because Prettier had split the call over several lines and the `sed` pattern no longer matched, so all tests passed. It only noticed because the result looked suspicious and redid it another way.
+- **Outcome:** ✏️
+- **Why:** I took the recommended stats (HP 12, armor class 12, +3 to hit, +2 initiative, d6), solid enemies, four-way adjacency and numbering only duplicates. I chose to share `samePosition` from `movement.ts` instead of having a second copy, because the first one had the `===` bug. Combat itself (starting a fight, attacking, low health) is left for the next branch.
+- **How I verified it:** Typecheck, lint, Prettier and all 234 tests pass (Claude Code ran them). On backup copies, wrong versions of `getAdjacentEnemies` (6), `spawnEnemies` (4), `samePosition` (4), `movePlayer` and the store each made at least one test fail, and the files were restored afterwards.
+
 ---
 
 ## Agent-built rooms: evaluation
