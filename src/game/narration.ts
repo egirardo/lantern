@@ -6,6 +6,7 @@ import { PLAYER_ID, type CombatEvent, type CombatState } from './combat'
 const BLOCKED_TEXT: Record<BlockedReason, string> = {
   wall: 'A wall blocks your path',
   edge: 'The edge of the world blocks your path',
+  enemy: 'An enemy blocks your path',
 }
 
 function isPlayer(id: string): boolean {

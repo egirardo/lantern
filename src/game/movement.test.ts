@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { movePlayer } from './movement'
+import { movePlayer, samePosition } from './movement'
 import type { Grid } from './movement'
 
 const grid: Grid = [
@@ -138,5 +138,61 @@ describe('movePlayer', () => {
     const direction = 'south'
     movePlayer(playerPosition, direction, grid)
     expect(playerPosition).toEqual({ x: 1, y: 1 })
+  })
+
+  it('should not move the player onto an enemy tile', () => {
+    const playerPosition = { x: 1, y: 1 }
+    const direction = 'south'
+    const enemyPositions = [{ x: 1, y: 2 }]
+    const result = movePlayer(playerPosition, direction, grid, enemyPositions)
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'enemy',
+    })
+  })
+
+  it('should allow the player to move onto a free tile with enemies elsewhere', () => {
+    const playerPosition = { x: 0, y: 0 }
+    const direction = 'south'
+    const enemyPositions = [{ x: 1, y: 2 }]
+    const result = movePlayer(playerPosition, direction, grid, enemyPositions)
+    expect(result).toEqual({
+      newPosition: { x: 0, y: 1 },
+      moved: true,
+    })
+  })
+
+  it('should still report a wall when the player encounters a wall', () => {
+    const playerPosition = { x: 1, y: 1 }
+    const direction = 'north'
+    const enemyPositions = [{ x: 1, y: 0 }]
+    const result = movePlayer(playerPosition, direction, grid, enemyPositions)
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'wall',
+    })
+  })
+})
+
+describe('samePosition', () => {
+  it('is true for the same coordinates, even in two different objects', () => {
+    // Two separate objects: === would say false, samePosition compares x and y
+    expect(samePosition({ x: 2, y: 3 }, { x: 2, y: 3 })).toBe(true)
+  })
+
+  it('is false when only x differs', () => {
+    expect(samePosition({ x: 2, y: 3 }, { x: 1, y: 3 })).toBe(false)
+  })
+
+  it('is false when only y differs', () => {
+    expect(samePosition({ x: 2, y: 3 }, { x: 2, y: 4 })).toBe(false)
+  })
+
+  it('gives the same answer whichever position comes first', () => {
+    const a = { x: 0, y: 1 }
+    const b = { x: 1, y: 0 }
+    expect(samePosition(a, b)).toBe(samePosition(b, a))
   })
 })

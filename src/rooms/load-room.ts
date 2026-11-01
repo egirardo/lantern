@@ -1,5 +1,10 @@
 import { roomSchema, type Room } from './room-schema'
-import { DIRECTION_OFFSETS, type Grid, type Position } from '../game/movement'
+import {
+  DIRECTION_OFFSETS,
+  type Grid,
+  type Position,
+  samePosition,
+} from '../game/movement'
 import { tiledSchema, type TiledMap } from './tiled-schema'
 import { buildGrid } from './build-grid'
 
@@ -81,10 +86,6 @@ function isInsideGrid(grid: Grid, position: Position): boolean {
     position.x >= 0 &&
     position.x < row.length
   )
-}
-
-function samePosition(a: Position, b: Position): boolean {
-  return a.x === b.x && a.y === b.y
 }
 
 function isWall(grid: Grid, position: Position): boolean {

@@ -29,6 +29,15 @@ describe('describeMove', () => {
       'You cannot move to the west. The edge of the world blocks your path.',
     )
   })
+  it('describes a failed move into an enemy', () => {
+    const result = describeMove(
+      { moved: false, newPosition: { x: 2, y: 2 }, reason: 'enemy' },
+      'south',
+    )
+    expect(result).toBe(
+      'You cannot move to the south. An enemy blocks your path.',
+    )
+  })
 })
 
 describe('describeCombatEvent', () => {
