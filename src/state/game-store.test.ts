@@ -100,4 +100,80 @@ describe('gameStore', () => {
     expect(state.log.length).toBe(0)
     expect(state.tiledMap).toBeNull()
   })
+
+  it('expects the store to start with no enemies', () => {
+    const store = createGameStore()
+    const state: GameState = store.getState()
+    expect(state.enemies).toEqual([])
+  })
+
+  it('loadRoom fills enemies', () => {
+    const store = createGameStore()
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 2, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    const state: GameState = store.getState()
+    expect(state.enemies.length).toBe(1)
+    const enemy = state.enemies[0]
+    expect(enemy?.id).toBe('e1')
+    expect(enemy?.type).toBe('skeleton')
+    expect(enemy?.position).toEqual({ x: 2, y: 2 })
+    expect(enemy?.combatant.currentHealth).toBe(enemy?.combatant.maxHealth)
+    expect(enemy?.combatant.name).toBe('skeleton')
+  })
+
+  it('moving into an enemy leaves playerPosition unchanged and logs the block', () => {
+    const store = createGameStore()
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 1, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    store.getState().movePlayer('south')
+    const state: GameState = store.getState()
+    expect(state.playerPosition).toEqual({ x: 1, y: 1 })
+    const describeMoveResult = describeMove(
+      { moved: false, newPosition: { x: 1, y: 2 }, reason: 'enemy' },
+      'south',
+    )
+    expect(state.log[1]?.text).toBe(describeMoveResult)
+  })
+
+  it('moving next to an enemy is allowed', () => {
+    const store = createGameStore()
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    store.getState().movePlayer('south')
+    const state: GameState = store.getState()
+    expect(state.playerPosition).toEqual({ x: 1, y: 2 })
+    const describeMoveResult = describeMove(
+      { moved: true, newPosition: { x: 1, y: 2 } },
+      'south',
+    )
+    expect(state.log[1]?.text).toBe(describeMoveResult)
+  })
+
+  it('reloading a room replaces the old enemies', () => {
+    const store = createGameStore()
+    const roomWithEnemy1: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 2, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy1, validMap)
+    const stateAfterFirstLoad: GameState = store.getState()
+    expect(stateAfterFirstLoad.enemies.length).toBe(1)
+    const roomWithEnemy2: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e2', type: 'orc', position: { x: 0, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy2, validMap)
+    const stateAfterSecondLoad: GameState = store.getState()
+    expect(stateAfterSecondLoad.enemies.length).toBe(1)
+    expect(stateAfterSecondLoad.enemies[0]?.id).toBe('e2')
+  })
 })

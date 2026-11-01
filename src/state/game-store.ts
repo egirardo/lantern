@@ -9,12 +9,14 @@ import { loadRoom as loadRoomFromFiles } from '../rooms/load-room'
 import type { Room } from '../rooms/room-schema'
 import { describeMove } from '../game/narration'
 import type { TiledMap } from '../rooms/tiled-schema'
+import { spawnEnemies, type StoreEnemy } from '../game/spawn-enemies'
 
 export type GameState = {
   playerPosition: Position | null
   grid: Grid | null
   room: Room | null
   tiledMap: TiledMap | null
+  enemies: StoreEnemy[]
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   log: { id: string; text: string }[]
@@ -30,6 +32,7 @@ export function createGameStore() {
     grid: null,
     room: null,
     tiledMap: null,
+    enemies: [],
     loadRoom: (roomData, mapData) => {
       const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
@@ -39,16 +42,26 @@ export function createGameStore() {
         playerPosition: room.playerStart,
         room,
         tiledMap,
+        enemies: spawnEnemies(room.enemies),
         log: [...log, { id: crypto.randomUUID(), text }],
       })
     },
     movePlayer: (direction) => {
-      const { playerPosition, grid, log } = get()
+      const { playerPosition, grid, enemies, log } = get()
       // No room loaded yet, so there's nowhere to move and nothing to narrate.
       // After this check, TypeScript knows both values aren't null (narrowing).
       if (playerPosition === null || grid === null) return
-      const result = computeMove(playerPosition, direction, grid)
+      // Enemies are solid, so movement needs to know which tiles they stand on.
+      const enemyPositions = enemies.map((enemy) => enemy.position)
+      const result = computeMove(
+        playerPosition,
+        direction,
+        grid,
+        enemyPositions,
+      )
       const text = describeMove(result, direction)
+      // Only the position and the log change. The enemies stay as they are,
+      // so they are not part of this update.
       set({
         playerPosition: result.newPosition,
         log: [...log, { id: crypto.randomUUID(), text }],
