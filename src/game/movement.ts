@@ -6,7 +6,7 @@ export type Tile = 'floor' | 'wall'
 
 export type Grid = Tile[][]
 
-export type BlockedReason = 'wall' | 'edge'
+export type BlockedReason = 'wall' | 'edge' | 'enemy'
 
 export type MoveResult =
   | { moved: true; newPosition: Position }
@@ -21,10 +21,15 @@ export const DIRECTION_OFFSETS: Record<Direction, Position> = {
   west: { x: -1, y: 0 },
 }
 
+export function samePosition(a: Position, b: Position): boolean {
+  return a.x === b.x && a.y === b.y
+}
+
 export function movePlayer(
   playerPosition: Position,
   direction: Direction,
   grid: Grid,
+  enemyPositions: Position[] = [],
 ): MoveResult {
   // Look up how far one step in this direction moves, then add it to the current position
   const offset = DIRECTION_OFFSETS[direction]
@@ -50,6 +55,15 @@ export function movePlayer(
   // Check if the new position is a wall
   if (targetRow[newX] === 'wall') {
     return { moved: false, newPosition: playerPosition, reason: 'wall' }
+  }
+
+  // Check if the new position is blocked by an enemy
+  if (
+    enemyPositions.some((position) =>
+      samePosition(position, { x: newX, y: newY }),
+    )
+  ) {
+    return { moved: false, newPosition: playerPosition, reason: 'enemy' }
   }
 
   // If the move is valid, return the new position
