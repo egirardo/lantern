@@ -70,7 +70,9 @@ Pure logic, test-first. No Phaser, no React (rule 1).
 - Defeated enemies must disappear from the store, not only from the canvas.
 - Keep the log from flooding: one sentence per event, no repeated descriptions every turn.
 
-- [ ] Phase I done, PR reviewed
+- [x] Phase I done, PR reviewed (PRs #26 and #27, finished Nov 2)
+
+> **Nov 2:** Phases J, K and L were not started in Sprint 3. They moved to `docs/sprint-4-plan.md`.
 
 ---
 

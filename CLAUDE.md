@@ -117,19 +117,20 @@ npm run typecheck   # TypeScript check
 
 ## Current status
 
-**Sprint 3 (Oct 26–Nov 1): Reference room, combat and accessibility**
-Goal: the reference room is a playable game with a lantern, three enemy types, dice-based combat and keyboard action menus. Full plan: `docs/sprint-3-plan.md`.
+**Sprint 4 (Nov 2–8), planned together with Sprint 5 up to submission on Fri Nov 13**
+Goal: finish the reference room, start the agents on rooms 2 and 3, then settings, saves, accounts and the evaluations. Full plan and timeline: `docs/sprint-4-plan.md`.
 
-Sprints 1 and 2 are finished. Sprint 3 effectively starts Wed Oct 28 (5 working days, including the weekend):
+Sprints 1–3 are finished (Phases H and I done; J, K and L moved here). Decided Nov 2: the dungeon has **3 rooms**, all Shoulds wait until after submission, and Playwright and axe-core are reduced to one axe scan (plus one keyboard Playwright path if there's time). Thu Nov 5 is a morning only; Sun Nov 8 is a full working day.
 
-- [ ] Decisions (turn structure, light radius, enemy stats)
-- [ ] Phase H: dice and combat rules, logic and tests
-- [ ] Phase I: enemies as data, combat in the store, combat narration
-- [ ] Phase J: keyboard action menus and focus management
-- [ ] Phase K: lantern rendering and narration of what the light reveals
-- [ ] Phase L: accessibility settings (reduced motion, high contrast, text size, log verbosity)
+- [ ] Phase J: keyboard action menus and focus management (Tue Nov 3)
+- [ ] Phase K: lantern rendering and narration of what the light reveals (Wed Nov 4 – Thu Nov 5)
+- [ ] Exits and room changes, arriving at the doorway (Fri Nov 6)
+- [ ] "Building rooms" spec below, agents build rooms 2 and 3 (from Sun Nov 8)
+- [ ] Phase L: accessibility settings (Sun Nov 8 – Mon Nov 9)
+- [ ] Guest saves, Supabase accounts, sync and row-level security (Tue Nov 10 – Wed Nov 11)
+- [ ] Full screen reader pass, axe scan, WCAG and agent evaluations, submission (Thu Nov 12 – Fri Nov 13)
 
-Does not fit and moves to the start of Sprint 4 (decided Oct 28: Sprint 5 is the buffer, so Inventory and colorblind design are the first Shoulds to cut): full-room screen reader test, guest saves, Playwright and axe-core, the "Building rooms" section below, exits and room changes.
+Work split for pure helpers in `src/game/`: I write the tests, Claude writes the implementation and explains it. I write store wiring, React, focus and Phaser code myself.
 
 *Update this section at the start of each sprint.*
 
