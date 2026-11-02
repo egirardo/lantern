@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { describeCombatEvent, describeMove } from './narration'
+import {
+  describeCombatEvent,
+  describeMove,
+  describeLowHealth,
+} from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState } from './test-helpers'
 
@@ -227,5 +231,14 @@ describe('describeCombatEvent', () => {
         describeCombatEvent(state, { type: 'combat-ended', outcome: 'defeat' }),
       ).toBe('Defeat. The fight is over.')
     })
+  })
+})
+
+describe('describeLowHealth', () => {
+  it('says low health first, then the health left out of max', () => {
+    const player = makeCombatant({ currentHealth: 3, maxHealth: 12 })
+    expect(describeLowHealth(player)).toBe(
+      'Low health warning: you have 3 out of 12 health remaining.',
+    )
   })
 })

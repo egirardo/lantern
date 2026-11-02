@@ -1,5 +1,10 @@
 import { type Direction, type MoveResult, type BlockedReason } from './movement'
-import { PLAYER_ID, type CombatEvent, type CombatState } from './combat'
+import {
+  PLAYER_ID,
+  type Combatant,
+  type CombatEvent,
+  type CombatState,
+} from './combat'
 
 // Record requires an entry for every BlockedReason, so adding a new reason
 // without a corresponding message is a type error instead of a silent default.
@@ -101,4 +106,12 @@ export function describeMove(result: MoveResult, direction: Direction): string {
   } else {
     return `You cannot move to the ${direction}. ${BLOCKED_TEXT[result.reason]}.`
   }
+}
+
+// The one assertive announcement in the game (see low-health.ts for when it
+// fires). "Low health" comes first because an assertive message interrupts
+// the screen reader, so the first words should say why. "health" is written
+// out, not "HP", because screen readers spell out abbreviations.
+export function describeLowHealth(player: Combatant): string {
+  return `Low health warning: you have ${player.currentHealth} out of ${player.maxHealth} health remaining.`
 }
