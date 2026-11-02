@@ -1,5 +1,6 @@
 // Helpers shared by the game logic tests. Only tests import this file.
 import { PLAYER_ID, type Combatant, type CombatState } from './combat'
+import type { StoreEnemy } from './spawn-enemies'
 
 // A combatant with sensible defaults, so a test only spells out what matters
 // for it, e.g. makeCombatant({ armorClass: 30 }).
@@ -12,6 +13,20 @@ export function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
     armorClass: 12,
     attackBonus: 3,
     damageDie: 6,
+    ...overrides,
+  }
+}
+
+// A store enemy with sensible defaults, e.g. makeStoreEnemy('e1', { position: { x: 2, y: 1 } }).
+export function makeStoreEnemy(
+  id: string,
+  overrides: Partial<StoreEnemy> = {},
+): StoreEnemy {
+  return {
+    id,
+    type: 'demon',
+    position: { x: 1, y: 1 },
+    combatant: makeCombatant(),
     ...overrides,
   }
 }
