@@ -286,3 +286,13 @@ Changes to the sprint plan above, with the date and reason. The original plan is
 - **What happened:** I decided to add initiative rolls to combat in Sprint 3, even though they're not in the MoSCoW. Building the turn model once avoids reshaping the combat code, enemy schema and menu focus later.
 - **Effect on the method:** the plan says I build the reference room completely by hand. For initiative I write the tests and Claude Code writes the implementation, which I review. This is logged in `docs/ai-log.md` as code Claude Code wrote. Dice, the attack roll, applying damage and the combat types are my own code. I'll say this in the evaluation, so the comparison with the agent-built rooms is honest about which parts of the reference room were AI-written.
 - **Schedule:** Phase L (settings) is still the first thing to slip if time runs short.
+
+**Nov 2 — Sprint 3 ran over, re-plan to submission**
+
+- **What happened:** Sprint 3 finished Phases H and I (dice, combat rules, enemies, combat in the store and its narration) but not Phases J, K and L. The Musts left are estimated at 10.5–13 days, with about 10 working days before submission.
+- **One plan to submission:** Sprints 4 and 5 are planned together in `docs/sprint-4-plan.md`. Order: action menus (Phase J), lantern rendering (Phase K), exits, the agent spec and agent rooms, settings (Phase L), guest saves, accounts and sync, a full screen reader pass, then the evaluations and submission on Fri Nov 13. Sat–Sun Nov 14–15 is a buffer.
+- **The dungeon has 3 rooms:** the reference room plus 2 agent-built rooms (plan B from the risks section).
+- **Supervision Nov 4:** demo of keyboard combat and this re-plan, instead of the full dungeon and account sync.
+- **Shoulds move to after submission:** all Should items are cut from the submission. Playwright and axe-core are reduced to one axe-core scan and, if there's time, one keyboard Playwright path.
+- **Effect on the method:** for pure helpers in `src/game/` (from Nov 2: low health, combat sync, combat flow; later reveal narration and verbosity), I write the tests and Claude Code writes the implementation, which I review. I write the store wiring, React, focus handling and Phaser code myself. All of it is logged in `docs/ai-log.md`, and the evaluation will say which parts of the reference room were AI-written.
+- **Days:** weekdays as before, but Thu Nov 5 is only a morning and Sun Nov 8 is a full working day I chose to add.

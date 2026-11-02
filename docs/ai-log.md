@@ -745,6 +745,16 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept my store design and fixed the review findings. For the tests I chose to write them myself with Claude Code reviewing, and only let it fix them when I asked. My question about S7 led to a decision for Sprint 4: when exits exist, the player arrives at the doorway they came through, not at `playerStart` (added to my open reminders).
 - **How I verified it:** Typecheck, lint, Prettier and all 269 tests pass (Claude Code ran them). Before giving me the table, Claude Code checked every dice sequence with a throwaway test outside the project. On a backup copy of the store, it removed the "can't move in a fight" check, made `loadRoom` keep the fight, and made `loadRoom` reset the player's health. Each change made a test fail (S3, then S7 twice). Before the fixes, the first change didn't make any test fail. The store file was restored afterwards.
 
+#### 2026-11-02 — Re-planning the rest of the project
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** To re-plan the rest of the project against the Nov 16 deadline, now that Phase I is merged and Phases J, K and L weren't started in Sprint 3.
+- **What I got:** An estimate of the Musts left (about 10.5–13 days against about 9.5 weekdays), a day-by-day timeline to submission on Fri Nov 13, and five decisions to make: the number of rooms, the supervision demo, how much Playwright and axe-core, moving all Shoulds to after submission, and whether to use the helper work split in Phases J, K and L. It recommended starting the agents before Phase L, because settings don't change the room format, so the agent rooms can be built while I work on settings and accounts. After I said Thu Nov 5 is only a morning and Sun Nov 8 is a full day, it moved Phase K's end to Thursday morning and the agent spec to Sunday. It then wrote `docs/sprint-4-plan.md`, a "Plan changes" entry in `docs/project-plan.md`, the status in `CLAUDE.md` and the Phase I tick in the Sprint 3 plan.
+- **Outcome:** ✏️
+- **Why:** I took all four recommendations (3 rooms, demo keyboard combat at the supervision, a minimum of axe-core and Playwright, the helper split for pure helpers in J, K and L) and changed the available days. The estimates are Claude Code's guesses, and the plan says that Tue Nov 10 and Wed Nov 11 (Supabase) are the riskiest days.
+- **How I verified it:** Checked the timeline against my own calendar, and the remaining Musts against the MoSCoW and the Definition of Done in `docs/project-plan.md`.
+
 ---
 
 ## Agent-built rooms: evaluation
