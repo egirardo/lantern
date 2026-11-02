@@ -45,24 +45,78 @@ The riskiest days are **Tue Nov 10 and Wed Nov 11** (Supabase is new to me). If 
 
 ## Phase J: keyboard action menus and focus (Tue Nov 3)
 
-As written in `docs/sprint-3-plan.md`, Phase J. What exists now: the store has `combat`, `player`, `enemies` and `playerAttack(targetId)`. When the player wins initiative, `combat` is set and it's the player's turn. When enemies go first, their attacks are already in the log.
+Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 
-- [ ] Action menu with real `<button>`s, shown while `combat` isn't null
-- [ ] Focus moves into the menu when a fight starts, and back to the game region when it ends
-- [ ] Choosing a target by name when more than one enemy is adjacent
-- [ ] "It's your turn" in the log before focus lands in the menu
-- [ ] Arrow keys don't move the player while the menu has focus
-- [ ] A short VoiceOver check of one fight (the full pass is on Nov 12)
-- [ ] PR reviewed
+**What exists now:** the store has `combat`, `player`, `enemies` and `playerAttack(targetId)`. Enemy turns run straight away inside `movePlayer` and `playerAttack`, so **whenever `combat` isn't null, it's the player's turn**. The menu is shown exactly then, with no turn check. The arrow-key handler is on the game region's `<div>`, so a menu placed outside that div can't trigger movement.
+
+**Gap found:** `AdventureLog` puts every entry in `role="log"` (polite) and ignores `urgency`, so the low-health warning isn't announced assertively yet. Fixed in step 5.
+
+**Decisions (Nov 2)**
+
+1. **One button per living enemy** ("Attack the skeleton", "Attack the orc"), not "Attack" followed by a target list. One step, no submenu, and it still covers choosing a target.
+2. **Tab, Enter and Space only.** Plain buttons do this natively. Arrow keys inside the menu would need the ARIA menu pattern (roving tabindex). Semantic HTML first; arrow keys only if the VoiceOver test shows they're missed.
+3. **No Flee button, not even a disabled one.** Fleeing isn't a Must.
+4. **No enemy health in the button text.** The canvas doesn't show it either; damage is already in the log.
+5. **"It's your turn." is the last line of a step,** after the low-health warning (this changes "low health goes last"). The low-health line gets its own assertive region, so in the log the line right before the menu is the cue to act.
+
+**Steps** (pure helpers: I write the tests, Claude implements. The rest I write myself.)
+
+1. **"It's your turn." and healing in `finishStep`** (`combat-flow.ts`). Pure helpers.
+   - A polite "It's your turn." at the end of every step where the fight goes on.
+   - **Healing (decided Nov 2):** after a won fight, the player recovers **4 health**, up to their maximum, with a polite line: "You catch your breath and recover 4 health. You have 11 out of 12." Fixed, not rolled, so it's predictable for the player and the tests. Health still carries over between rooms. Healing back above the threshold re-arms the low-health warning with no extra code (`crossedLowHealth` compares before and after).
+   - [ ] Tests written, implemented
+2. **`getAttackOptions(combat)`** in `src/game/`: `{ id, label }` for each living enemy, e.g. `{ id: 'e1', label: 'Attack the skeleton' }`, using the "the skeleton" wording from `narration.ts`. Pure helper, so the button text is unit-tested.
+   - [ ] Tests written, implemented
+3. **`CombatMenu.tsx`:** a section with a "Your turn" heading and a list of `<button>`s, one per option, each calling `playerAttack(option.id)`. Rendered in `App.tsx` between the game and the log, only while `combat !== null`.
+   - [ ] Done
+4. **Focus in and out:** one `useEffect` in `CombatMenu`. When the menu appears, save `document.activeElement` and focus the first button. In the effect's cleanup (when the menu disappears), focus the saved element again. After every attack, focus the first remaining button, because the focused one disappears when its enemy dies.
+   - [ ] Done
+5. **Assertive announcements:** a visually hidden `aria-live="assertive"` region in `AdventureLog` that holds only the newest assertive line, and a `.visually-hidden` CSS class.
+   - [ ] Done
+6. **Game over:** when the player falls, show "You have fallen. Reload the page to try again." and move focus to it (the same pattern as the error in `RoomLoader`: `tabIndex={-1}` and `.focus()`). A real "try again" comes with the save layer.
+   - [ ] Done
+7. **VoiceOver check** of a fight with one enemy and with two (the full pass is on Nov 12).
+   - [ ] Done, PR reviewed
+
+**Risks**
+
+- **Focus versus the live region:** when focus jumps to the first button, VoiceOver may cut off polite log lines that arrived at the same moment (e.g. the initiative rolls). The "Your turn" heading helps. If lines get lost, choose the fix after hearing it in step 7.
+- **A disappearing button:** killing one of two enemies removes the focused button, and focus drops to the top of the page (handled in step 4).
+- **The low-health line may be read twice** (assertive region and log). Decide after hearing it in VoiceOver.
+
+**Estimate:** steps 1–2 about 1 hour, steps 3–4 about 2.5 hours, steps 5–6 about 1.25 hours, step 7 about 1 hour.
 
 ## Phase K: lantern rendering and narration (Wed Nov 4 – Thu Nov 5 morning)
 
-As written in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first time here, only inside the light.
+Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first time here, only inside the light. **Decor names added on Nov 2**, so Phase K will probably spill into **Fri morning**. If it slips further, use Sun morning before the agent spec, not next week. Decor names must be in before the agent spec, or the agents copy a format without them.
 
-- [ ] Tiles outside the light drawn dark, redrawn on every move
-- [ ] Enemies drawn only inside the light (looked up through the asset manifest)
-- [ ] Narration when something new enters the light, once, with a direction (pure helper: I write the tests)
-- [ ] PR reviewed
+**Why decor names:** decor already *draws* with no code. `drawRoom` draws every tile layer, so walk-over decor (rugs, bones) can go on a new layer, and blocking decor (barrels, tables) goes on `walls`. But the text doesn't match: walking into a barrel says "A wall blocks your path.", and the lantern can't say "a barrel" (rule 5).
+
+**Decisions (Nov 2)**
+
+1. **Names come from a names table,** not from Tiled tile properties (this changes the Oct 20 idea). One Zod-validated JSON file next to the asset manifest maps tile ids to names, e.g. `{ "dungeon": { "1099": "barrel" } }`. Every room, including the agent rooms, shares it automatically, and map loading doesn't change. Tile properties would need the tileset exported from `entrance-hall.tmj` as a shared file and a third file fetched per room (about 3–4 hours instead of 1–1.5). Downside: names aren't visible while painting in Tiled.
+2. **Doors don't need the table.** The room file's `exits` already lists the door tiles, so "A door appears to the north" comes from `room.exits`.
+3. **Names live next to the grid, not in it.** The grid stays `'floor' | 'wall'`. Changing it would touch movement, visibility and all their tests.
+
+**Steps** (pure helpers: I write the tests, Claude implements. Tiled work, Phaser and the store I do myself.)
+
+1. **Names table and lookup:** `tile-names.json` plus a schema, and a lookup from a map gid to a name. Gotcha: Tiled shows the tile's *local* id (gid minus `firstgid`), and flipped tiles have flag bits set (`gid & 0x1fffffff`, as in `toTileIndices`). The table uses the id Tiled shows. Pure helper.
+   - [ ] Tests written, implemented
+2. **`buildFeatures(map)`:** `{ position, name }` for every named tile on any layer, built in `loadRoom` next to the grid and kept in the store. Pure helper.
+   - [ ] Tests written, implemented, wired into the store
+3. **Blocked-move text:** walking into a named tile says "A barrel blocks your path." An unnamed blocked tile still says wall. Pure helper (narration).
+   - [ ] Tests written, implemented
+4. **Name the decor (Tiled):** add the barrels, tables and so on to the entrance hall, and their tile ids to the table.
+   - [ ] Done
+5. **Render the dark (Phaser):** tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
+   - [ ] Done
+6. **Enemies in the light (Phaser):** enemies drawn only inside the light, looked up through the asset manifest.
+   - [ ] Done
+7. **Reveal narration:** when an enemy, an exit or a named feature enters the light, log it once with a direction ("A barrel appears to the east."). A feature covering several tiles (the two-tile door) is announced once. Pure helper.
+   - [ ] Tests written, implemented, wired into the store
+8. - [ ] PR reviewed
+
+**Rough order:** Wed afternoon steps 1–3. Thu morning step 7. Fri morning steps 4–6 and the PR. Fri afternoon exits.
 
 ## Exits and room changes (Fri Nov 6)
 
@@ -74,8 +128,37 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 4. **Redrawing.** Destroy the old tilemap and player sprite before drawing the new room (two Open reminders in the learning notes).
 5. **Narration.** Entering a room logs its description, as `loadRoom` already does.
 6. **Tests** use small fixture rooms in the test files. No real second room yet: those are built by the agents.
+7. **The goal: find the way out (decided Nov 2).** The last room has an exit marked `final` (e.g. a ladder up to the surface). Using it wins the game: a victory line in the log, and focus moves to a victory message (same pattern as game over in Phase J). Until now the game could only be lost. About 30 extra minutes.
+8. **"How to play"** as a native `<details>` element above the map, with the rules text below. It opens and closes with the keyboard, and screen readers support it without ARIA. Fill in the door key once it's chosen. About 30 minutes.
 
-- [ ] Exits work, tested with fixture rooms, PR reviewed
+- [ ] Exits work, tested with fixture rooms
+- [ ] Final exit and victory
+- [ ] "How to play" in the game
+- [ ] PR reviewed
+
+**Rules text (draft, Nov 2)**
+
+```markdown
+## How to play
+
+**Your goal:** find the way out of the dungeon. The exit is somewhere in the last room.
+
+**Moving.** Focus the dungeon map and use the arrow keys. Each key press is one step. Walls, objects and enemies block your way, and the adventure log tells you what happened.
+
+**Your lantern.** You can only see three tiles around you. When something comes into the light, the log tells you what it is and in which direction.
+
+**Fights.** A fight starts when you step next to an enemy. Everyone rolls a 20-sided die for initiative, and the highest roll goes first. You win a tie. On your turn, choose an enemy to attack in the action menu (Tab to move, Enter to choose). You can't move or run away during a fight.
+
+**Attacks.** An attack is a 20-sided die plus your attack bonus. It hits if the total is at least the target's armor class. A natural 20 always hits and is a critical hit: the damage is rolled twice. A natural 1 always misses. Every roll is written in the log.
+
+**Health.** You have 12 health. After you win a fight, you recover 4 health. The game warns you when you're down to 3 or less. At 0 you fall, and the game is over.
+
+**Doors.** [key to be decided] Use a door when you're next to it. You can't leave a room during a fight.
+
+**No hurry.** The game always waits for you. There are no time limits.
+```
+
+**Check on Thu Nov 12:** play the whole dungeon once to see whether 12 health and healing 4 per won fight are balanced. Adjust the numbers (data, not code) if it's too hard or too easy.
 
 ## Agent spec and agent rooms (Sun Nov 8 onwards)
 
