@@ -17,8 +17,9 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
 3. **Playwright and axe-core: minimum.** One axe-core scan of the game page, plus one keyboard Playwright path if there's time on Thu Nov 12. The rest is future work in the report.
 4. **All Shoulds move to after submission** (Sprint 6): inventory, colorblind design and game speed, sound cues, moving a guest save to an account, magic links. They go in the report as "future improvements" if they aren't done.
 5. **Work split for Phases J, K and L:** for pure helpers in `src/game/` (e.g. reveal narration, verbosity), I write the tests and Claude Code writes the implementation, the same as for the combat helpers on Nov 2. I write the React components, focus handling, Phaser code and store wiring myself. Logged in `docs/ai-log.md`, and recorded in "Plan changes" so the evaluation is honest about what was AI-written.
+6. **UI skin with the Pixel RPG UI Pack, built by an agent (added Nov 3).** I slice the pieces I need from the sheet myself and choose an accessible font; an agent writes the CSS. It's a third agent task for the evaluation, next to rooms 2 and 3. **License:** the pack's custom license allows editing and commercial use but doesn't mention redistribution. I asked the author and have had no reply. I accept the risk of committing the pieces I use to the public repo, and mitigate it (see "UI skin"). This deviates from the project plan's "CC0 asset pack", so it goes in "Plan changes" and in the report.
 
-**What gives first if a day slips:** the weekend buffer (Nov 14–15), then the Playwright path, then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
+**What gives first if a day slips:** the weekend buffer (Nov 14–15), then the UI skin (the game works without it, so it's the first thing to cut), then the Playwright path, then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
 
 ---
 
@@ -31,10 +32,10 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
 | Wed Nov 4 | **Supervision:** demo keyboard combat and the re-plan. Then start **Phase K** |
 | Thu Nov 5 (morning) | Finish **Phase K:** lantern light and narration of what it reveals |
 | Fri Nov 6 | **Exits and room changes** |
-| Sun Nov 8 | **Agent spec** ("Building rooms" in `CLAUDE.md`), start the agents on rooms 2 and 3. Start **Phase L** |
-| Mon Nov 9 | Finish **Phase L:** settings |
+| Sun Nov 8 | **Slice the UI pieces** from the sheet in Aseprite and choose the font (morning, about 1–1.5 h). **Agent spec** ("Building rooms" in `CLAUDE.md`) and the **UI skin brief**, start the agents on rooms 2 and 3. Start **Phase L** |
+| Mon Nov 9 | Finish **Phase L:** settings. When the Phase L PR is merged, **start the UI skin agent** |
 | Tue Nov 10 | **Guest saves** (localStorage), then **Supabase sign-in** with accessible login and sign-up |
-| Wed Nov 11 | **Sync** saves and settings to the account, **row-level security** and its tests. Review the agent rooms |
+| Wed Nov 11 | **Sync** saves and settings to the account, **row-level security** and its tests. Review the agent rooms and the **UI skin PR** |
 | Thu Nov 12 | **Full screen reader pass** (VoiceOver), one axe scan, fixes. Finish reviewing the agent rooms |
 | Fri Nov 13 | **WCAG 2.2 evaluation**, agent-workflow evaluation, README, AI log summary, Result section. **Submit** |
 | Sat–Sun Nov 14–15 | Buffer |
@@ -169,6 +170,32 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 - [ ] Spec written
 - [ ] Room 2 merged, corrections logged
 - [ ] Room 3 merged, corrections logged
+
+## UI skin (agent): Pixel RPG UI Pack (Sun Nov 8 – Wed Nov 11)
+
+Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sheet, `Ui.png` (plus `Ui.aseprite` and `Ui.psd`), with no data saying where each piece is. An agent reading pixel coordinates by eye would get seams in the frames, so **I cut the pieces out myself** and the agent only writes CSS.
+
+**Why the agent starts after Phase L:** by then the combat menu, game over, the log and the settings dialog all exist, so it styles real markup. The high contrast setting exists too, so the agent can make it turn the skin off instead of guessing how it will work.
+
+1. **Slice the pieces (me, Sun Nov 8 morning, about 1–1.5 h).** Open `Ui.aseprite` and check for slices first. Export each piece I need as its own PNG: a panel frame, a button, a pressed or focused button, and maybe a heading banner. Only the pieces I use go into the repo, in their own folder with a credit file.
+2. **Choose the font (me, same morning).** Readable at small sizes, with its license (e.g. SIL OFL), and all the characters the log uses (`+`, `=`, `'`, `!`).
+3. **Write the brief (with Claude Code, Sun Nov 8, about 30 min).** Which piece goes on which element. Only CSS and class names change, never component structure or text. It shares the checklist with the room spec.
+4. **The agent builds it as a PR (from Mon Nov 9).**
+5. **I review it (Wed Nov 11, about 1–2 h with fixes)** and log every correction in the evaluation, the same as for the agent rooms.
+
+**Accessibility rules for the skin** (from Oct 14):
+
+- Frames are decoration around real HTML text. No text in images (WCAG 1.4.5 Images of Text).
+- Text contrast against the frame colours meets AA (checked with axe).
+- Focus stays clearly visible on styled buttons (a `border-image` can hide the outline).
+- The high contrast setting turns the skin off or overrides it.
+- `image-rendering: pixelated` and whole-number scaling, so the art stays sharp. Text size changes must not break the frames.
+
+**License safeguards:** commit only the pieces I use, credit the author in the README with a link, note that I asked for permission on the itch.io page and haven't had a reply (keep a screenshot of the comments), and write it in the report as a known risk. The skin is one stylesheet and one folder, so it can be removed quickly if the author says no.
+
+- [ ] Pieces sliced and exported, font chosen
+- [ ] Brief written
+- [ ] UI skin PR reviewed and merged, corrections logged
 
 ## Phase L: accessibility settings (Sun Nov 8 – Mon Nov 9)
 
