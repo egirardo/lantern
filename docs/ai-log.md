@@ -794,6 +794,25 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 
 ---
 
+#### 2026-11-03 — Phase J steps 1b, 3, 4 and 5: the combat menu, focus, the layout and the announcer
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Accessibility, Learning
+- **What I asked:** Reviews of my `CombatMenu.tsx`, a layout with the log beside the map, a line announcing who attacks at the start of a fight, help with focus handling, and help finding out why VoiceOver didn't read parts of the log. Later, to write the fixes myself would take too long, so I asked Claude Code to write them.
+- **What I got:**
+  - **Code I wrote:** `CombatMenu.tsx` (the section, heading, list of buttons from `getAttackOptions`, the store read and the null check), the first version of the focus effect (remember focus, return it at the end), and placing the menu in `App.tsx`.
+  - **Code Claude Code wrote, at my request:** the two-column layout (`App.tsx`, `index.css`, the scrolling log box with `tabIndex={0}` and auto-scroll); `describeCombatStart` with its tests and the `beginCombat` change ("The skeleton attacks you! A fight begins."); the rest of the focus handling (the `document.body` check, focus moving in the click handler, `data-enemy-id`, the 100 ms delay at fight start); and `LiveAnnouncer.tsx` with the `.visually-hidden` class.
+  - **Review findings in my code:** `getAttackOptions` was called before the null check (a typecheck error and a runtime crash outside a fight); `type="button"` and the class name were missing; the menu wasn't in `App.tsx`; a half-pasted copy of the effect broke the file; `firstButtonRef` was never attached to a button; and reading a ref in the effect cleanup would trigger a lint warning.
+  - **My VoiceOver testing found:** no context when a fight started (only dice); the victory lines never read; "main" instead of the button in a second fight; the log stopping after line 16; the low-health warning dropping the lines before it; repeated wall bumps read only once; and VoiceOver's hints talking over the log.
+  - **Fixes, one at a time:** a separate fight-start line (my idea was to add the enemy to the initiative line; Claude Code suggested a separate line so the context comes first, and I agreed). Focus moved in the click handler, so the focused button never disappears. A `LiveAnnouncer` that only holds the newest batch, instead of the growing `role="log"`. A whole batch going to one region by its most urgent line. An invisible alternating space so identical lines are read again.
+  - **Learning:** the Safari Tab setting and dev tools, closures in effects, narrowing, hooks before early returns, why a new array from a Zustand selector re-renders forever, `useEffect` vs `useLayoutEffect`, React batching updates in event handlers, where a `key` works, and how VoiceOver queues, drops and skips announcements.
+  - **Claude Code was wrong or unclear:** it blamed hot reloading when Tab couldn't reach the attack button; the real cause was Safari's Tab setting (I found it with Option + Tab). Its first focus fix (a 100 ms delay everywhere) made the victory problem audible as "main" instead of fixing it. It had two wrong theories about the 16-line limit (the auto-scroll, then the scrolling box) and wrote one of them into a code comment before it was tested; the comment was removed. Its first `LiveAnnouncer` change put the `key` inside the component, where it does nothing, and it caught that itself. It first said fight 2 was probably caused by `role="application"`; the hints test pointed more widely at VoiceOver's hints.
+- **Outcome:** ✏️
+- **Why:** I kept the fixes because each one was confirmed by ear in VoiceOver, not just by tests. Most of this afternoon's code is Claude Code's, because I asked it to write the fixes to save time before the supervision. I need to read through `CombatMenu.tsx` and `LiveAnnouncer.tsx` before I present them. Still open: the hints problem, and whether to keep `role="application"` (known issues in the sprint plan).
+- **How I verified it:** Typecheck, lint, Prettier, all 293 tests and the build pass (Claude Code ran them). I tested in Safari with VoiceOver after every change: keyboard combat, focus at the start and end of fights, the log past line 16, low health, and repeated walls. With VoiceOver's hints turned off, everything was read as intended. `document.activeElement` in the console confirmed focus was on the button when VoiceOver said "main". There are no automated tests for the React components.
+
+---
+
 ## Agent-built rooms: evaluation
 
 Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.

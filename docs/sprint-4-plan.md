@@ -71,15 +71,20 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 2. **`getAttackOptions(combat)`** in `src/game/`: `{ id, label }` for each living enemy, e.g. `{ id: 'e1', label: 'Attack the skeleton' }`, using the "the skeleton" wording from `narration.ts`. Pure helper, so the button text is unit-tested.
    - [x] Tests written, implemented (in `narration.ts`, so the label uses the same words as the log)
 3. **`CombatMenu.tsx`:** a section with a "Your turn" heading and a list of `<button>`s, one per option, each calling `playerAttack(option.id)`. Rendered in `App.tsx` between the game and the log, only while `combat !== null`.
-   - [ ] Done
+   - [x] Done. Checked by hand: Tab reaches the button, Enter and Space both attack. Claude Code also moved the log beside the map, in its own scrolling box, at my request (Nov 3)
 4. **Focus in and out:** one `useEffect` in `CombatMenu`. When the menu appears, save `document.activeElement` and focus the first button. In the effect's cleanup (when the menu disappears), focus the saved element again. After every attack, focus the first remaining button, because the focused one disappears when its enemy dies.
-   - [ ] Done
+   - [x] Done (Nov 3). **Changed while testing:** the focused button must never disappear while it has focus, or VoiceOver jumps to "main" and drops the queued lines. So after an attack, the click handler moves focus (to the map when the fight ends, or to a button that stays when one enemy of several dies) before React removes the button. The move into the menu at the start of a fight waits 100 ms. Mostly written by Claude Code at my request, starting from my effect.
 5. **Assertive announcements:** a visually hidden `aria-live="assertive"` region in `AdventureLog` that holds only the newest assertive line, and a `.visually-hidden` CSS class.
-   - [ ] Done
+   - [x] Done (Nov 3), **as a `LiveAnnouncer`** instead: two visually hidden regions (polite and assertive) that only hold the newest batch of lines. The visible log is now a plain named region, not a live region. Why: VoiceOver in Safari stopped announcing the growing `role="log"` after about 16 lines. A batch is as urgent as its most urgent line and goes whole to one region, because a separate assertive line interrupted and dropped the polite lines before it. Every other batch gets an invisible non-breaking space, because VoiceOver skips text identical to the previous announcement. Written by Claude Code at my request.
 6. **Game over:** when the player falls, show "You have fallen. Reload the page to try again." and move focus to it (the same pattern as the error in `RoomLoader`: `tabIndex={-1}` and `.focus()`). A real "try again" comes with the save layer.
    - [ ] Done
 7. **VoiceOver check** of a fight with one enemy and with two (the full pass is on Nov 12).
    - [ ] Done, PR reviewed
+
+**Known issues after testing (Nov 3), for step 7 on Wed:**
+
+- **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** Decide: keep `role="application"` (and document it), or drop it so the map has no long hint, if arrow keys still reach the game for VoiceOver users. Test first.
+- **At the start of a fight, the button is read before the lines** ("Attack the demon, button", then "The demon attacks you!…"). Accepted: nothing is lost, and the button names the enemy.
 
 **Risks**
 
