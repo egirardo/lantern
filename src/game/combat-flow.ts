@@ -11,7 +11,13 @@ import {
   startCombat,
 } from './combat-turns'
 import { crossedLowHealth } from './low-health'
-import { describeCombatEvent, describeLowHealth } from './narration'
+import {
+  describeCombatEvent,
+  describeLowHealth,
+  describeRecovery,
+  describeYourTurn,
+} from './narration'
+import { recoverHealth, RECOVERY_AMOUNT } from './recovery'
 import type { StoreEnemy } from './spawn-enemies'
 
 // The store's two combat moments (a fight starts, the player attacks) each
@@ -106,16 +112,40 @@ function finishStep(
     urgency: 'polite',
   }))
 
-  // 3. The low-health warning goes last, after everything that happened in
-  //    this step (decided Nov 2). `lines` is a new array made by map above,
-  //    so pushing to it doesn't change anything that was passed in.
+  // 3. The low-health warning comes after everything that happened in this
+  //    step. `lines` is a new array made by map above, so pushing to it
+  //    doesn't change anything that was passed in.
   if (crossedLowHealth(playerBefore, synced.player)) {
     lines.push({ text: describeLowHealth(synced.player), urgency: 'assertive' })
   }
 
-  // 4. A finished fight is cleared, so the store goes back to exploring.
-  const combat =
-    getCombatStatus(update.state) === 'ongoing' ? update.state : null
+  // The status is read once and used for steps 4–6, so they can't disagree.
+  const status = getCombatStatus(update.state)
 
-  return { player: synced.player, enemies: synced.enemies, combat, lines }
+  // 4. While the fight goes on, "It's your turn." is always the last line:
+  //    the cue to act, right before focus moves to the attack buttons
+  //    (decided Nov 2). Enemy turns already ran, so if the fight is still
+  //    going, it's the player's turn.
+  if (status === 'ongoing') {
+    lines.push({ text: describeYourTurn(), urgency: 'polite' })
+  }
+
+  // 5. After a won fight, the player recovers up to RECOVERY_AMOUNT health
+  //    (decided Nov 2). `let` because the player only changes on a win.
+  //    Narration gets the amount actually recovered, after the cap, so the
+  //    line never claims more than happened. A defeat gets no healing.
+  let player = synced.player
+  if (status === 'victory') {
+    player = recoverHealth(synced.player, RECOVERY_AMOUNT)
+    const amountRecovered = player.currentHealth - synced.player.currentHealth
+    lines.push({
+      text: describeRecovery(synced.player, amountRecovered),
+      urgency: 'polite',
+    })
+  }
+
+  // 6. A finished fight is cleared, so the store goes back to exploring.
+  const combat = status === 'ongoing' ? update.state : null
+
+  return { player, enemies: synced.enemies, combat, lines }
 }
