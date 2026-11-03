@@ -67,7 +67,7 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
    - **Healing (decided Nov 2):** after a won fight, the player recovers **4 health**, up to their maximum, with a polite line: "You catch your breath and recover 4 health. You have 11 out of 12." Fixed, not rolled, so it's predictable for the player and the tests. **Changed Nov 3:** going through an exit into a new room also restores full health (see Exits, step 5). Healing back above the threshold re-arms the low-health warning with no extra code (`crossedLowHealth` compares before and after).
    - [x] Tests written, implemented
 2. **`getAttackOptions(combat)`** in `src/game/`: `{ id, label }` for each living enemy, e.g. `{ id: 'e1', label: 'Attack the skeleton' }`, using the "the skeleton" wording from `narration.ts`. Pure helper, so the button text is unit-tested.
-   - [ ] Tests written, implemented
+   - [x] Tests written, implemented (in `narration.ts`, so the label uses the same words as the log)
 3. **`CombatMenu.tsx`:** a section with a "Your turn" heading and a list of `<button>`s, one per option, each calling `playerAttack(option.id)`. Rendered in `App.tsx` between the game and the log, only while `combat !== null`.
    - [ ] Done
 4. **Focus in and out:** one `useEffect` in `CombatMenu`. When the menu appears, save `document.activeElement` and focus the first button. In the effect's cleanup (when the menu disappears), focus the saved element again. After every attack, focus the first remaining button, because the focused one disappears when its enemy dies.

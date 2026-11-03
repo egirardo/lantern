@@ -776,6 +776,22 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept the implementations, because my tests define the behaviour and I reviewed them. I changed the healing plan (full health per room) and chose the recovery wording myself. The "catch your breath" rule is mine; Claude Code had suggested dropping the amount only when nothing was healed.
 - **How I verified it:** Typecheck, lint, Prettier and all 283 tests pass (Claude Code ran them). On backup copies, Claude Code broke each new function on purpose: 4 ways for `recoverHealth` (one, "always adds 4", got through until I added a test with a different amount), 5 for the narration functions (one equivalent mutant survives, explained above) and 4 for `finishStep`. Each other break made at least one test fail, and the files were restored afterwards.
 
+#### 2026-11-03 — Phase J step 2: getAttackOptions, and the UI pack and font decisions
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a breakdown of step 2, a review of my `getAttackOptions` tests and the implementation. In between, I asked when we get to how the UI looks, and whether an agent could style the site with the Pixel RPG UI Pack if I provide a font. Then for a review of the font I picked.
+- **What I got:**
+  - **Step 2 breakdown:** Claude Code checked the code first and found that defeated enemies stay in the combat state with 0 health, so filtering them out is the main job of the function. It recommended putting it in `narration.ts` to reuse the "the skeleton" wording from the log, and I agreed.
+  - **Code I wrote:** all six `getAttackOptions` tests.
+  - **Code Claude Code wrote:** `getAttackOptions` and the `AttackOption` type in `narration.ts`.
+  - **Review findings in my tests:** my "never includes the player" test put the player inside `combat.enemies`, which can't happen, so a correct implementation would have failed it. A test name said the function numbers duplicates, but `spawnEnemies` does that. Prettier failed.
+  - **UI pack:** Claude Code said the look lives in CSS, so the components I build now won't need rewriting, and suggested a time-boxed slot before Phase L. When I asked about an agent, it looked inside the pack and found that it's one packed sheet with no slice data. It said an agent would likely get the pieces wrong by reading pixel coordinates by eye, and recommended that I slice the pieces myself in Aseprite. It pointed out that the license allows use but doesn't mention redistribution in a public repo, and suggested safeguards: commit only the pieces I use, credit the author, keep the skin removable, and report it as a risk. It added a "UI skin" section and timeline changes to the sprint plan, and noted that Sunday is now very full.
+  - **Font review:** Claude Code read the license (CC0) and checked with `fc-query` that Pixel Operator has every character the game's text uses. It explained that pixel fonts are only crisp at whole multiples of their design size, and that some players find pixel fonts hard to read in long text. It gave two options and recommended one.
+- **Outcome:** ✏️
+- **Why:** I kept `getAttackOptions` and fixed my player test. For the UI, I decided to use the UI pack despite the unclear license (I asked the author and have had no reply) and to have an agent build the skin from pieces I slice. I picked Pixel Operator myself, and chose the pixel font everywhere, with high contrast also switching the log to a system font. I kept the font license in `public/assets/fonts/` instead of a subfolder, because it's the only font.
+- **How I verified it:** Typecheck, lint, Prettier and all narration tests pass (Claude Code ran them). On a backup copy, Claude Code broke `getAttackOptions` five ways (no filter, dropping the first enemy, `>= 0`, no number in the label, reversed order), and each made at least one test fail. Claude Code compared the font files in the repo with the originals. I haven't seen the font rendered in the game yet.
+
 ---
 
 ## Agent-built rooms: evaluation
