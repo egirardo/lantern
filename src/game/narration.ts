@@ -143,3 +143,26 @@ export function describeRecovery(
 export function describeYourTurn(): string {
   return "It's your turn."
 }
+
+// One button in the combat menu: `id` is what the button passes to
+// playerAttack (and React's key), `label` is the button text and the name a
+// screen reader reads out.
+export type AttackOption = { id: string; label: string }
+
+// The attack buttons for the current fight, one per living enemy, in the
+// order of `combat.enemies` so the buttons don't move around between turns.
+export function getAttackOptions(combat: CombatState): AttackOption[] {
+  return (
+    combat.enemies
+      // Defeated enemies stay in the combat state with 0 health, so the log
+      // can still name them. They must not get a button: attacking one
+      // throws. `> 0` is the same "alive" rule as getCombatStatus.
+      .filter((entry) => entry.combatant.currentHealth > 0)
+      // object() gives "the skeleton 1", exactly the words the log uses
+      // ("You hit the skeleton 1…"), so the button and the log always match.
+      .map((entry) => ({
+        id: entry.id,
+        label: `Attack ${object(combat, entry.id)}`,
+      }))
+  )
+}

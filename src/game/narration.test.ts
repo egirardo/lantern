@@ -5,6 +5,7 @@ import {
   describeLowHealth,
   describeRecovery,
   describeYourTurn,
+  getAttackOptions,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState } from './test-helpers'
@@ -280,5 +281,82 @@ describe('describeRecovery', () => {
 describe('describeYourTurn', () => {
   it('says it is your turn', () => {
     expect(describeYourTurn()).toBe("It's your turn.")
+  })
+})
+
+describe('getAttackOptions', () => {
+  it('returns one option for one living enemy', () => {
+    const state = makeState({
+      enemies: [{ id: 'e1', combatant: makeCombatant({ name: 'skeleton' }) }],
+    })
+    const options = getAttackOptions(state)
+    expect(options).toEqual([{ id: 'e1', label: 'Attack the skeleton' }])
+  })
+
+  it('returns two options for two living enemies in the order of combat.enemies', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+      ],
+    })
+    const options = getAttackOptions(state)
+    expect(options).toEqual([
+      { id: 'e1', label: 'Attack the skeleton' },
+      { id: 'e2', label: 'Attack the orc' },
+    ])
+  })
+
+  it('uses the full name, so numbered enemies get different labels', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton 1' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'skeleton 2' }) },
+      ],
+    })
+    const options = getAttackOptions(state)
+    expect(options).toEqual([
+      { id: 'e1', label: 'Attack the skeleton 1' },
+      { id: 'e2', label: 'Attack the skeleton 2' },
+    ])
+  })
+
+  it('leaves out defeated enemies', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({ name: 'skeleton', currentHealth: 0 }),
+        },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+      ],
+    })
+    const options = getAttackOptions(state)
+    expect(options).toEqual([{ id: 'e2', label: 'Attack the orc' }])
+  })
+
+  it('returns an empty array when all enemies are defeated', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({ name: 'skeleton', currentHealth: 0 }),
+        },
+        {
+          id: 'e2',
+          combatant: makeCombatant({ name: 'orc', currentHealth: 0 }),
+        },
+      ],
+    })
+    const options = getAttackOptions(state)
+    expect(options).toEqual([])
+  })
+
+  it('never includes the player as an option', () => {
+    const state = makeState({
+      enemies: [{ id: 'e1', combatant: makeCombatant({ name: 'skeleton' }) }],
+    })
+    const options = getAttackOptions(state)
+    expect(options.map((o) => o.id)).not.toContain(PLAYER_ID)
   })
 })
