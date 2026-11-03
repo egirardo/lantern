@@ -189,11 +189,13 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 - Text contrast against the frame colours meets AA (checked with axe).
 - Focus stays clearly visible on styled buttons (a `border-image` can hide the outline).
 - The high contrast setting turns the skin off or overrides it.
+- **Font (decided Nov 3):** Pixel Operator everywhere, at 16px or a whole multiple by default. The high contrast setting also switches the **adventure log** to a plain system font, for players who find a pixel font hard to read in long text. The text size setting isn't limited to 2× steps: in-between sizes are a bit soft, but the player's choice wins (WCAG 1.4.4).
 - `image-rendering: pixelated` and whole-number scaling, so the art stays sharp. Text size changes must not break the frames.
 
 **License safeguards:** commit only the pieces I use, credit the author in the README with a link, note that I asked for permission on the itch.io page and haven't had a reply (keep a screenshot of the comments), and write it in the report as a known risk. The skin is one stylesheet and one folder, so it can be removed quickly if the author says no.
 
-- [ ] Pieces sliced and exported, font chosen
+- [x] Font chosen: **Pixel Operator** (Jayvee Enaguas), CC0, Regular and Bold (Nov 3, in `public/assets/fonts/`)
+- [ ] Pieces sliced and exported
 - [ ] Brief written
 - [ ] UI skin PR reviewed and merged, corrections logged
 
@@ -203,7 +205,7 @@ As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save
 
 - [ ] Settings in the store, with the `prefers-reduced-motion` default (tests)
 - [ ] Settings dialog with focus management
-- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests)
+- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin")
 - [ ] PR reviewed
 
 ## Saves, accounts and sync (Tue Nov 10 – Wed Nov 11)
