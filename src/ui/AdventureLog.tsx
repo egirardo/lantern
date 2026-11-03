@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from 'zustand'
 import { gameStore } from '../state/game-store'
+import { LiveAnnouncer } from './LiveAnnouncer'
 
 export function AdventureLog() {
   const log = useStore(gameStore, (state) => state.log)
@@ -22,14 +23,17 @@ export function AdventureLog() {
     // and only the entries box below it scrolls.
     <div className="adventure-log">
       <h2 id="adventure-log">Adventure log</h2>
-      {/* tabIndex={0}: a scrollable box must be reachable with the keyboard,
+      {/* The visible log is a named region, not a live region: LiveAnnouncer
+          reads new lines aloud, so nothing is announced twice. Screen reader
+          users can still jump here ("Adventure log") and read back.
+          tabIndex={0}: a scrollable box must be reachable with the keyboard,
           so keyboard users can focus it and scroll with the arrow keys
           (WCAG 2.1.1; axe checks this as "scrollable-region-focusable").
           Safari doesn't make scrollable boxes focusable on its own. */}
       <div
         ref={entriesRef}
         className="adventure-log-entries"
-        role="log"
+        role="region"
         aria-labelledby="adventure-log"
         // The rule doesn't know about scrollable boxes, which must be focusable
         // (see the comment above), so it's turned off for this line only.
@@ -42,6 +46,7 @@ export function AdventureLog() {
           ))}
         </ol>
       </div>
+      <LiveAnnouncer />
     </div>
   )
 }

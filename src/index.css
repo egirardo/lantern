@@ -61,3 +61,18 @@ body {
   outline: 3px solid white;
   outline-offset: 3px;
 }
+
+/* Hidden on screen but still read by screen readers. display: none or
+   visibility: hidden would hide it from screen readers too. This is the
+   standard pattern: a 1px box, clipped, taken out of the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
