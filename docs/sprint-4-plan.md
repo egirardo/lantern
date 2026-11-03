@@ -63,8 +63,8 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 
 1. **"It's your turn." and healing in `finishStep`** (`combat-flow.ts`). Pure helpers.
    - A polite "It's your turn." at the end of every step where the fight goes on.
-   - **Healing (decided Nov 2):** after a won fight, the player recovers **4 health**, up to their maximum, with a polite line: "You catch your breath and recover 4 health. You have 11 out of 12." Fixed, not rolled, so it's predictable for the player and the tests. Health still carries over between rooms. Healing back above the threshold re-arms the low-health warning with no extra code (`crossedLowHealth` compares before and after).
-   - [ ] Tests written, implemented
+   - **Healing (decided Nov 2):** after a won fight, the player recovers **4 health**, up to their maximum, with a polite line: "You catch your breath and recover 4 health. You have 11 out of 12." Fixed, not rolled, so it's predictable for the player and the tests. **Changed Nov 3:** going through an exit into a new room also restores full health (see Exits, step 5). Healing back above the threshold re-arms the low-health warning with no extra code (`crossedLowHealth` compares before and after).
+   - [x] Tests written, implemented
 2. **`getAttackOptions(combat)`** in `src/game/`: `{ id, label }` for each living enemy, e.g. `{ id: 'e1', label: 'Attack the skeleton' }`, using the "the skeleton" wording from `narration.ts`. Pure helper, so the button text is unit-tested.
    - [ ] Tests written, implemented
 3. **`CombatMenu.tsx`:** a section with a "Your turn" heading and a list of `<button>`s, one per option, each calling `playerAttack(option.id)`. Rendered in `App.tsx` between the game and the log, only while `combat !== null`.
@@ -126,7 +126,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbour. `playerStart` is only for the first room of a new game. Pure helper with tests.
 3. **No leaving in a fight.** Moving is already blocked during combat. Using an exit must be blocked too, with a log line.
 4. **Redrawing.** Destroy the old tilemap and player sprite before drawing the new room (two Open reminders in the learning notes).
-5. **Narration.** Entering a room logs its description, as `loadRoom` already does.
+5. **Narration and full health.** Entering a room logs its description, as `loadRoom` already does. **Decided Nov 3:** going through an exit also restores the player to full health, with a polite line, because there are no potions and a hard earlier room shouldn't decide a harder later fight. The healing goes in the exit step, not in `loadRoom`, so loading a save later won't heal (the store test that `loadRoom` keeps health stays). Pure helper with tests.
 6. **Tests** use small fixture rooms in the test files. No real second room yet: those are built by the agents.
 7. **The goal: find the way out (decided Nov 2).** The last room has an exit marked `final` (e.g. a ladder up to the surface). Using it wins the game: a victory line in the log, and focus moves to a victory message (same pattern as game over in Phase J). Until now the game could only be lost. About 30 extra minutes.
 8. **"How to play"** as a native `<details>` element above the map, with the rules text below. It opens and closes with the keyboard, and screen readers support it without ARIA. Fill in the door key once it's chosen. About 30 minutes.
@@ -151,14 +151,14 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Attacks.** An attack is a 20-sided die plus your attack bonus. It hits if the total is at least the target's armor class. A natural 20 always hits and is a critical hit: the damage is rolled twice. A natural 1 always misses. Every roll is written in the log.
 
-**Health.** You have 12 health. After you win a fight, you recover 4 health. The game warns you when you're down to 3 or less. At 0 you fall, and the game is over.
+**Health.** You have 12 health. After you win a fight, you recover 4 health. When you go through a door into a new room, you recover fully. The game warns you when you're down to 3 or less. At 0 you fall, and the game is over.
 
 **Doors.** [key to be decided] Use a door when you're next to it. You can't leave a room during a fight.
 
 **No hurry.** The game always waits for you. There are no time limits.
 ```
 
-**Check on Thu Nov 12:** play the whole dungeon once to see whether 12 health and healing 4 per won fight are balanced. Adjust the numbers (data, not code) if it's too hard or too easy.
+**Check on Thu Nov 12:** play the whole dungeon once to see whether 12 health, healing 4 per won fight and full health per room are balanced. Adjust the numbers (data, not code) if it's too hard or too easy.
 
 ## Agent spec and agent rooms (Sun Nov 8 onwards)
 

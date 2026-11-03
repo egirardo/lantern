@@ -757,6 +757,27 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 
 ---
 
+## Sprint 4 (Nov 2–13): Finishing the reference room, settings, saves and accounts
+
+#### 2026-11-03 — Phase J step 1: "It's your turn." and healing after a won fight
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review, Learning
+- **What I asked:** For a guide to starting the day and a breakdown of Phase J step 1. Then for reviews of my tests for `recoverHealth`, `describeRecovery`, `describeYourTurn` and the new combat-flow tests, implementations once the tests were right, and the AI log entry and commit messages.
+- **What I got:**
+  - **Planning:** a timeline for the day (steps 1–4 before tomorrow's supervision demo), the order of the step 1 tests, and a breakdown of the 6 combat-flow tests that would break and the 3 new ones to write, with the dice for each.
+  - **A change to the Nov 2 plan:** I thought we had decided that health is restored when entering a new room. Claude Code showed that the docs said the opposite (health carries over). I decided on both: +4 after each won fight, and full health when going through an exit into a new room, because a hard earlier room shouldn't leave me too weak for a harder enemy later. Claude Code recommended doing the full heal in the exit step on Friday, not in `loadRoom`, so loading a save won't heal. It updated `docs/sprint-4-plan.md` and my learning notes.
+  - **Code I wrote:** all of `recovery.test.ts`, the first drafts of the `describeRecovery` tests and the `describeYourTurn` test, the "It's your turn." lines in two of the old combat-flow tests, the three new combat-flow tests (healing after a win, healing capped at max, low health re-armed after healing), the store test fix (4 → 5 log lines), and the rule for the recovery line: "You catch your breath and recover N health" when something was recovered, "You recover 0 health" when I was already full.
+  - **Code Claude Code wrote:** `recovery.ts` (`recoverHealth` and `RECOVERY_AMOUNT`), `describeRecovery` and `describeYourTurn` in `narration.ts`, and the `finishStep` change in `combat-flow.ts`. At my request it rewrote the four `describeRecovery` tests (wording and names), and updated the rest of the six old combat-flow tests.
+  - **Review findings in my tests:** my first `recovery.test.ts` defined its own `recoverHealth` inside the test, which shadowed the import, so the real function was never tested; it also used `makeCombatant`'s default max health of 5, and passed a combat state instead of a combatant. My "does not change its input" test cloned the player and passed the clone in, so there was nothing to compare against. Two of my `describeRecovery` tests contradicted each other (10 → 12 said "recovered 2", 8 → 12 said "catch your breath"). My draft of the "kill the last enemy" test expected 16 out of 12 health, had the victory and recovery lines swapped, and said "recover 4" at full health.
+  - **Learning:** shadowing (an inner variable hides an import with the same name, without a TypeScript error), where `structuredClone` belongs in an "input unchanged" test, the immutable update `{ ...combatant, currentHealth }`, and equivalent mutants (a wrong-looking version that no real input can tell apart).
+  - **Claude Code was wrong or unclear:** its first attempt to update the combat-flow tests failed, because I had already started editing them and it was using an old copy of the file. It noticed, kept my changes and finished the rest. One of its mutation-check scripts had a bug (a placeholder that also matched `RECOVERY_AMOUNT`) and gave "no tests" instead of a result, so it fixed the script and ran it again.
+- **Outcome:** ✏️
+- **Why:** I kept the implementations, because my tests define the behaviour and I reviewed them. I changed the healing plan (full health per room) and chose the recovery wording myself. The "catch your breath" rule is mine; Claude Code had suggested dropping the amount only when nothing was healed.
+- **How I verified it:** Typecheck, lint, Prettier and all 283 tests pass (Claude Code ran them). On backup copies, Claude Code broke each new function on purpose: 4 ways for `recoverHealth` (one, "always adds 4", got through until I added a test with a different amount), 5 for the narration functions (one equivalent mutant survives, explained above) and 4 for `finishStep`. Each other break made at least one test fail, and the files were restored afterwards.
+
+---
+
 ## Agent-built rooms: evaluation
 
 Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.
