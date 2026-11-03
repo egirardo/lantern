@@ -115,3 +115,31 @@ export function describeMove(result: MoveResult, direction: Direction): string {
 export function describeLowHealth(player: Combatant): string {
   return `Low health warning: you have ${player.currentHealth} out of ${player.maxHealth} health remaining.`
 }
+
+// The polite line after a won fight. `player` is the player before healing,
+// and `amountRecovered` is what recoverHealth actually added after the cap
+// (0 to RECOVERY_AMOUNT), so the sentence never claims more than happened.
+// This function doesn't cap anything itself: the healing rule lives in
+// recovery.ts, and narration only puts it into words.
+export function describeRecovery(
+  player: Combatant,
+  amountRecovered: number,
+): string {
+  const total = `You have ${player.currentHealth + amountRecovered} out of ${player.maxHealth} health.`
+
+  // "Catch your breath" only when something was actually recovered (your
+  // rule, Nov 3). Already at full, the player still gets a line, so every
+  // won fight ends the same way and the total is always announced.
+  if (amountRecovered > 0) {
+    return `You catch your breath and recover ${amountRecovered} health. ${total}`
+  } else {
+    return `You recover 0 health. ${total}`
+  }
+}
+
+// The last line of every combat step where the fight goes on: the cue for a
+// screen reader user that the enemies are done and they can act. It's read
+// right before focus moves to the attack buttons (Phase J decision 5).
+export function describeYourTurn(): string {
+  return "It's your turn."
+}

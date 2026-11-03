@@ -3,6 +3,8 @@ import {
   describeCombatEvent,
   describeMove,
   describeLowHealth,
+  describeRecovery,
+  describeYourTurn,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState } from './test-helpers'
@@ -240,5 +242,43 @@ describe('describeLowHealth', () => {
     expect(describeLowHealth(player)).toBe(
       'Low health warning: you have 3 out of 12 health remaining.',
     )
+  })
+})
+
+// `player` is the player before healing, and the second argument is the
+// health actually recovered (after the cap), not always RECOVERY_AMOUNT.
+describe('describeRecovery', () => {
+  it('says the player catches their breath, the amount recovered and the new total', () => {
+    const player = makeCombatant({ currentHealth: 3, maxHealth: 12 })
+    expect(describeRecovery(player, 4)).toBe(
+      'You catch your breath and recover 4 health. You have 7 out of 12 health.',
+    )
+  })
+
+  it('says the real amount when the cap allowed less than the usual 4', () => {
+    const player = makeCombatant({ currentHealth: 10, maxHealth: 12 })
+    expect(describeRecovery(player, 2)).toBe(
+      'You catch your breath and recover 2 health. You have 12 out of 12 health.',
+    )
+  })
+
+  it('still says the amount when the healing ends exactly at full health', () => {
+    const player = makeCombatant({ currentHealth: 8, maxHealth: 12 })
+    expect(describeRecovery(player, 4)).toBe(
+      'You catch your breath and recover 4 health. You have 12 out of 12 health.',
+    )
+  })
+
+  it('says 0 health was recovered, without catching a breath, when health was already full', () => {
+    const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
+    expect(describeRecovery(player, 0)).toBe(
+      'You recover 0 health. You have 12 out of 12 health.',
+    )
+  })
+})
+
+describe('describeYourTurn', () => {
+  it('says it is your turn', () => {
+    expect(describeYourTurn()).toBe("It's your turn.")
   })
 })
