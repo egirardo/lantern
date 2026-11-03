@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   describeCombatEvent,
+  describeCombatStart,
   describeMove,
   describeLowHealth,
   describeRecovery,
@@ -358,5 +359,48 @@ describe('getAttackOptions', () => {
     })
     const options = getAttackOptions(state)
     expect(options.map((o) => o.id)).not.toContain(PLAYER_ID)
+  })
+})
+
+describe('describeCombatStart', () => {
+  it('names a single attacker', () => {
+    const state = makeState({
+      enemies: [{ id: 'e1', combatant: makeCombatant({ name: 'skeleton' }) }],
+    })
+    expect(describeCombatStart(state)).toBe(
+      'The skeleton attacks you! A fight begins.',
+    )
+  })
+
+  it('joins two attackers with "and" and uses the plural verb', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton 1' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+      ],
+    })
+    expect(describeCombatStart(state)).toBe(
+      'The skeleton 1 and the orc attack you! A fight begins.',
+    )
+  })
+
+  it('joins three attackers with commas and a final "and"', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+        { id: 'e3', combatant: makeCombatant({ name: 'demon' }) },
+      ],
+    })
+    expect(describeCombatStart(state)).toBe(
+      'The skeleton, the orc and the demon attack you! A fight begins.',
+    )
+  })
+
+  it('throws when the fight has no enemies, because that is a bug', () => {
+    const state = makeState({ enemies: [] })
+    expect(() => describeCombatStart(state)).toThrow(
+      'A fight needs at least one enemy',
+    )
   })
 })

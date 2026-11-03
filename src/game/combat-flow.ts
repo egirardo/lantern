@@ -13,6 +13,7 @@ import {
 import { crossedLowHealth } from './low-health'
 import {
   describeCombatEvent,
+  describeCombatStart,
   describeLowHealth,
   describeRecovery,
   describeYourTurn,
@@ -61,10 +62,20 @@ export function beginCombat(
 
   // One update for the whole step: the newest state, and the events of both
   // calls in the order they happened.
-  return finishStep(player, enemies, {
+  const step = finishStep(player, enemies, {
     state: enemyTurns.state,
     events: [...started.events, ...enemyTurns.events],
   })
+
+  // The fight is announced before any dice, so the player knows who is
+  // attacking before hearing the rolls (decided Nov 3). It reads the state at
+  // the start of the fight, which lists exactly the enemies who joined. Only
+  // beginCombat adds it, so it's not in finishStep.
+  const startLine: LogLine = {
+    text: describeCombatStart(started.state),
+    urgency: 'polite',
+  }
+  return { ...step, lines: [startLine, ...step.lines] }
 }
 
 // The player attacks `targetId`, and then the enemies act if the fight goes

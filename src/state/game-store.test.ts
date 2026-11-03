@@ -213,9 +213,10 @@ describe('gameStore', () => {
     expect(state.combat?.player).toEqual(PLAYER)
     expect(state.combat?.enemies.length).toBe(1)
     expect(state.combat?.enemies[0]?.id).toBe('e1')
-    // The fight start is narrated: the room description, the step, one
-    // initiative line each for the player and the skeleton, and the turn cue.
-    expect(state.log.length).toBe(5)
+    // The fight start is narrated: the room description, the step, the
+    // "attacks you" line, one initiative line each for the player and the
+    // skeleton, and the turn cue.
+    expect(state.log.length).toBe(6)
   })
 
   it('does not allow a player to move while in combat', () => {

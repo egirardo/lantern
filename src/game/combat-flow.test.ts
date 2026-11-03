@@ -29,7 +29,7 @@ function makeSkeleton() {
 }
 
 describe('beginCombat', () => {
-  it("starts on the player's turn with only initiative lines when the player wins initiative", () => {
+  it("starts on the player's turn with only the start and initiative lines when the player wins initiative", () => {
     const skeleton = makeSkeleton()
     // Player's initiative, then e1's. No more values: if an enemy tried to
     // attack, sequence would throw.
@@ -39,8 +39,9 @@ describe('beginCombat', () => {
 
     expect(step.combat?.turnOrder).toEqual([PLAYER_ID, 'e1'])
     expect(step.combat?.turnIndex).toBe(0)
-    expect(urgencies(step)).toEqual(['polite', 'polite', 'polite'])
+    expect(urgencies(step)).toEqual(['polite', 'polite', 'polite', 'polite'])
     expect(texts(step)).toEqual([
+      'The skeleton attacks you! A fight begins.',
       'You roll initiative: 20 + 0 = 20.',
       'The skeleton rolls initiative: 2 + 0 = 2.',
       "It's your turn.",
@@ -93,8 +94,15 @@ describe('beginCombat', () => {
     // The skeleton acted, so now it's the player's turn.
     expect(step.combat?.turnOrder).toEqual(['e1', PLAYER_ID])
     expect(step.combat?.turnIndex).toBe(1)
-    expect(urgencies(step)).toEqual(['polite', 'polite', 'polite', 'polite'])
+    expect(urgencies(step)).toEqual([
+      'polite',
+      'polite',
+      'polite',
+      'polite',
+      'polite',
+    ])
     expect(texts(step)).toEqual([
+      'The skeleton attacks you! A fight begins.',
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
       'The skeleton hits you for 4 damage (15 + 3 = 18 against armor class 12).',
@@ -116,6 +124,7 @@ describe('beginCombat', () => {
     expect(step.player.currentHealth).toBe(2)
     expect(step.combat).not.toBeNull()
     expect(urgencies(step)).toEqual([
+      'polite',
       'polite',
       'polite',
       'polite',
@@ -151,8 +160,10 @@ describe('beginCombat', () => {
       'polite',
       'polite',
       'polite',
+      'polite',
     ])
     expect(texts(step)).toEqual([
+      'The skeleton attacks you! A fight begins.',
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
       'The skeleton hits you for 6 damage (15 + 3 = 18 against armor class 12).',

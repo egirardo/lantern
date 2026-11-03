@@ -166,3 +166,32 @@ export function getAttackOptions(combat: CombatState): AttackOption[] {
       }))
   )
 }
+
+// The first line of a fight, before any dice: who attacks, in plain words.
+// Without it, a screen reader user hears a step and then initiative numbers,
+// and has to work out from a roll line that a fight started (rule 5).
+// Every enemy in a new fight is alive and next to the player, so this reads
+// all of `combat.enemies`. Names come from subject() and object(), so they
+// match the rest of the log ("The skeleton 1", "the orc").
+export function describeCombatStart(combat: CombatState): string {
+  const ids = combat.enemies.map((entry) => entry.id)
+  // A fight always has at least one enemy. If not, the caller has a bug.
+  if (ids.length === 0) {
+    throw new Error('A fight needs at least one enemy')
+  }
+
+  // "The skeleton", "The skeleton and the orc", or "The skeleton, the orc
+  // and the demon": the first name starts the sentence, the rest are joined
+  // with commas and a final "and".
+  const names = ids.map((id, index) =>
+    index === 0 ? subject(combat, id) : object(combat, id),
+  )
+  const attackers =
+    names.length === 1
+      ? names[0]
+      : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+
+  // English changes the verb with the number of attackers.
+  const verb = names.length === 1 ? 'attacks' : 'attack'
+  return `${attackers} ${verb} you! A fight begins.`
+}
