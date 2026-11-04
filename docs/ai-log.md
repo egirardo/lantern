@@ -757,9 +757,116 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 
 ---
 
+## Sprint 4 (Nov 2–13): Finishing the reference room, settings, saves and accounts
+
+#### 2026-11-03 — Phase J step 1: "It's your turn." and healing after a won fight
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review, Learning
+- **What I asked:** For a guide to starting the day and a breakdown of Phase J step 1. Then for reviews of my tests for `recoverHealth`, `describeRecovery`, `describeYourTurn` and the new combat-flow tests, implementations once the tests were right, and the AI log entry and commit messages.
+- **What I got:**
+  - **Planning:** a timeline for the day (steps 1–4 before tomorrow's supervision demo), the order of the step 1 tests, and a breakdown of the 6 combat-flow tests that would break and the 3 new ones to write, with the dice for each.
+  - **A change to the Nov 2 plan:** I thought we had decided that health is restored when entering a new room. Claude Code showed that the docs said the opposite (health carries over). I decided on both: +4 after each won fight, and full health when going through an exit into a new room, because a hard earlier room shouldn't leave me too weak for a harder enemy later. Claude Code recommended doing the full heal in the exit step on Friday, not in `loadRoom`, so loading a save won't heal. It updated `docs/sprint-4-plan.md` and my learning notes.
+  - **Code I wrote:** all of `recovery.test.ts`, the first drafts of the `describeRecovery` tests and the `describeYourTurn` test, the "It's your turn." lines in two of the old combat-flow tests, the three new combat-flow tests (healing after a win, healing capped at max, low health re-armed after healing), the store test fix (4 → 5 log lines), and the rule for the recovery line: "You catch your breath and recover N health" when something was recovered, "You recover 0 health" when I was already full.
+  - **Code Claude Code wrote:** `recovery.ts` (`recoverHealth` and `RECOVERY_AMOUNT`), `describeRecovery` and `describeYourTurn` in `narration.ts`, and the `finishStep` change in `combat-flow.ts`. At my request it rewrote the four `describeRecovery` tests (wording and names), and updated the rest of the six old combat-flow tests.
+  - **Review findings in my tests:** my first `recovery.test.ts` defined its own `recoverHealth` inside the test, which shadowed the import, so the real function was never tested; it also used `makeCombatant`'s default max health of 5, and passed a combat state instead of a combatant. My "does not change its input" test cloned the player and passed the clone in, so there was nothing to compare against. Two of my `describeRecovery` tests contradicted each other (10 → 12 said "recovered 2", 8 → 12 said "catch your breath"). My draft of the "kill the last enemy" test expected 16 out of 12 health, had the victory and recovery lines swapped, and said "recover 4" at full health.
+  - **Learning:** shadowing (an inner variable hides an import with the same name, without a TypeScript error), where `structuredClone` belongs in an "input unchanged" test, the immutable update `{ ...combatant, currentHealth }`, and equivalent mutants (a wrong-looking version that no real input can tell apart).
+  - **Claude Code was wrong or unclear:** its first attempt to update the combat-flow tests failed, because I had already started editing them and it was using an old copy of the file. It noticed, kept my changes and finished the rest. One of its mutation-check scripts had a bug (a placeholder that also matched `RECOVERY_AMOUNT`) and gave "no tests" instead of a result, so it fixed the script and ran it again.
+- **Outcome:** ✏️
+- **Why:** I kept the implementations, because my tests define the behaviour and I reviewed them. I changed the healing plan (full health per room) and chose the recovery wording myself. The "catch your breath" rule is mine; Claude Code had suggested dropping the amount only when nothing was healed.
+- **How I verified it:** Typecheck, lint, Prettier and all 283 tests pass (Claude Code ran them). On backup copies, Claude Code broke each new function on purpose: 4 ways for `recoverHealth` (one, "always adds 4", got through until I added a test with a different amount), 5 for the narration functions (one equivalent mutant survives, explained above) and 4 for `finishStep`. Each other break made at least one test fail, and the files were restored afterwards.
+
+#### 2026-11-03 — Phase J step 2: getAttackOptions, and the UI pack and font decisions
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a breakdown of step 2, a review of my `getAttackOptions` tests and the implementation. In between, I asked when we get to how the UI looks, and whether an agent could style the site with the Pixel RPG UI Pack if I provide a font. Then for a review of the font I picked.
+- **What I got:**
+  - **Step 2 breakdown:** Claude Code checked the code first and found that defeated enemies stay in the combat state with 0 health, so filtering them out is the main job of the function. It recommended putting it in `narration.ts` to reuse the "the skeleton" wording from the log, and I agreed.
+  - **Code I wrote:** all six `getAttackOptions` tests.
+  - **Code Claude Code wrote:** `getAttackOptions` and the `AttackOption` type in `narration.ts`.
+  - **Review findings in my tests:** my "never includes the player" test put the player inside `combat.enemies`, which can't happen, so a correct implementation would have failed it. A test name said the function numbers duplicates, but `spawnEnemies` does that. Prettier failed.
+  - **UI pack:** Claude Code said the look lives in CSS, so the components I build now won't need rewriting, and suggested a time-boxed slot before Phase L. When I asked about an agent, it looked inside the pack and found that it's one packed sheet with no slice data. It said an agent would likely get the pieces wrong by reading pixel coordinates by eye, and recommended that I slice the pieces myself in Aseprite. It pointed out that the license allows use but doesn't mention redistribution in a public repo, and suggested safeguards: commit only the pieces I use, credit the author, keep the skin removable, and report it as a risk. It added a "UI skin" section and timeline changes to the sprint plan, and noted that Sunday is now very full.
+  - **Font review:** Claude Code read the license (CC0) and checked with `fc-query` that Pixel Operator has every character the game's text uses. It explained that pixel fonts are only crisp at whole multiples of their design size, and that some players find pixel fonts hard to read in long text. It gave two options and recommended one.
+- **Outcome:** ✏️
+- **Why:** I kept `getAttackOptions` and fixed my player test. For the UI, I decided to use the UI pack despite the unclear license (I asked the author and have had no reply) and to have an agent build the skin from pieces I slice. I picked Pixel Operator myself, and chose the pixel font everywhere, with high contrast also switching the log to a system font. I kept the font license in `public/assets/fonts/` instead of a subfolder, because it's the only font.
+- **How I verified it:** Typecheck, lint, Prettier and all narration tests pass (Claude Code ran them). On a backup copy, Claude Code broke `getAttackOptions` five ways (no filter, dropping the first enemy, `>= 0`, no number in the label, reversed order), and each made at least one test fail. Claude Code compared the font files in the repo with the originals. I haven't seen the font rendered in the game yet.
+
+---
+
+#### 2026-11-03 — Phase J steps 1b, 3, 4 and 5: the combat menu, focus, the layout and the announcer
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Accessibility, Learning
+- **What I asked:** Reviews of my `CombatMenu.tsx`, a layout with the log beside the map, a line announcing who attacks at the start of a fight, help with focus handling, and help finding out why VoiceOver didn't read parts of the log. Later, to write the fixes myself would take too long, so I asked Claude Code to write them.
+- **What I got:**
+  - **Code I wrote:** `CombatMenu.tsx` (the section, heading, list of buttons from `getAttackOptions`, the store read and the null check), the first version of the focus effect (remember focus, return it at the end), and placing the menu in `App.tsx`.
+  - **Code Claude Code wrote, at my request:** the two-column layout (`App.tsx`, `index.css`, the scrolling log box with `tabIndex={0}` and auto-scroll); `describeCombatStart` with its tests and the `beginCombat` change ("The skeleton attacks you! A fight begins."); the rest of the focus handling (the `document.body` check, focus moving in the click handler, `data-enemy-id`, the 100 ms delay at fight start); and `LiveAnnouncer.tsx` with the `.visually-hidden` class.
+  - **Review findings in my code:** `getAttackOptions` was called before the null check (a typecheck error and a runtime crash outside a fight); `type="button"` and the class name were missing; the menu wasn't in `App.tsx`; a half-pasted copy of the effect broke the file; `firstButtonRef` was never attached to a button; and reading a ref in the effect cleanup would trigger a lint warning.
+  - **My VoiceOver testing found:** no context when a fight started (only dice); the victory lines never read; "main" instead of the button in a second fight; the log stopping after line 16; the low-health warning dropping the lines before it; repeated wall bumps read only once; and VoiceOver's hints talking over the log.
+  - **Fixes, one at a time:** a separate fight-start line (my idea was to add the enemy to the initiative line; Claude Code suggested a separate line so the context comes first, and I agreed). Focus moved in the click handler, so the focused button never disappears. A `LiveAnnouncer` that only holds the newest batch, instead of the growing `role="log"`. A whole batch going to one region by its most urgent line. An invisible alternating space so identical lines are read again.
+  - **Learning:** the Safari Tab setting and dev tools, closures in effects, narrowing, hooks before early returns, why a new array from a Zustand selector re-renders forever, `useEffect` vs `useLayoutEffect`, React batching updates in event handlers, where a `key` works, and how VoiceOver queues, drops and skips announcements.
+  - **Claude Code was wrong or unclear:** it blamed hot reloading when Tab couldn't reach the attack button; the real cause was Safari's Tab setting (I found it with Option + Tab). Its first focus fix (a 100 ms delay everywhere) made the victory problem audible as "main" instead of fixing it. It had two wrong theories about the 16-line limit (the auto-scroll, then the scrolling box) and wrote one of them into a code comment before it was tested; the comment was removed. Its first `LiveAnnouncer` change put the `key` inside the component, where it does nothing, and it caught that itself. It first said fight 2 was probably caused by `role="application"`; the hints test pointed more widely at VoiceOver's hints.
+- **Outcome:** ✏️
+- **Why:** I kept the fixes because each one was confirmed by ear in VoiceOver, not just by tests. Most of this afternoon's code is Claude Code's, because I asked it to write the fixes to save time before the supervision. I need to read through `CombatMenu.tsx` and `LiveAnnouncer.tsx` before I present them. Still open: the hints problem, and whether to keep `role="application"` (known issues in the sprint plan).
+- **How I verified it:** Typecheck, lint, Prettier, all 293 tests and the build pass (Claude Code ran them). I tested in Safari with VoiceOver after every change: keyboard combat, focus at the start and end of fights, the log past line 16, low health, and repeated walls. With VoiceOver's hints turned off, everything was read as intended. `document.activeElement` in the console confirmed focus was on the button when VoiceOver said "main". There are no automated tests for the React components.
+
+#### 2026-11-03 — Phase J step 6: game over, and a skipped repeated line
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Accessibility
+- **What I asked:** To plan step 6 from my handoff, review my `GameOver.tsx`, fix the focus handling in `CombatMenu` (it felt fragile, and Claude Code wrote the other focus code), and figure out why VoiceOver didn't read the last lines when I died. At the end, to update the two tests and the docs, because it was late.
+- **What I got:**
+  - **Code I wrote:** `GameOver.tsx` (the store selector, the ref, the focus effect, the markup), adding it to `App.tsx`, and the focus outline CSS.
+  - **Review findings in my code:** `role="alert"` plus `aria-live="assertive"` on a focused element (read up to three times, and it would cut off the log); the message didn't say how to continue; double quotes against Prettier's settings; no visible focus style for a focus moved by code. After the rewrite, the effect still focused `gameOverRef`, which was no longer attached to any element. That came partly from Claude Code's snippet, which left "the effect focuses messageRef.current" as a placeholder instead of the code.
+  - **My VoiceOver testing found:** focus on the container read "Game over, and one more item", not the sentence. Focusing the message dropped the last batch (the killing blow and "You are defeated."). I had been pressing Space quickly, so I tested again slowly: the batch was still dropped. Two natural 1s in a row: the second was skipped.
+  - **Fixes:** focus on the `<p>` instead of the container (fixed the "one more item", but not the dropped batch). Claude Code then suggested the 100 ms delay used at fight start. My `GameOver.tsx` never got the delay, so it was never really tested. Claude Code suggested two paths: A, a loss works like a win (focus to the map in the click handler, the game over sentence as the last log line), or B, more experiments to keep focus on the message. I chose A as the simplest. Claude Code wrote it: the narration change, removing the defeat exception it had added to `CombatMenu` earlier the same evening, rewriting `GameOver.tsx` so it only shows the message, removing the unused CSS, and updating the two tests at my request. For the natural 1s, Claude Code found the cause in the code: that line has no numbers, and the invisible space was only on the last line of a batch. It now goes on every line.
+  - **Claude Code was wrong or unclear:** its first focus fix (`GameOver` takes focus, `CombatMenu` stays out of the way) went into the code before it was tested in VoiceOver, and it was removed again within the hour. It also made a shared `focus-delay.ts` for the delay, then deleted it once path A made it unnecessary. It explained the dropped batch as "probably focus on `body`" without proving it.
+- **Outcome:** ✏️
+- **Why:** I didn't follow the plan ("move focus to the message"), because testing showed it lost the most important lines. Path A reuses the one path that already worked for a win, and it's easy to explain: never move focus to something that doesn't exist yet. Every event is still in the log (rule 5). Most of the final code is Claude Code's; my own `GameOver.tsx` was rewritten down to the visible message.
+- **How I verified it:** Typecheck, lint, Prettier and all 293 tests pass (Claude Code ran them). VoiceOver in Safari with hints off, both fast and slow, for the earlier versions. Path A tested by ear: a loss now reads the whole last batch through to the game over line. A win and three wall bumps in a row were also read as intended.
+- **Afterwards:** hearing it, I noticed "You are defeated." followed by "Defeat. Game over…" repeated the word. At my request, Claude Code changed the player's line to "You have fallen." (enemies keep "is defeated") and updated the three test lines. I also noticed the first log line is read twice after a reload. I guessed the hidden announcer text; Claude Code said it could also be VoiceOver reading the page on load, and suggested a test. Reading through with VO + right arrow confirmed the hidden copy was read again after the log. Claude Code made the announcer clear its batch after 7 seconds (React Aria's default). I tested it again in VoiceOver, and it works.
+
+
+#### 2026-11-04 — Re-plan for the code freeze: agents take more of the engine
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I heard there's a code freeze on Nov 16, and asked how to go on, since I thought I needed to give up some control and send agents out to build things that I approve afterwards.
+- **What I got:** Claude Code read `docs/sprint-4-plan.md` and pointed out that the freeze doesn't move any dates: I already submit on Fri Nov 13, and what's lost is Sprint 6 as a safety net. It said handing off work could still be worth it, because the plan was already tight (10.5–13 days of Musts for about 10 days). It warned that handing off settings and Supabase is the riskiest, because dialog focus and row-level security are what I most need to understand and defend. It then proposed a split: four agent tasks (Phaser rendering, the Supabase foundation, exits, guest saves and sync), each a PR in its own git worktree. I keep Phase J step 7, the Phase K helper tests, the decor, the settings dialog, the login form, all VoiceOver testing and the evaluations. Agents that touch the same files run one after the other. Claude Code also updated decision 7 and the timeline in the sprint plan, "Plan changes" in the project plan, and the status in `CLAUDE.md`.
+- **Outcome:** ✏️
+- **Why:** At first I chose all four areas to hand off, settings included. When Claude Code explained the risk, I chose "hand off some" instead and kept settings and the login form. Handing off more changes my method (the reference room is no longer fully hand-built), so it goes in "Plan changes", and the agent engine work is evaluated like the agent rooms.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the sprint plan and the project plan.
+
+
+#### 2026-11-04 — Phase J step 7: VoiceOver checklist and keeping `role="application"`
+
+- **Tool:** Claude Code
+- **Category:** Accessibility
+- **What I asked:** A list of everything to test in the step 7 VoiceOver check, so I wouldn't miss anything. Before that, I said I would keep `role="application"` on the map, because I can only test on a Mac.
+- **What I got:** A checklist: reload, moving and wall bumps, a fight with one enemy (the opening line, focus on the button, Enter and Space, no moving in a fight, a win), a fight with two enemies, a loss, and hints on vs off. Claude Code checked the room and found that no tile is next to two enemies, because adjacency only counts the four directions. So it suggested moving the orc to (7, 4) for the test, with the key presses to get between the demon and the orc. It agreed with keeping the role: NVDA and JAWS on Windows catch arrow keys in browse mode, and `role="application"` is what lets them reach the game. It said it wasn't sure how VoiceOver behaves without the role. Afterwards, Claude Code found that the orc change was still in the room file and moved it back (only that line), then ticked step 7 and wrote down the decision in the sprint plan.
+- **Outcome:** ✅
+- **Why:** The checklist covered everything Phase J changed. Keeping the role protects players I can't test for, and the hints problem has a known workaround (hints off).
+- **How I verified it:** VoiceOver in Safari, following the checklist: everything worked as intended. `git status` shows the room file is unchanged.
+
+
+#### 2026-11-04 — The key, the inventory, and cutting the UI skin
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** Because agents now do more of the work, I wanted to bring back the inventory and health potions. The goal would be to find a key to get out of the dungeon, and the key would be in a different room from the exit.
+- **What I got:** Claude Code listed what it would take: items in the room format, a locked exit, picking up, the inventory in the store and in the save, an inventory list, a potion button in the combat menu, and new balance numbers. It pointed out that the format has to be decided today, before the exits agent starts on Friday and the room spec on Sunday. It also said that agents write the code, but my review time is the bottleneck. It recommended the key, the locked exit and a simple inventory list in place of the UI skin, with potions only if there's time, because the key needs no new combat action and doesn't touch the focus code I had just tested. Then it wrote decision 8 into the sprint plan: Agent C also does the item format and the locked exit, and a new Agent E builds picking up, the inventory and the list. It also moved Agent D after E, cut the UI skin, and updated the "How to play" text, "Plan changes" and `CLAUDE.md`.
+- **Outcome:** ✅
+- **Why:** I chose the recommended option. The key gives the game a real goal and tests the room format across two rooms. The UI skin was already first in line to be cut. Potions would mean changing the combat menu and the healing I decided on Nov 2–3.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the project plan.
+- **Afterwards:** I wanted the key to be behind an enemy, for some difficulty. Claude Code suggested placing the key where every path to it passes next to an enemy. That's only a rule in the room spec, because a fight already starts next to an enemy and enemies block movement. The other option, an enemy that drops the key, needs new code, so it became a future improvement. I chose the guard.
+- **Then:** I also wanted health potions to loot from barrels and crates. Claude Code said it's the biggest addition so far: a search action (it can use the door key), containers in the room file, a drink button, and balance. The risky part is focus: drinking the last potion removes the focused button, the same problem as on Nov 3. It recommended making it the first stretch item, with the design written now, and building it only if the reviews are on schedule on Wed Nov 11 (Agent F). I agreed.
+
+---
+
 ## Agent-built rooms: evaluation
 
-Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.
+Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room. From Nov 4, agent-built engine work (rendering, exits, Supabase foundation, saves and sync) gets a row too, with the task in the Room column.
 
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |

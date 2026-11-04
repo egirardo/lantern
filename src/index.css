@@ -3,6 +3,8 @@ body {
   font-family: system-ui, sans-serif;
   background: #111;
   color: #eee;
+  display: flex;
+  justify-content: center;
 }
 
 #phaser-game {
@@ -16,4 +18,61 @@ body {
 #phaser-game:focus {
   outline: 3px solid white;
   outline-offset: 3px;
+}
+
+/* Map (and combat menu) on the left, adventure log on the right. flex-wrap
+   puts the log below the map when the window is too narrow for both, e.g. on
+   a phone or with large text. */
+.game-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* The log is a column: the heading on top, the entries box fills the rest.
+   480px is the canvas height (10 tiles × 16px × zoom 3, in create-game.ts),
+   so the log lines up with the map. */
+.adventure-log {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  flex: 1 1 20rem;
+  min-width: 16rem;
+  max-width: 40rem;
+}
+
+.adventure-log h2 {
+  margin: 0 0 0.5rem;
+}
+
+/* Only this box scrolls. min-height: 0 is needed because a flex child won't
+   shrink below its content by default, so without it the box would just grow
+   taller instead of scrolling. */
+.adventure-log-entries {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #888;
+  padding: 0 1rem;
+}
+
+.adventure-log-entries:focus {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+
+/* Hidden on screen but still read by screen readers. display: none or
+   visibility: hidden would hide it from screen readers too. This is the
+   standard pattern: a 1px box, clipped, taken out of the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
