@@ -153,7 +153,7 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
    - [ ] Tests written, implemented
 4. **Name the decor (Tiled):** add the barrels, tables and so on to the entrance hall, and their tile ids to the table.
    - [ ] Done
-5. **Render the dark (Phaser), Agent A (decision 7, also step 6):** tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
+5. **Render the dark (Phaser), Agent A (decision 7, also step 6).** **Changed Nov 4 after my playtest:** the radius is 2.5 (rounder than 2, smaller than 3), and the dark is one image with a soft round hole instead of black squares: fully clear up to 2 tiles, black from 3. The high contrast setting will switch to a hard edge (Phase L). tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
    - [ ] Done
 6. **Enemies in the light (Phaser):** enemies drawn only inside the light, looked up through the asset manifest.
    - [ ] Done
@@ -194,7 +194,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Moving.** Focus the dungeon map and use the arrow keys. Each key press is one step. Walls, objects and enemies block your way, and the adventure log tells you what happened.
 
-**Your lantern.** You can only see three tiles around you. When something comes into the light, the log tells you what it is and in which direction.
+**Your lantern.** You can only see about two tiles around you. When something comes into the light, the log tells you what it is and in which direction.
 
 **Fights.** A fight starts when you step next to an enemy. Everyone rolls a 20-sided die for initiative, and the highest roll goes first. You win a tie. On your turn, choose an enemy to attack in the action menu (Tab to move, Enter to choose). You can't move or run away during a fight.
 
@@ -286,7 +286,7 @@ As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save
 
 - [ ] Settings in the store, with the `prefers-reduced-motion` default (tests)
 - [ ] Settings dialog with focus management
-- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin")
+- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin"), and draws the lantern light with a hard edge instead of a soft fade (decided Nov 4), so lit and dark tiles are easy to tell apart
 - [ ] PR reviewed
 
 ## Saves, accounts and sync (Tue Nov 10 – Wed Nov 11)
