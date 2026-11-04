@@ -1,4 +1,5 @@
 import { samePosition, type Grid, type Position } from './movement'
+import type { StoreEnemy } from './spawn-enemies'
 
 // How far the player's lantern shines, in tiles. It doesn't have to be a whole
 // number, because the rule is dx² + dy² <= radius² (here <= 6.25). 2.5 lights
@@ -37,4 +38,27 @@ export function getVisibleTiles(
 // so the "is it lit" rule stays here instead of in rendering code.
 export function isLit(visibleTiles: Position[], position: Position): boolean {
   return visibleTiles.some((tile) => samePosition(tile, position))
+}
+
+// The enemies that have just come into the light: lit after the step, but not
+// before it. The reveal narration announces exactly these (rule 5: an enemy
+// that appears on the canvas must also appear in the log).
+// - Every time, not once (decided Nov 4): an enemy that leaves the light and
+//   comes back is in the result again, because the player really lost sight
+//   of it. So nothing needs to be remembered between steps.
+// - Loading a room passes an empty `visibleBefore`, so every enemy that is
+//   already lit is announced.
+// It loops over the enemies, not the tiles, so the result keeps the store's
+// order (the same order as the rest of the log). filter() makes a new array
+// and never changes the inputs.
+export function getNewlyLit(
+  visibleBefore: Position[],
+  visibleAfter: Position[],
+  enemies: StoreEnemy[],
+): StoreEnemy[] {
+  return enemies.filter(
+    (enemy) =>
+      isLit(visibleAfter, enemy.position) &&
+      !isLit(visibleBefore, enemy.position),
+  )
 }
