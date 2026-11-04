@@ -1,0 +1,130 @@
+import { useEffect, useRef } from 'react'
+import { useStore } from 'zustand'
+import { gameStore } from '../state/game-store'
+import { getAttackOptions } from '../game/narration'
+
+// How long to wait before moving focus into the menu at the start of a fight.
+// VoiceOver lost track when focus moved in the same moment the page changed
+// (it read "main" instead of the button). With a short wait, it reads the
+// button, then the queued log lines ("The demon attacks you!…"). Tested with
+// VoiceOver in Safari, Nov 3.
+const FOCUS_DELAY_MS = 100
+
+// Focus whatever had focus before the fight (normally the map), or the map
+// if that element is gone. document.body counts as "nowhere": it's an
+// HTMLElement and always on the page, but focusing it doesn't help.
+function returnFocus(previousFocus: HTMLElement | null) {
+  if (
+    previousFocus &&
+    previousFocus.isConnected &&
+    previousFocus !== document.body
+  ) {
+    previousFocus.focus()
+  } else {
+    document.getElementById('phaser-game')?.focus()
+  }
+}
+
+export function CombatMenu() {
+  const combat = useStore(gameStore, (state) => state.combat)
+  const menuRef = useRef<HTMLElement>(null)
+  // What had focus when the fight started. A ref instead of a variable inside
+  // the effect, because the click handler needs it too, at the end of the
+  // fight. Changing a ref doesn't re-render.
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  const inFight = combat !== null
+
+  // The fight starts: remember what has focus (normally the map), then move
+  // focus to the first attack button after a short wait.
+  useEffect(() => {
+    if (!inFight) return
+
+    const current = document.activeElement
+    previousFocusRef.current = current instanceof HTMLElement ? current : null
+
+    const timeoutId = setTimeout(() => {
+      menuRef.current?.querySelector('button')?.focus()
+    }, FOCUS_DELAY_MS)
+
+    return () => {
+      // The fight has ended. Cancel the timer in case it ended before the
+      // timer fired.
+      clearTimeout(timeoutId)
+      // Normally the click handler has already moved focus (see attack
+      // below). This is a safety net: if focus was lost anyway, give it back.
+      if (document.activeElement === document.body) {
+        returnFocus(previousFocusRef.current)
+      }
+    }
+  }, [inFight])
+
+  // The player attacks. Focus must never be on a button that disappears:
+  // VoiceOver then moves its own cursor to "main", announces that, and drops
+  // the queued log lines (the victory lines were never read, Nov 3).
+  // playerAttack updates the store right away, so the result can be read on
+  // the next line. React only re-renders (and removes buttons) after this
+  // handler has finished, so the old buttons are still on the page here.
+  function attack(targetId: string) {
+    gameStore.getState().playerAttack(targetId)
+    const after = gameStore.getState().combat
+
+    if (after === null) {
+      // The fight is over, won or lost. Move focus to the map now, while the
+      // button still exists. VoiceOver reads the map, then the queued lines.
+      // On a loss, those lines end with the game over message. Focus doesn't
+      // go to GameOver's message: it doesn't exist yet at this point, and
+      // moving focus there afterwards made VoiceOver drop the last batch of
+      // lines (tested Nov 4).
+      returnFocus(previousFocusRef.current)
+      return
+    }
+
+    // The fight goes on. If the target died, its button is about to vanish,
+    // so move focus to the button of the first enemy still standing. That
+    // button exists already and stays. If the target survived, focus stays
+    // where it is, on the enemy you were fighting.
+    const options = getAttackOptions(after)
+    const targetSurvived = options.some((option) => option.id === targetId)
+    // options[0] is `AttackOption | undefined` to TypeScript (an array can be
+    // empty), so it gets a name and a check instead of a ! assertion.
+    const firstStanding = options[0]
+    if (!targetSurvived && firstStanding) {
+      menuRef.current
+        ?.querySelector<HTMLButtonElement>(
+          `[data-enemy-id="${firstStanding.id}"]`,
+        )
+        ?.focus()
+    }
+  }
+
+  if (!combat) {
+    return null
+  }
+
+  const options = getAttackOptions(combat)
+
+  return (
+    <section
+      ref={menuRef}
+      aria-labelledby="combat-menu-heading"
+      className="combat-menu"
+    >
+      <h2 id="combat-menu-heading">Your turn</h2>
+      <ul>
+        {options.map((option) => (
+          <li key={option.id}>
+            {/* data-enemy-id lets attack() find this button by enemy id. */}
+            <button
+              type="button"
+              data-enemy-id={option.id}
+              onClick={() => attack(option.id)}
+            >
+              {option.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

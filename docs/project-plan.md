@@ -274,3 +274,32 @@ Changes to the sprint plan above, with the date and reason. The original plan is
 - **Moved from Sprint 2 to Sprint 3:** lantern rendering and narration of surroundings, dice, combat with 3 enemy types, keyboard action menus. Action menus fit well with focus management, which was already in Sprint 3.
 - **Knock-on effects (to be re-planned at the start of Sprint 3):** guest mode with local saves will probably move to Sprint 4, since it uses the same save layer as account sync. Agents may start building rooms 2–5 early in Sprint 4 instead of at the end of Sprint 3. Sprint 5 is the planned buffer for delays.
 - **Planning rule from now on:** sprints are planned on weekdays only. Weekend work is a bonus.
+
+**Oct 28 — Sprint 3 plan**
+
+- **What happened:** Sprints 1 and 2 were only finished by Oct 28, so Sprint 3 has 5 working days left (Wed–Fri plus Sat and Sun), not the usual 5 weekdays, with the weekend counted in.
+- **Sprint 3 (Oct 26–Nov 1):** the core game loop (dice, combat with 3 enemy types, action menus with focus management, lantern rendering and narration, accessibility settings). See `docs/sprint-3-plan.md`.
+- **Moved to the start of Sprint 4:** the full-room screen reader test, guest mode with local saves, Playwright and axe-core, the agent specification in `CLAUDE.md`, and exits between rooms. **Decided Oct 28:** Sprint 5 is used as the buffer. The screen reader pass and agent spec go first in Sprint 4, accounts follow, and the dungeon stays at 3–5 rooms. If time runs short, inventory and colorblind design (Should) are cut first, as the risks section says.
+
+**Oct 28 — Initiative added to Sprint 3, and what "hand-built" means for the reference room**
+
+- **What happened:** I decided to add initiative rolls to combat in Sprint 3, even though they're not in the MoSCoW. Building the turn model once avoids reshaping the combat code, enemy schema and menu focus later.
+- **Effect on the method:** the plan says I build the reference room completely by hand. For initiative I write the tests and Claude Code writes the implementation, which I review. This is logged in `docs/ai-log.md` as code Claude Code wrote. Dice, the attack roll, applying damage and the combat types are my own code. I'll say this in the evaluation, so the comparison with the agent-built rooms is honest about which parts of the reference room were AI-written.
+- **Schedule:** Phase L (settings) is still the first thing to slip if time runs short.
+
+**Nov 2 — Sprint 3 ran over, re-plan to submission**
+
+- **What happened:** Sprint 3 finished Phases H and I (dice, combat rules, enemies, combat in the store and its narration) but not Phases J, K and L. The Musts left are estimated at 10.5–13 days, with about 10 working days before submission.
+- **One plan to submission:** Sprints 4 and 5 are planned together in `docs/sprint-4-plan.md`. Order: action menus (Phase J), lantern rendering (Phase K), exits, the agent spec and agent rooms, settings (Phase L), guest saves, accounts and sync, a full screen reader pass, then the evaluations and submission on Fri Nov 13. Sat–Sun Nov 14–15 is a buffer.
+- **The dungeon has 3 rooms:** the reference room plus 2 agent-built rooms (plan B from the risks section).
+- **Supervision Nov 4:** demo of keyboard combat and this re-plan, instead of the full dungeon and account sync.
+- **Shoulds move to after submission:** all Should items are cut from the submission. Playwright and axe-core are reduced to one axe-core scan and, if there's time, one keyboard Playwright path.
+- **Effect on the method:** for pure helpers in `src/game/` (from Nov 2: low health, combat sync, combat flow; later reveal narration and verbosity), I write the tests and Claude Code writes the implementation, which I review. I write the store wiring, React, focus handling and Phaser code myself. All of it is logged in `docs/ai-log.md`, and the evaluation will say which parts of the reference room were AI-written.
+- **Days:** weekdays as before, but Thu Nov 5 is only a morning and Sun Nov 8 is a full working day I chose to add.
+
+**Nov 4 — Code freeze on Nov 16, and agents build more of the engine**
+
+- **What happened:** on Nov 4 I heard that no code can be pushed after Nov 16, so the supervisors can review everything. Submission is still Fri Nov 13, but Sprint 6 (Nov 16–22) is gone as a buffer for polish and fixes. The plan to submission was already tight (see Nov 2).
+- **Change:** coding agents now build the lower-risk engine work as well as rooms 2 and 3: lantern rendering in Phaser, exits and room changes, the Supabase foundation (tables, row-level security and its tests, the auth client), and guest saves with sync. Each is delivered as a pull request that I review, play with the keyboard and, where it matters, test in VoiceOver. I keep the accessibility-critical work: the settings dialog and focus handling, the login and sign-up form, all screen reader testing, and the evaluations. Details in decision 7 in `docs/sprint-4-plan.md`.
+- **Effect on the method:** the reference room is no longer fully hand-built: its rendering and exits are agent-built. Its combat rules, the combat store wiring, the menus and focus handling are still mine (with the AI-written helpers logged since Oct 28). I'll evaluate the agent-built engine work the same way as the agent rooms (checks passed, corrections needed, accessibility issues, review time), and the evaluation will say which parts were agent-built.
+- **The goal is a key, and part of the inventory Should is back:** the player is locked in the dungeon, and the locked final exit needs a key found in another room. Items in the room file, picking them up and a simple inventory list are back in the plan, built by agents. Health potions looted from barrels and crates are the first stretch item, built only if the reviews are on schedule on Nov 11. **The UI skin (decision 6, Nov 3) is cut** to make room. It's cosmetic, while an inventory you can use with the keyboard is accessibility work. Details in decision 8 in `docs/sprint-4-plan.md`.

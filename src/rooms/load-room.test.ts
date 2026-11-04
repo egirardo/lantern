@@ -91,6 +91,70 @@ describe('checkPositions', () => {
     )
   })
 
+  it('fails when an enemy is outside the grid', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [{ id: 'enemy-1', type: 'skeleton', position: { x: 3, y: 1 } }],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Enemy enemy-1 is outside the grid',
+    )
+  })
+
+  it('fails when an enemy is inside a wall', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [{ id: 'enemy-1', type: 'skeleton', position: { x: 0, y: 0 } }],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Enemy enemy-1 is inside a wall',
+    )
+  })
+
+  it('fails when an enemy is on the player start position', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [{ id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 1 } }],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Enemy enemy-1 is on the player start position',
+    )
+  })
+
+  it('fails when two enemies are on the same tile', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [
+        { id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 2 } },
+        { id: 'enemy-2', type: 'orc', position: { x: 1, y: 2 } },
+      ],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Enemy enemy-1 is on the same position as another enemy',
+    )
+  })
+
+  it('accepts a valid room with an enemy on a floor tile', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [{ id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 2 } }],
+    }
+    expect(() => checkPositions(grid, room)).not.toThrow()
+  })
+
+  it('fails when a second enemy is invalid', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [
+        { id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 2 } },
+        { id: 'enemy-2', type: 'orc', position: { x: 0, y: 0 } },
+      ],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Enemy enemy-2 is inside a wall',
+    )
+  })
+
   // The walkable-neighbor tests need grids where walls don't all touch the
   // floor, so they build their own. playerStart is always moved onto a floor
   // tile, otherwise the start check would throw before the exit rule runs.

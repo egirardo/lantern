@@ -580,11 +580,293 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** I kept the breakdowns and the lint exceptions, and changed my code after each review point. I rejected nothing, but I corrected Claude Code's two wrong lint claims by testing, and the VoiceOver result showed that `aria-describedby` can't be relied on for essential information.
 - **How I verified it:** Claude Code ran typecheck, lint, Prettier, all 82 tests and the build before the PR: all pass. By hand: arrows move the hero one tile with a log entry each (also into walls), holding a key doesn't repeat, the page doesn't scroll, Tab leaves the region, clicking the canvas focuses it, and VoiceOver reads the name, role and hint. Not yet tested: announcements of moves (Phase F).
 
+#### 2026-10-27 — Review, commits and PR descriptions for the room scene and the release
+
+- **Tool:** Claude Code
+- **Category:** Review, Documentation
+- **What I asked:** A last check of the branch, the commits in order with messages, the PR description for the room scene (#17), and the description for the release from `dev` to `main` (#18).
+- **What I got:**
+  - Typecheck, lint, Prettier, all 82 tests and the build run, and a list of small review points (a missing comment on `mouse: false`, heading case, an unused id), which I fixed.
+  - Seven commits, split so each one passes lint on its own (the ESLint exception before the handler that needs it), with the commits already on the branch left out.
+  - The two PR descriptions, in the format of my earlier PRs. Claude Code looked at the merged PRs and `git log origin/main..origin/dev` to list everything the release included (#4 to #17), and told me not to claim two manual checks (click focus, held key) until I'd run them.
+  - A VoiceOver and keyboard question about `fn` + arrow and Cmd/Option + arrow scrolling the page. Claude Code's explanation: those are browser shortcuts that my handler leaves alone on purpose, and the scroll shortcuts only seemed to start once the page was tall enough to scroll. I tested and agreed.
+  - Ticked Phase E and the release boxes in `CLAUDE.md` and `docs/sprint-2-plan.md`.
+- **Outcome:** ✅
+- **Why:** The descriptions and commit messages are what I merged, with edits to the manual-check lines so they only list what I ran. I did the merges and the commits myself.
+- **How I verified it:** CI on both PRs, and the manual checks listed in each description. Claude Code could not see the deployed site, so the checks on `lantern-wine.vercel.app` after the release were mine.
+
+#### 2026-10-27 — Phase F: adventure log as a live region
+
+- **Tool:** Claude Code
+- **Category:** Planning, Review, Accessibility
+- **What I asked:** A breakdown of Phase F, a name for the branch, and a review of my change to `AdventureLog.tsx`.
+- **What I got:**
+  - Breakdown: Claude Code read the plan and my code first and found that the heading, `aria-labelledby`, the `key={entry.id}` and the empty-list-before-the-first-message were already done in Phase E. Only `role="log"` was missing.
+  - Decision: `role="log"` directly on the `<ol>` (option A) replaces the list semantics, so Claude Code gave me two options and recommended B, a `<div role="log">` around the `<ol>`.
+  - Branch name: `feature/adventure-log-live-region`, matching `feature/room-scene`.
+  - Review: my change was correct. Claude Code said I should not add `aria-live` myself (`role="log"` already means `polite`, and implies `aria-atomic="false"`, so only new entries are read). It flagged that keeping `aria-labelledby` on both the div and the `<ol>` might make VoiceOver say "Adventure log" twice, and left that for me to test. It also warned that the first "You enter the room" entry might not be announced during page load.
+- **Outcome:** ✏️
+- **Why:** I chose B and wrote the change myself. Claude Code's "might read twice" was a guess, so I tested it. VoiceOver did read the name twice, so I removed `aria-labelledby` from the `<ol>`. The div is the named region and the `<ol>` is just the list.
+- **How I verified it:** VoiceOver: walking into a wall or the edge twice announces the message both times. Not yet checked (Claude Code listed them): that old entries aren't read again when a new one is added, that focus stays on the game region, and whether the first entry is announced on load.
+
+#### 2026-10-28 — Phase G: lantern visibility rules
+
+- **Tool:** Claude Code
+- **Category:** Planning, Learning, Review, Coding
+- **What I asked:** A breakdown of Phase G and a branch name, whether the light could fade into a gradient so the player knows where to investigate, then reviews of my tests and `getVisibleTiles`, and help with the errors and the one failing test.
+- **What I got:**
+  - Breakdown: the three decisions to make first (shape, function shape, walls), five tests to write first, and the red/green/break-on-purpose steps. I chose the round shape and `getVisibleTiles`. Branch name: `feature/lantern-visibility`.
+  - Gradient question: Claude Code split it into logic and rendering. A gradient on the canvas alone would break rule 5, so a dim ring needs a log line with a direction. It recommended keeping Phase G bright or dark and parking a `dim` level for Sprint 3, and added it to "Moved to Sprint 3" in the sprint plan.
+  - Test review: the "just outside" test used a tile outside the grid, so it passed for the wrong reason. No test checked the round shape. `grid[0].length` failed typecheck. The edge test passed on an empty result. `as Grid` hid mistakes. Claude Code fixed the ones I missed (the exact-list test, the comments, the edge test with `toHaveLength(11)` and `toBeDefined`), and added the "light goes through walls" test at my request.
+  - Function review: correct, with a typecheck error on `grid[y].length` and some cleanup. Claude Code broke the function on a backup copy and restored it. A square and `<` instead of `<=` failed tests, but a diamond passed all of them. Claude Code fixed my inner loop (`for (let x = 0; …)`) after a bad edit left it broken, and fixed my radius 3 test (the list was missing `(0, 3)` and `(4, 3)`).
+  - **Claude Code was wrong:** its first breakdown said a round light at radius 2 covers 21 tiles. It covers 13, the same as a diamond. So no radius 2 test can tell the shapes apart, and the first set of tests couldn't enforce the shape I chose. A radius 3 test could, and fixed it.
+- **Outcome:** ✏️
+- **Why:** I wrote the tests (apart from the walls test) and `getVisibleTiles`, and made the other fixes. Claude Code's wrong tile count was the reason for the radius 3 test. I kept Phase G binary and moved the dim ring to Sprint 3, because it's a Should-level addition that depends on things that don't exist yet (enemies and items on tiles).
+- **How I verified it:** Typecheck, lint, Prettier and all 90 tests pass (Claude Code ran them). On a backup copy, a square light, `<=` changed to `<` and a diamond light each make a test fail (the diamond only since the radius 3 test), and the file was restored afterwards.
+
+---
+
+## Sprint 3 (Oct 26–Nov 1): Reference room, combat and accessibility
+
+#### 2026-10-28 — Sprint 3 plan
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I had caught up on Sprints 1 and 2. I asked for a Sprint 3 plan that includes weekend work, so I'm back on track for Sprint 4 on Monday. First I asked for one weekend day, then added the second.
+- **What I got:** `docs/sprint-3-plan.md`: 5 working days (Wed, Thu, Fri, Sat and Sun), with six decisions to make first, then Phase H (dice and combat rules), Phase I (enemies as data, combat in the store, narration), Phase J (action menus and focus) and Phase K (lantern rendering and narration). With the second weekend day, Claude Code added Phase L (accessibility settings). It said plainly that the original Sprint 3 scope plus the work moved from Sprint 2 still doesn't fit. The full-room screen reader test, guest saves, Playwright and axe-core, the agent spec and room exits are listed as not fitting, with three options for Sprint 4.
+- **Also that day:** I picked the three enemies (`skeleton`, `demon`, `orc`) from the tileset and sent Claude Code screenshots of each sprite set. It found their positions on the sheet by cropping and enlarging regions of the PNG, and added 24 frames to `public/assets/dungeon/sprites.json` (data only, no code). Its first crops with `sips` were wrong (the offsets landed in the wrong area), so it wrote a small throwaway PNG cropper instead. It checked the result by rendering the three rows and comparing them with my screenshots.
+- **Outcome:** ⏳ (to fill in after I review it)
+- **Why:** ✏️ (to fill in: what I kept or changed, and I chose option A for Sprint 4: use Sprint 5 as the buffer)
+- **How I verified it:** ✏️ (to fill in)
+
+#### 2026-10-28 — Phase H part 1: dice, attack roll and damage
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review
+- **What I asked:** To talk me through the six decisions at the start of Sprint 3, then to guide me through `rollDie`, the attack roll and `applyDamage`, and to review my tests and code at each step. I wrote the types, the tests and the functions. I also asked for a natural 20 to deal double damage, after the plan had left it out.
+- **What I got:**
+  - Decisions: a recommendation for each (free movement while exploring, melee only, light radius 3, no explored-tile memory). I changed the enemies (`skeleton`, `demon`, `orc`) to match the sprites I picked.
+  - Review of `rollDie`: the tests passed, but a wrong version (`Math.round(random() * (sides - 1)) + 1`) also passed them, because they only checked the ends and the middle. Claude Code fixed my tests: a loop over every face of d4, d6 and d20, a boundary test, `NaN` and `Infinity` as bad input, and a test of the default `Math.random`. I decided on the throw when `random` is outside 0 to under 1, and it added that.
+  - Review of the combat types and tests: no discriminant on `CombatResult`, and several tests had wrong numbers. For example, `0.5` on a d20 rolls 11, not 3. Two of my natural 20 and natural 1 tests would have passed without the rule. Claude Code rewrote the tests with `rollOf` and `sequence` helpers, so the d20 and the damage die can be controlled separately.
+  - Review of my `attackRoll`: correct. Claude Code found a gap by breaking it on a backup copy: a critical hit with a fixed d6 passed every test, so it added a d4 critical hit test.
+  - **Claude Code was wrong:** it said `1 - Number.EPSILON` is the closest number under 1. It isn't (`1 - Number.EPSILON / 2` is), so it changed the test constant. Its first mutation check also did nothing, because the `sed` pattern didn't match, and it only noticed because every version passed.
+- **Outcome:** ✏️
+- **Why:** I wrote the types, tests and functions, and Claude Code fixed the tests that I got wrong. I added the critical hit myself. Claude Code recommended rolling the damage die twice and adding, as D&D does, instead of multiplying by 2, and I kept that. I decided negative damage does 0 damage and doesn't heal.
+- **How I verified it:** Typecheck, lint, Prettier and all 128 tests pass (Claude Code ran them). On backup copies, many wrong versions of `rollDie`, `attackRoll` and `applyDamage` each make at least one test fail, and the files were restored afterwards.
+
+#### 2026-10-28 — Phase H part 2: initiative and turn logic
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review
+- **What I asked:** To add initiative to combat (everyone rolls d20 + a bonus once, the player wins ties), to review my turn types and tests for gaps, and to write the implementation of `startCombat`, `resolvePlayerAttack` and `resolveEnemyTurns` after I wrote the tests. Later I also asked it to condense my tests and to fix the mistakes it found in my enemy turn tests.
+- **What I got:**
+  - **Code I wrote:** the turn types in `combat.ts` (`CombatState`, `CombatEvent`, `CombatEntry`, `CombatStatus`, `CombatUpdate`), `getCombatStatus` and its tests, `makeState`, and the first version of every test.
+  - **Code Claude Code wrote:** the three functions and their two private helpers (`isAlive`, `nextLivingIndex`) in `combat-turns.ts`, the shared test helpers `makeFight`, `makeEnemyTurn`, `hitRoll`, `hitEvent` and `enemyHitEvent`, and the condensed version of the `startCombat` and `resolvePlayerAttack` tests. It also rewrote the enemy turn tests after its review.
+  - **Review of my types:** I had no ids on the enemies, although events and `turnOrder` use ids. I also stored `status` in the state, which went against my own decision that it's calculated from health. The result type, `PLAYER_ID` and an outcome on `combat-ended` were missing too.
+  - **Review of my `startCombat` tests:** the bonus test could not fail, because the player wins a tie anyway. The `0.75` I used for a 15 is really a 16, and two tests were duplicates. Nothing checked the `initiative` events or more than two combatants.
+  - **Review of my `resolvePlayerAttack` tests:** the throws test reused one `sequence` for several calls, two throws used identical states, and the "skip and wrap" test passed for a different reason than its name. Claude Code then condensed the file from 483 to 336 lines with helpers and tables.
+  - **Review of my `resolveEnemyTurns` tests:** most started on the player's turn, so the function would do nothing. They also checked the wrong health and used the player's attack bonus for enemies. One used a damage roll that makes `rollDie` throw, and one "combat over" state wasn't over. Claude Code fixed all of them.
+  - **Claude Code was wrong:** its first condensed test table used tuples, which failed typecheck under `noUncheckedIndexedAccess`. Its first rewrite was refused because it had not opened the file with the Read tool, and in between it ran `prettier --write` on my original file (only the formatting changed). In the `resolveEnemyTurns` mutation script it also left in a placeholder that made no sense.
+- **Outcome:** ✏️
+- **Why:** I kept the whole design: initiative rolled once, a stable sort so the player wins ties and tied enemies keep their order, defeated combatants stay in the order and are skipped, and a bad call throws. For `resolveEnemyTurns` I kept "does nothing on the player's turn", so the UI can call it after every action. I also kept that a defeat stops the other enemies at once. I changed my types after the review. I reviewed the code Claude Code wrote, which is why the plan notes that the turn logic is not entirely hand-built.
+- **How I verified it:** Typecheck, lint, Prettier and all 168 tests pass (Claude Code ran them). On copies of the functions, wrong versions each make at least one test fail: 5 for `startCombat`, 10 for `resolvePlayerAttack` and 8 for `resolveEnemyTurns`. Two survived. Reversing the caller's `enemies` in place got through my first `startCombat` test, because it used one enemy, so I used two. Ignoring that the combat is over for `turnIndex` can't be told apart by any test, since only the player is left alive. The files were restored afterwards.
+
+#### 2026-10-29 — Phase I part 1: enemies as data
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** To help me start Phase I and suggest a branch name, to say where the enemy stats file should go, and then to review each step of my work: the enemy schema and `enemies.json`, my schema tests, the `enemies` field in the room schema, my `checkPositions` changes and tests, and the enemies in `entrance-hall.json`. I wrote this part myself, and asked Claude Code for hints, not solutions.
+- **What I got:**
+  - **Plan:** Phase I split into three small branches (`feature/enemy-data`, then narration, then the combat store). I started with `feature/enemy-data`. Stats in `src/game/enemies.json` with a Zod schema beside it, imported directly instead of fetched.
+  - **Code I wrote:** `enemy-schema.ts`, `enemies.json`, the `enemies` field in `room-schema.ts` (including the unique `id` I added), the enemy checks in `checkPositions`, all tests, and the three enemies in `entrance-hall.json`.
+  - **Code Claude Code wrote:** the `superRefine` in `room-schema.ts` (duplicate ids and the reserved id `player`), after I asked for help. It also ran Prettier on a few files, the scaffold of `enemy-schema.test.ts` (empty test bodies with hints), and it printed the room grid so I could pick tile positions.
+  - **Review findings:** `type` was a plain string so an unknown enemy couldn't fail; `maxHealth` allowed 0; `displayName` was optional or could be empty; my table schema was named like data; `damageDie` was `"d4"` in the JSON instead of a number (`tsc` can't see this); `z.keyof` doesn't take plain data; the table test used a schema as the value, so it would have passed for the wrong reason; my first extra-field test checked `path`, but Zod reports `unrecognized_keys` with an empty path; and my position checks compared objects with `===`, so the player-start and same-tile checks never fired.
+  - **Claude Code was wrong or unclear:** it said "the real-room test will tell you if a position is on a wall" without checking that such a test existed. Such a test does exist (`room-files.test.ts`), but it only checked that when I asked for the review. It also first sketched `in` for the unknown type check and changed it to `Object.hasOwn` in the next message. Its first throwaway script to read the Zod issue printed nothing and had to be rerun.
+- **Outcome:** ✏️
+- **Why:** I kept the split into three branches, the location of the stats file and `Object.hasOwn`. I decided to write the schema before the tests this time, because it made more sense to me, and Claude Code agreed as long as the tests were written before moving on. I added the enemy `id` myself, which the plan didn't have, and Claude Code suggested the uniqueness and `player` rules. I picked the initiative bonuses (skeleton +1, demon +2, orc 0). Claude Code suggested the enemy positions (away from the player start so a fight doesn't start at once, and not on the door tiles) and I used them as they were.
+- **How I verified it:** Typecheck, lint, Prettier and all 188 tests pass. On a backup copy, changing `samePosition` back to `===` made exactly the two tests for the player start and the same tile fail, and the file was restored afterwards. `room-files.test.ts` loads the real `entrance-hall.json` with its three enemies.
+
+#### 2026-10-29 — Phase I part 2: combat narration
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a guide to writing combat narration, with Claude Code's recommendations for the open choices, then to fix my `getName` and `describeCombatEvent`. I was short on time, so I asked Claude Code to finish the function and the tests.
+- **What I got:**
+  - **Code I wrote:** `isPlayer`, `getName` and `describeRoll` (with the minus sign for a negative bonus), and a first version of `describeCombatEvent` for attacks and initiative.
+  - **Code Claude Code wrote:** the `subject`, `object` and `verb` helpers, the final `describeCombatEvent` with all four event types, "against armor class" in the roll text, and all 20 tests in `narration.test.ts`.
+  - **Review findings:** `getName` used the store's `GameState` instead of `CombatState`, and the initiative numbers are in `event.initiativeRoll`, not on the event. The `defeated` and `combat-ended` cases were missing (TypeScript's missing return error). The sentences used the raw names, so the player was "Hero".
+  - **Claude Code was wrong or unclear:** its first guide proposed longer sentences ("You attack the skeleton: ...") that I didn't prefer. Its own mutation check showed that its first set of tests had no zero bonus case, so it added one.
+- **Outcome:** ✏️
+- **Why:** I kept my shorter sentence structure over Claude Code's longer one, but asked for "you" instead of "Hero" and for the armor class to be in the brackets, because the roll alone didn't say what it had to beat. I kept "armor class" in full because screen readers read "AC" as two letters.
+- **How I verified it:** Typecheck, lint, Prettier and all 205 tests pass (Claude Code ran them). On a backup copy, using "hit" for enemies, leaving out the armor class number and using "Hero" for the player each made tests fail. The `bonus > 0` change survived until I added a zero bonus test. The file was restored afterwards. `+` and `=` still need a VoiceOver check in Phase J.
+
+#### 2026-11-01 — Phase I part 3: enemies in the store
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a guide to getting the enemies into the store, with Claude Code's recommendations for the player stats, how combat starts, solid enemies and duplicate names. Then to review each piece as I wrote it: the player constant, `spawnEnemies`, `getAdjacentEnemies`, the enemy check in `movePlayer` and the store tests. I also asked for the extra `samePosition` tests and for help with the store's `movePlayer`.
+- **What I got:**
+  - **Code I wrote:** `player.ts`, `spawn-enemies.ts` (including the two counts for numbering duplicates), `adjacency.ts`, the enemy check and the new blocked reason in `movement.ts`, the move of `samePosition` out of `load-room.ts`, the store changes in `loadRoom`, and the tests for all of it.
+  - **Code Claude Code wrote:** the `readonly` on the `spawnEnemies` parameter (to fix a type error in my test), the fix to `movePlayer` in the store (positions read before `computeMove` and not set back), and the four `samePosition` tests. It also deleted the blocks of guide text I had pasted at the top of two test files and ran Prettier on several files.
+  - **Review findings:** `PLAYER.currentHealth` was typed as `12` twice (now one constant); `RoomEnemy` had no type; `StoreEnemy` wasn't exported; the first `movePlayer` enemy check was before the edge and wall checks; the store's `set` replaced `enemies` with positions and the positions were calculated after `computeMove`; my `toBe` change went into the wrong adjacency test; and the "move next to an enemy" store test was a diagonal move, which doesn't count as adjacent.
+  - **Claude Code was wrong or unclear:** my first mutation check of the store did nothing, because Prettier had split the call over several lines and the `sed` pattern no longer matched, so all tests passed. It only noticed because the result looked suspicious and redid it another way.
+- **Outcome:** ✏️
+- **Why:** I took the recommended stats (HP 12, armor class 12, +3 to hit, +2 initiative, d6), solid enemies, four-way adjacency and numbering only duplicates. I chose to share `samePosition` from `movement.ts` instead of having a second copy, because the first one had the `===` bug. Combat itself (starting a fight, attacking, low health) is left for the next branch.
+- **How I verified it:** Typecheck, lint, Prettier and all 234 tests pass (Claude Code ran them). On backup copies, wrong versions of `getAdjacentEnemies` (6), `spawnEnemies` (4), `samePosition` (4), `movePlayer` and the store each made at least one test fail, and the files were restored afterwards.
+
+#### 2026-11-02 — Phase I part 4: combat helpers and combat flow
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a plan for the day, since I'm behind on the sprint. Then for step-by-step breakdowns of the low-health helper, the combat-sync helper and the combat flow (starting a fight and the player's attack), reviews of my tests, and implementations once the tests were right.
+- **What I got:**
+  - **Planning:** a timeline for the day, and a suggestion to speed up by changing the work split for the pure helpers: I write the tests, Claude Code writes the implementation. I agreed. Claude Code also proposed the shape of `combat-flow.ts` (`beginCombat`, `playerAttackStep`, a shared `finishStep`, `LogLine` and `CombatStep`) and three decisions, which I accepted: the low-health line goes last in a step, its text lives in `narration.ts`, and `beginCombat` converts the adjacent enemies itself.
+  - **Code I wrote:** the `low-health.test.ts` tests (fixed after two reviews), the `makeStoreEnemy` builder, the first drafts of the `combat-sync`, `beginCombat` and `playerAttackStep` tests, the `describeLowHealth` test, and the wording of the low-health warning.
+  - **Code Claude Code wrote:** `low-health.ts`, `combat-sync.ts`, `describeLowHealth` in `narration.ts`, and `combat-flow.ts`. When I asked, it also rewrote my drafts of `combat-sync.test.ts` and the `beginCombat` tests, and fixed my `playerAttackStep` tests (including adding the missing low-health case).
+  - **Review findings in my tests:** a killing blow expected a low-health warning; a typo in max health; a rounding test that couldn't fail; the enemy that isn't in the fight expected to be removed (it must stay); `[0]` lookups that fail typecheck; a duplicate test; input-unchanged tests that compared a new array instead of the one passed in; in the flow tests, made-up narration sentences, a missing `adjacent` argument, the wrong dice order, a d6 "rolling" 10, and the name read from `type` instead of `combatant.name`.
+  - **Claude Code was wrong or unclear:** it said `test-helpers.ts` "probably" had a store enemy builder (it didn't). It showed the `syncFromCombat` signature without a body, which I copied into a file, where it was a type error. It first designed `syncFromCombat` with a `player` parameter that was never used, then wrote a `void player` workaround, and removed the parameter instead. The rounding test it suggested for `crossedLowHealth` could never catch a missing `Math.floor`, because health is a whole number. One of its mutation checks only broke the code instead of testing a rule, and it said so. It also gave the time wrong several times, because it guessed instead of checking.
+- **Outcome:** ✏️
+- **Why:** I kept the implementations, because my tests define the behaviour and I reviewed every line. I changed the wording of the low-health warning to my own ("Low health warning: you have 2 out of 12 health remaining."). The new work split is faster but I still decide what the code must do, through the tests.
+- **How I verified it:** Typecheck, lint, Prettier and all 262 tests pass (Claude Code ran them). On backup copies, Claude Code broke each helper on purpose (7 ways for low-health, 7 for combat-sync, 1 for `describeLowHealth`, 8 for `beginCombat`, 6 for `playerAttackStep`), and each break made at least one test fail. The files were restored afterwards.
+
+#### 2026-11-02 — Phase I part 5: combat in the store, and the store tests
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Learning
+- **What I asked:** To review my store wiring for combat in `game-store.ts`. Then for a table of the store tests (S1–S7) with the real player and skeleton stats and the dice for each test. I wrote the tests myself and asked Claude Code to review them, after asking for help setting up a shared helper and for example tests. Finally I asked it to fix the problems it found.
+- **What I got:**
+  - **Code I wrote:** all the store changes in `game-store.ts`: the `player` and `combat` fields, `LogEntry`, `withIds`, `politeEntry`, the `random` parameter on `createGameStore`, starting a fight in `movePlayer`, `playerAttack`, and clearing combat in `loadRoom`. Also the store tests S2, S3, S5 and S7, and the imports and `playerWinsInitiative` constant.
+  - **Code Claude Code wrote:** the `storeInFight` helper and `roomWithSkeleton` (I placed them in the file), and S1, S4 and S6 as examples that I copied in. After its review, at my request, it fixed S3, S5 and S7, added a log check to S2, gave the older "moving next to an enemy" test fixed dice, and ran Prettier on the file.
+  - **Review findings in my store code:** a pasted skeleton replaced my existing move code; `'urgent'` was used as an urgency, which isn't one of the two allowed values; the action was typed as `typeof playerAttackStep` instead of its own signature; `player` was nullable; `playerAttack` had a target guard that silently did nothing (removed, because a wrong target is a bug that should throw); and a game-over guard that could never be reached (replaced by a comment explaining why).
+  - **Review findings in my tests:** S3 moved south, which the edge of the map blocks anyway, so it passed even with the fight check deleted from the store. S5 moved off the map to (1,3). S7 never called `loadRoom`, so it didn't test what its name said. It also had two dice rolls that were never used, and the wrong bonus and armor class in a comment. The older test used real dice now that stepping next to an enemy starts a fight. There was also one duplicate test and formatting issues.
+  - **Learning:** why each test needs its own fresh store (test isolation) instead of one shared at the top, and how a helper function removes the repetition without sharing state. Also: a test only proves something if it fails when the code is wrong.
+  - **Claude Code was wrong or unclear:** in the store review it guessed the time instead of checking it, and gave line numbers that were about 30 lines off because it had only printed part of the file. Its first plain-language description of S7 made it sound like the room was reloaded after winning a fight. I asked about it, and it rewrote the description to say the reload happens mid-fight.
+- **Outcome:** ✏️
+- **Why:** I kept my store design and fixed the review findings. For the tests I chose to write them myself with Claude Code reviewing, and only let it fix them when I asked. My question about S7 led to a decision for Sprint 4: when exits exist, the player arrives at the doorway they came through, not at `playerStart` (added to my open reminders).
+- **How I verified it:** Typecheck, lint, Prettier and all 269 tests pass (Claude Code ran them). Before giving me the table, Claude Code checked every dice sequence with a throwaway test outside the project. On a backup copy of the store, it removed the "can't move in a fight" check, made `loadRoom` keep the fight, and made `loadRoom` reset the player's health. Each change made a test fail (S3, then S7 twice). Before the fixes, the first change didn't make any test fail. The store file was restored afterwards.
+
+#### 2026-11-02 — Re-planning the rest of the project
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** To re-plan the rest of the project against the Nov 16 deadline, now that Phase I is merged and Phases J, K and L weren't started in Sprint 3.
+- **What I got:** An estimate of the Musts left (about 10.5–13 days against about 9.5 weekdays), a day-by-day timeline to submission on Fri Nov 13, and five decisions to make: the number of rooms, the supervision demo, how much Playwright and axe-core, moving all Shoulds to after submission, and whether to use the helper work split in Phases J, K and L. It recommended starting the agents before Phase L, because settings don't change the room format, so the agent rooms can be built while I work on settings and accounts. After I said Thu Nov 5 is only a morning and Sun Nov 8 is a full day, it moved Phase K's end to Thursday morning and the agent spec to Sunday. It then wrote `docs/sprint-4-plan.md`, a "Plan changes" entry in `docs/project-plan.md`, the status in `CLAUDE.md` and the Phase I tick in the Sprint 3 plan.
+- **Outcome:** ✏️
+- **Why:** I took all four recommendations (3 rooms, demo keyboard combat at the supervision, a minimum of axe-core and Playwright, the helper split for pure helpers in J, K and L) and changed the available days. The estimates are Claude Code's guesses, and the plan says that Tue Nov 10 and Wed Nov 11 (Supabase) are the riskiest days.
+- **How I verified it:** Checked the timeline against my own calendar, and the remaining Musts against the MoSCoW and the Definition of Done in `docs/project-plan.md`.
+
+---
+
+## Sprint 4 (Nov 2–13): Finishing the reference room, settings, saves and accounts
+
+#### 2026-11-03 — Phase J step 1: "It's your turn." and healing after a won fight
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review, Learning
+- **What I asked:** For a guide to starting the day and a breakdown of Phase J step 1. Then for reviews of my tests for `recoverHealth`, `describeRecovery`, `describeYourTurn` and the new combat-flow tests, implementations once the tests were right, and the AI log entry and commit messages.
+- **What I got:**
+  - **Planning:** a timeline for the day (steps 1–4 before tomorrow's supervision demo), the order of the step 1 tests, and a breakdown of the 6 combat-flow tests that would break and the 3 new ones to write, with the dice for each.
+  - **A change to the Nov 2 plan:** I thought we had decided that health is restored when entering a new room. Claude Code showed that the docs said the opposite (health carries over). I decided on both: +4 after each won fight, and full health when going through an exit into a new room, because a hard earlier room shouldn't leave me too weak for a harder enemy later. Claude Code recommended doing the full heal in the exit step on Friday, not in `loadRoom`, so loading a save won't heal. It updated `docs/sprint-4-plan.md` and my learning notes.
+  - **Code I wrote:** all of `recovery.test.ts`, the first drafts of the `describeRecovery` tests and the `describeYourTurn` test, the "It's your turn." lines in two of the old combat-flow tests, the three new combat-flow tests (healing after a win, healing capped at max, low health re-armed after healing), the store test fix (4 → 5 log lines), and the rule for the recovery line: "You catch your breath and recover N health" when something was recovered, "You recover 0 health" when I was already full.
+  - **Code Claude Code wrote:** `recovery.ts` (`recoverHealth` and `RECOVERY_AMOUNT`), `describeRecovery` and `describeYourTurn` in `narration.ts`, and the `finishStep` change in `combat-flow.ts`. At my request it rewrote the four `describeRecovery` tests (wording and names), and updated the rest of the six old combat-flow tests.
+  - **Review findings in my tests:** my first `recovery.test.ts` defined its own `recoverHealth` inside the test, which shadowed the import, so the real function was never tested; it also used `makeCombatant`'s default max health of 5, and passed a combat state instead of a combatant. My "does not change its input" test cloned the player and passed the clone in, so there was nothing to compare against. Two of my `describeRecovery` tests contradicted each other (10 → 12 said "recovered 2", 8 → 12 said "catch your breath"). My draft of the "kill the last enemy" test expected 16 out of 12 health, had the victory and recovery lines swapped, and said "recover 4" at full health.
+  - **Learning:** shadowing (an inner variable hides an import with the same name, without a TypeScript error), where `structuredClone` belongs in an "input unchanged" test, the immutable update `{ ...combatant, currentHealth }`, and equivalent mutants (a wrong-looking version that no real input can tell apart).
+  - **Claude Code was wrong or unclear:** its first attempt to update the combat-flow tests failed, because I had already started editing them and it was using an old copy of the file. It noticed, kept my changes and finished the rest. One of its mutation-check scripts had a bug (a placeholder that also matched `RECOVERY_AMOUNT`) and gave "no tests" instead of a result, so it fixed the script and ran it again.
+- **Outcome:** ✏️
+- **Why:** I kept the implementations, because my tests define the behaviour and I reviewed them. I changed the healing plan (full health per room) and chose the recovery wording myself. The "catch your breath" rule is mine; Claude Code had suggested dropping the amount only when nothing was healed.
+- **How I verified it:** Typecheck, lint, Prettier and all 283 tests pass (Claude Code ran them). On backup copies, Claude Code broke each new function on purpose: 4 ways for `recoverHealth` (one, "always adds 4", got through until I added a test with a different amount), 5 for the narration functions (one equivalent mutant survives, explained above) and 4 for `finishStep`. Each other break made at least one test fail, and the files were restored afterwards.
+
+#### 2026-11-03 — Phase J step 2: getAttackOptions, and the UI pack and font decisions
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Review
+- **What I asked:** For a breakdown of step 2, a review of my `getAttackOptions` tests and the implementation. In between, I asked when we get to how the UI looks, and whether an agent could style the site with the Pixel RPG UI Pack if I provide a font. Then for a review of the font I picked.
+- **What I got:**
+  - **Step 2 breakdown:** Claude Code checked the code first and found that defeated enemies stay in the combat state with 0 health, so filtering them out is the main job of the function. It recommended putting it in `narration.ts` to reuse the "the skeleton" wording from the log, and I agreed.
+  - **Code I wrote:** all six `getAttackOptions` tests.
+  - **Code Claude Code wrote:** `getAttackOptions` and the `AttackOption` type in `narration.ts`.
+  - **Review findings in my tests:** my "never includes the player" test put the player inside `combat.enemies`, which can't happen, so a correct implementation would have failed it. A test name said the function numbers duplicates, but `spawnEnemies` does that. Prettier failed.
+  - **UI pack:** Claude Code said the look lives in CSS, so the components I build now won't need rewriting, and suggested a time-boxed slot before Phase L. When I asked about an agent, it looked inside the pack and found that it's one packed sheet with no slice data. It said an agent would likely get the pieces wrong by reading pixel coordinates by eye, and recommended that I slice the pieces myself in Aseprite. It pointed out that the license allows use but doesn't mention redistribution in a public repo, and suggested safeguards: commit only the pieces I use, credit the author, keep the skin removable, and report it as a risk. It added a "UI skin" section and timeline changes to the sprint plan, and noted that Sunday is now very full.
+  - **Font review:** Claude Code read the license (CC0) and checked with `fc-query` that Pixel Operator has every character the game's text uses. It explained that pixel fonts are only crisp at whole multiples of their design size, and that some players find pixel fonts hard to read in long text. It gave two options and recommended one.
+- **Outcome:** ✏️
+- **Why:** I kept `getAttackOptions` and fixed my player test. For the UI, I decided to use the UI pack despite the unclear license (I asked the author and have had no reply) and to have an agent build the skin from pieces I slice. I picked Pixel Operator myself, and chose the pixel font everywhere, with high contrast also switching the log to a system font. I kept the font license in `public/assets/fonts/` instead of a subfolder, because it's the only font.
+- **How I verified it:** Typecheck, lint, Prettier and all narration tests pass (Claude Code ran them). On a backup copy, Claude Code broke `getAttackOptions` five ways (no filter, dropping the first enemy, `>= 0`, no number in the label, reversed order), and each made at least one test fail. Claude Code compared the font files in the repo with the originals. I haven't seen the font rendered in the game yet.
+
+---
+
+#### 2026-11-03 — Phase J steps 1b, 3, 4 and 5: the combat menu, focus, the layout and the announcer
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Accessibility, Learning
+- **What I asked:** Reviews of my `CombatMenu.tsx`, a layout with the log beside the map, a line announcing who attacks at the start of a fight, help with focus handling, and help finding out why VoiceOver didn't read parts of the log. Later, to write the fixes myself would take too long, so I asked Claude Code to write them.
+- **What I got:**
+  - **Code I wrote:** `CombatMenu.tsx` (the section, heading, list of buttons from `getAttackOptions`, the store read and the null check), the first version of the focus effect (remember focus, return it at the end), and placing the menu in `App.tsx`.
+  - **Code Claude Code wrote, at my request:** the two-column layout (`App.tsx`, `index.css`, the scrolling log box with `tabIndex={0}` and auto-scroll); `describeCombatStart` with its tests and the `beginCombat` change ("The skeleton attacks you! A fight begins."); the rest of the focus handling (the `document.body` check, focus moving in the click handler, `data-enemy-id`, the 100 ms delay at fight start); and `LiveAnnouncer.tsx` with the `.visually-hidden` class.
+  - **Review findings in my code:** `getAttackOptions` was called before the null check (a typecheck error and a runtime crash outside a fight); `type="button"` and the class name were missing; the menu wasn't in `App.tsx`; a half-pasted copy of the effect broke the file; `firstButtonRef` was never attached to a button; and reading a ref in the effect cleanup would trigger a lint warning.
+  - **My VoiceOver testing found:** no context when a fight started (only dice); the victory lines never read; "main" instead of the button in a second fight; the log stopping after line 16; the low-health warning dropping the lines before it; repeated wall bumps read only once; and VoiceOver's hints talking over the log.
+  - **Fixes, one at a time:** a separate fight-start line (my idea was to add the enemy to the initiative line; Claude Code suggested a separate line so the context comes first, and I agreed). Focus moved in the click handler, so the focused button never disappears. A `LiveAnnouncer` that only holds the newest batch, instead of the growing `role="log"`. A whole batch going to one region by its most urgent line. An invisible alternating space so identical lines are read again.
+  - **Learning:** the Safari Tab setting and dev tools, closures in effects, narrowing, hooks before early returns, why a new array from a Zustand selector re-renders forever, `useEffect` vs `useLayoutEffect`, React batching updates in event handlers, where a `key` works, and how VoiceOver queues, drops and skips announcements.
+  - **Claude Code was wrong or unclear:** it blamed hot reloading when Tab couldn't reach the attack button; the real cause was Safari's Tab setting (I found it with Option + Tab). Its first focus fix (a 100 ms delay everywhere) made the victory problem audible as "main" instead of fixing it. It had two wrong theories about the 16-line limit (the auto-scroll, then the scrolling box) and wrote one of them into a code comment before it was tested; the comment was removed. Its first `LiveAnnouncer` change put the `key` inside the component, where it does nothing, and it caught that itself. It first said fight 2 was probably caused by `role="application"`; the hints test pointed more widely at VoiceOver's hints.
+- **Outcome:** ✏️
+- **Why:** I kept the fixes because each one was confirmed by ear in VoiceOver, not just by tests. Most of this afternoon's code is Claude Code's, because I asked it to write the fixes to save time before the supervision. I need to read through `CombatMenu.tsx` and `LiveAnnouncer.tsx` before I present them. Still open: the hints problem, and whether to keep `role="application"` (known issues in the sprint plan).
+- **How I verified it:** Typecheck, lint, Prettier, all 293 tests and the build pass (Claude Code ran them). I tested in Safari with VoiceOver after every change: keyboard combat, focus at the start and end of fights, the log past line 16, low health, and repeated walls. With VoiceOver's hints turned off, everything was read as intended. `document.activeElement` in the console confirmed focus was on the button when VoiceOver said "main". There are no automated tests for the React components.
+
+#### 2026-11-03 — Phase J step 6: game over, and a skipped repeated line
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review, Accessibility
+- **What I asked:** To plan step 6 from my handoff, review my `GameOver.tsx`, fix the focus handling in `CombatMenu` (it felt fragile, and Claude Code wrote the other focus code), and figure out why VoiceOver didn't read the last lines when I died. At the end, to update the two tests and the docs, because it was late.
+- **What I got:**
+  - **Code I wrote:** `GameOver.tsx` (the store selector, the ref, the focus effect, the markup), adding it to `App.tsx`, and the focus outline CSS.
+  - **Review findings in my code:** `role="alert"` plus `aria-live="assertive"` on a focused element (read up to three times, and it would cut off the log); the message didn't say how to continue; double quotes against Prettier's settings; no visible focus style for a focus moved by code. After the rewrite, the effect still focused `gameOverRef`, which was no longer attached to any element. That came partly from Claude Code's snippet, which left "the effect focuses messageRef.current" as a placeholder instead of the code.
+  - **My VoiceOver testing found:** focus on the container read "Game over, and one more item", not the sentence. Focusing the message dropped the last batch (the killing blow and "You are defeated."). I had been pressing Space quickly, so I tested again slowly: the batch was still dropped. Two natural 1s in a row: the second was skipped.
+  - **Fixes:** focus on the `<p>` instead of the container (fixed the "one more item", but not the dropped batch). Claude Code then suggested the 100 ms delay used at fight start. My `GameOver.tsx` never got the delay, so it was never really tested. Claude Code suggested two paths: A, a loss works like a win (focus to the map in the click handler, the game over sentence as the last log line), or B, more experiments to keep focus on the message. I chose A as the simplest. Claude Code wrote it: the narration change, removing the defeat exception it had added to `CombatMenu` earlier the same evening, rewriting `GameOver.tsx` so it only shows the message, removing the unused CSS, and updating the two tests at my request. For the natural 1s, Claude Code found the cause in the code: that line has no numbers, and the invisible space was only on the last line of a batch. It now goes on every line.
+  - **Claude Code was wrong or unclear:** its first focus fix (`GameOver` takes focus, `CombatMenu` stays out of the way) went into the code before it was tested in VoiceOver, and it was removed again within the hour. It also made a shared `focus-delay.ts` for the delay, then deleted it once path A made it unnecessary. It explained the dropped batch as "probably focus on `body`" without proving it.
+- **Outcome:** ✏️
+- **Why:** I didn't follow the plan ("move focus to the message"), because testing showed it lost the most important lines. Path A reuses the one path that already worked for a win, and it's easy to explain: never move focus to something that doesn't exist yet. Every event is still in the log (rule 5). Most of the final code is Claude Code's; my own `GameOver.tsx` was rewritten down to the visible message.
+- **How I verified it:** Typecheck, lint, Prettier and all 293 tests pass (Claude Code ran them). VoiceOver in Safari with hints off, both fast and slow, for the earlier versions. Path A tested by ear: a loss now reads the whole last batch through to the game over line. A win and three wall bumps in a row were also read as intended.
+- **Afterwards:** hearing it, I noticed "You are defeated." followed by "Defeat. Game over…" repeated the word. At my request, Claude Code changed the player's line to "You have fallen." (enemies keep "is defeated") and updated the three test lines. I also noticed the first log line is read twice after a reload. I guessed the hidden announcer text; Claude Code said it could also be VoiceOver reading the page on load, and suggested a test. Reading through with VO + right arrow confirmed the hidden copy was read again after the log. Claude Code made the announcer clear its batch after 7 seconds (React Aria's default). I tested it again in VoiceOver, and it works.
+
+
+#### 2026-11-04 — Re-plan for the code freeze: agents take more of the engine
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I heard there's a code freeze on Nov 16, and asked how to go on, since I thought I needed to give up some control and send agents out to build things that I approve afterwards.
+- **What I got:** Claude Code read `docs/sprint-4-plan.md` and pointed out that the freeze doesn't move any dates: I already submit on Fri Nov 13, and what's lost is Sprint 6 as a safety net. It said handing off work could still be worth it, because the plan was already tight (10.5–13 days of Musts for about 10 days). It warned that handing off settings and Supabase is the riskiest, because dialog focus and row-level security are what I most need to understand and defend. It then proposed a split: four agent tasks (Phaser rendering, the Supabase foundation, exits, guest saves and sync), each a PR in its own git worktree. I keep Phase J step 7, the Phase K helper tests, the decor, the settings dialog, the login form, all VoiceOver testing and the evaluations. Agents that touch the same files run one after the other. Claude Code also updated decision 7 and the timeline in the sprint plan, "Plan changes" in the project plan, and the status in `CLAUDE.md`.
+- **Outcome:** ✏️
+- **Why:** At first I chose all four areas to hand off, settings included. When Claude Code explained the risk, I chose "hand off some" instead and kept settings and the login form. Handing off more changes my method (the reference room is no longer fully hand-built), so it goes in "Plan changes", and the agent engine work is evaluated like the agent rooms.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the sprint plan and the project plan.
+
+
+#### 2026-11-04 — Phase J step 7: VoiceOver checklist and keeping `role="application"`
+
+- **Tool:** Claude Code
+- **Category:** Accessibility
+- **What I asked:** A list of everything to test in the step 7 VoiceOver check, so I wouldn't miss anything. Before that, I said I would keep `role="application"` on the map, because I can only test on a Mac.
+- **What I got:** A checklist: reload, moving and wall bumps, a fight with one enemy (the opening line, focus on the button, Enter and Space, no moving in a fight, a win), a fight with two enemies, a loss, and hints on vs off. Claude Code checked the room and found that no tile is next to two enemies, because adjacency only counts the four directions. So it suggested moving the orc to (7, 4) for the test, with the key presses to get between the demon and the orc. It agreed with keeping the role: NVDA and JAWS on Windows catch arrow keys in browse mode, and `role="application"` is what lets them reach the game. It said it wasn't sure how VoiceOver behaves without the role. Afterwards, Claude Code found that the orc change was still in the room file and moved it back (only that line), then ticked step 7 and wrote down the decision in the sprint plan.
+- **Outcome:** ✅
+- **Why:** The checklist covered everything Phase J changed. Keeping the role protects players I can't test for, and the hints problem has a known workaround (hints off).
+- **How I verified it:** VoiceOver in Safari, following the checklist: everything worked as intended. `git status` shows the room file is unchanged.
+
+
+#### 2026-11-04 — The key, the inventory, and cutting the UI skin
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** Because agents now do more of the work, I wanted to bring back the inventory and health potions. The goal would be to find a key to get out of the dungeon, and the key would be in a different room from the exit.
+- **What I got:** Claude Code listed what it would take: items in the room format, a locked exit, picking up, the inventory in the store and in the save, an inventory list, a potion button in the combat menu, and new balance numbers. It pointed out that the format has to be decided today, before the exits agent starts on Friday and the room spec on Sunday. It also said that agents write the code, but my review time is the bottleneck. It recommended the key, the locked exit and a simple inventory list in place of the UI skin, with potions only if there's time, because the key needs no new combat action and doesn't touch the focus code I had just tested. Then it wrote decision 8 into the sprint plan: Agent C also does the item format and the locked exit, and a new Agent E builds picking up, the inventory and the list. It also moved Agent D after E, cut the UI skin, and updated the "How to play" text, "Plan changes" and `CLAUDE.md`.
+- **Outcome:** ✅
+- **Why:** I chose the recommended option. The key gives the game a real goal and tests the room format across two rooms. The UI skin was already first in line to be cut. Potions would mean changing the combat menu and the healing I decided on Nov 2–3.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the project plan.
+- **Afterwards:** I wanted the key to be behind an enemy, for some difficulty. Claude Code suggested placing the key where every path to it passes next to an enemy. That's only a rule in the room spec, because a fight already starts next to an enemy and enemies block movement. The other option, an enemy that drops the key, needs new code, so it became a future improvement. I chose the guard.
+- **Then:** I also wanted health potions to loot from barrels and crates. Claude Code said it's the biggest addition so far: a search action (it can use the door key), containers in the room file, a drink button, and balance. The risky part is focus: drinking the last potion removes the focused button, the same problem as on Nov 3. It recommended making it the first stretch item, with the design written now, and building it only if the reviews are on schedule on Wed Nov 11 (Agent F). I agreed.
+
 ---
 
 ## Agent-built rooms: evaluation
 
-Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.
+Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room. From Nov 4, agent-built engine work (rendering, exits, Supabase foundation, saves and sync) gets a row too, with the task in the Room column.
 
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |

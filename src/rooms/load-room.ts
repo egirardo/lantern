@@ -1,5 +1,10 @@
 import { roomSchema, type Room } from './room-schema'
-import { DIRECTION_OFFSETS, type Grid, type Position } from '../game/movement'
+import {
+  DIRECTION_OFFSETS,
+  type Grid,
+  type Position,
+  samePosition,
+} from '../game/movement'
 import { tiledSchema, type TiledMap } from './tiled-schema'
 import { buildGrid } from './build-grid'
 
@@ -18,7 +23,7 @@ export function loadRoom(
 }
 
 export function checkPositions(grid: Grid, room: Room) {
-  const { playerStart, exits } = room
+  const { playerStart, enemies, exits } = room
 
   // Check player start position
   if (!isInsideGrid(grid, playerStart)) {
@@ -26,6 +31,29 @@ export function checkPositions(grid: Grid, room: Room) {
   }
   if (isWall(grid, playerStart)) {
     throw new Error('Start position is inside a wall')
+  }
+
+  // Check enemy positions
+  for (const enemy of enemies) {
+    const { position } = enemy
+    if (!isInsideGrid(grid, position)) {
+      throw new Error(`Enemy ${enemy.id} is outside the grid`)
+    }
+    if (isWall(grid, position)) {
+      throw new Error(`Enemy ${enemy.id} is inside a wall`)
+    }
+    if (samePosition(enemy.position, playerStart)) {
+      throw new Error(`Enemy ${enemy.id} is on the player start position`)
+    }
+    if (
+      enemies
+        .filter((e) => e.id !== enemy.id)
+        .some((e) => samePosition(e.position, position))
+    ) {
+      throw new Error(
+        `Enemy ${enemy.id} is on the same position as another enemy`,
+      )
+    }
   }
 
   // Check exit tiles. Exits are doors or ladders the player interacts with,

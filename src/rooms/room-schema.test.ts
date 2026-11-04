@@ -57,4 +57,99 @@ describe('roomSchema', () => {
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]?.path).toEqual(['exits', 0, 'tiles'])
   })
+
+  it('rejects enemies with the same id', () => {
+    // Arrange: copy the valid room and give it two enemies with the same id
+    const invalidRoom: Room = {
+      ...validRoom,
+      enemies: [
+        { id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 1 } },
+        { id: 'enemy-1', type: 'orc', position: { x: 2, y: 2 } },
+      ],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the id of the second enemy
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies', 1, 'id'])
+  })
+
+  it('rejects an enemy with a bad id', () => {
+    // Arrange: copy the valid room and give its enemy an invalid id
+    const invalidRoom: Room = {
+      ...validRoom,
+      enemies: [{ id: 'Enemy 1', type: 'skeleton', position: { x: 1, y: 1 } }],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the id of the first enemy
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies', 0, 'id'])
+  })
+
+  it('rejects an enemy with the id "player"', () => {
+    // Arrange: copy the valid room and give its enemy the id "player"
+    const invalidRoom: Room = {
+      ...validRoom,
+      enemies: [{ id: 'player', type: 'skeleton', position: { x: 1, y: 1 } }],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the id of the first enemy
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies', 0, 'id'])
+  })
+
+  it('rejects an enemy with an unknown type', () => {
+    // Arrange: copy the valid room and give its enemy an unknown type
+    const invalidRoom: Room = {
+      ...validRoom,
+      enemies: [
+        { id: 'enemy-1', type: 'unknown-type', position: { x: 1, y: 1 } },
+      ],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the type of the first enemy
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies', 0, 'type'])
+  })
+
+  it('rejects a room with a missing enemies field', () => {
+    // Arrange: copy the valid room and delete the enemies field
+    const invalidRoom: Partial<Room> = { ...validRoom }
+    delete invalidRoom.enemies
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(invalidRoom)
+
+    // Assert: the issue points at the enemies field
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies'])
+  })
+
+  it('accepts a room with a valid enemies field', () => {
+    // Arrange: copy the valid room and give it a valid enemies field
+    const validRoomWithEnemies: Room = {
+      ...validRoom,
+      enemies: [
+        { id: 'enemy-1', type: 'skeleton', position: { x: 1, y: 1 } },
+        { id: 'enemy-2', type: 'orc', position: { x: 2, y: 2 } },
+      ],
+    }
+
+    // Act: run the Zod schema on the data, at runtime
+    const result = roomSchema.safeParse(validRoomWithEnemies)
+
+    // Assert: the room is accepted
+    expect(result.success).toBe(true)
+  })
 })

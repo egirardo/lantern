@@ -5,6 +5,26 @@ import type { GameState } from './game-store'
 import { describeMove } from '../game/narration'
 import type { Room } from '../rooms/room-schema'
 import { ZodError } from 'zod'
+import { rollOf, sequence } from '../game/test-helpers'
+import { PLAYER } from '../game/player'
+
+const playerWinsInitiative = [rollOf(20, 20), rollOf(1, 20)]
+
+// One skeleton at (0, 2). The player starts at (1, 1), so one step south
+// puts them next to it.
+const roomWithSkeleton: Room = {
+  ...validRoom,
+  enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+}
+
+// A fresh store with the skeleton room loaded, after the player has stepped
+// south next to the skeleton. `rolls` are all the dice the test will use.
+function storeInFight(...rolls: number[]) {
+  const store = createGameStore(sequence(...rolls))
+  store.getState().loadRoom(roomWithSkeleton, validMap)
+  store.getState().movePlayer('south')
+  return store
+}
 
 describe('gameStore', () => {
   it('starts empty', () => {
@@ -99,5 +119,215 @@ describe('gameStore', () => {
     expect(state.room).toBeNull()
     expect(state.log.length).toBe(0)
     expect(state.tiledMap).toBeNull()
+  })
+
+  it('expects the store to start with no enemies', () => {
+    const store = createGameStore()
+    const state: GameState = store.getState()
+    expect(state.enemies).toEqual([])
+  })
+
+  it('loadRoom fills enemies', () => {
+    const store = createGameStore()
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 2, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    const state: GameState = store.getState()
+    expect(state.enemies.length).toBe(1)
+    const enemy = state.enemies[0]
+    expect(enemy?.id).toBe('e1')
+    expect(enemy?.type).toBe('skeleton')
+    expect(enemy?.position).toEqual({ x: 2, y: 2 })
+    expect(enemy?.combatant.currentHealth).toBe(enemy?.combatant.maxHealth)
+    expect(enemy?.combatant.name).toBe('skeleton')
+  })
+
+  it('moving into an enemy leaves playerPosition unchanged and logs the block', () => {
+    const store = createGameStore()
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 1, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    store.getState().movePlayer('south')
+    const state: GameState = store.getState()
+    expect(state.playerPosition).toEqual({ x: 1, y: 1 })
+    const describeMoveResult = describeMove(
+      { moved: false, newPosition: { x: 1, y: 2 }, reason: 'enemy' },
+      'south',
+    )
+    expect(state.log[1]?.text).toBe(describeMoveResult)
+  })
+
+  it('moving next to an enemy is allowed', () => {
+    // Stepping next to the skeleton starts a fight, which rolls initiative.
+    // A fixed sequence keeps the test from rolling real dice.
+    const store = createGameStore(sequence(...playerWinsInitiative))
+    const roomWithEnemy: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy, validMap)
+    store.getState().movePlayer('south')
+    const state: GameState = store.getState()
+    expect(state.playerPosition).toEqual({ x: 1, y: 2 })
+    const describeMoveResult = describeMove(
+      { moved: true, newPosition: { x: 1, y: 2 } },
+      'south',
+    )
+    expect(state.log[1]?.text).toBe(describeMoveResult)
+  })
+
+  it('reloading a room replaces the old enemies', () => {
+    const store = createGameStore()
+    const roomWithEnemy1: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 2, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy1, validMap)
+    const stateAfterFirstLoad: GameState = store.getState()
+    expect(stateAfterFirstLoad.enemies.length).toBe(1)
+    const roomWithEnemy2: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e2', type: 'orc', position: { x: 0, y: 2 } }],
+    }
+    store.getState().loadRoom(roomWithEnemy2, validMap)
+    const stateAfterSecondLoad: GameState = store.getState()
+    expect(stateAfterSecondLoad.enemies.length).toBe(1)
+    expect(stateAfterSecondLoad.enemies[0]?.id).toBe('e2')
+  })
+
+  it('starts with the full-health player and no combat', () => {
+    const store = createGameStore()
+    const state: GameState = store.getState()
+    expect(state.player).toEqual(PLAYER)
+    expect(state.combat).toBeNull()
+  })
+
+  it('starts combat when the player walks next to an enemy, and the player wins initiative', () => {
+    const store = storeInFight(...playerWinsInitiative)
+    const state: GameState = store.getState()
+    expect(state.combat).not.toBeNull()
+    expect(state.combat?.player).toEqual(PLAYER)
+    expect(state.combat?.enemies.length).toBe(1)
+    expect(state.combat?.enemies[0]?.id).toBe('e1')
+    // The fight start is narrated: the room description, the step, the
+    // "attacks you" line, one initiative line each for the player and the
+    // skeleton, and the turn cue.
+    expect(state.log.length).toBe(6)
+  })
+
+  it('does not allow a player to move while in combat', () => {
+    const store = storeInFight(...playerWinsInitiative)
+    const stateBeforeMove: GameState = store.getState()
+    expect(stateBeforeMove.combat).not.toBeNull()
+    // East, because (2, 2) is floor: only the fight can stop this move.
+    // South would be blocked by the edge of the map even without a fight.
+    store.getState().movePlayer('east')
+    const stateAfterMove: GameState = store.getState()
+    expect(stateAfterMove.playerPosition).toEqual({ x: 1, y: 2 })
+    expect(stateAfterMove.combat).not.toBeNull()
+    // The log tells the player why nothing happened.
+    expect(stateAfterMove.log.at(-1)?.text).toBe(
+      'You are in a fight and cannot move.',
+    )
+  })
+
+  it('playerAttack hurts the enemy in state.enemies', () => {
+    const store = storeInFight(
+      ...playerWinsInitiative, // initiative: player 22, skeleton 2 → player goes first
+      rollOf(10, 20), // player's attack: 10 + 3 = 13 against AC 10 → hit
+      rollOf(2, 6), // player's damage: 2 → skeleton goes from 4 to 2 HP
+      rollOf(1, 20), // skeleton's attack: natural 1 → always a miss, no damage roll
+    )
+
+    store.getState().playerAttack('e1')
+    const state: GameState = store.getState()
+
+    // The store's own enemy list has the new health, not only the combat state.
+    expect(state.enemies[0]?.combatant.currentHealth).toBe(2)
+    // The skeleton is still alive, so the fight goes on.
+    expect(state.combat).not.toBeNull()
+    // The skeleton missed, so the player is unhurt.
+    expect(state.player.currentHealth).toBe(12)
+  })
+
+  it('playerAttack that kills the enemy removes it from state.enemies and ends combat, then makes a move', () => {
+    const store = storeInFight(
+      ...playerWinsInitiative, // initiative: player 22, skeleton 2 → player goes first
+      rollOf(10, 20), // player's attack: 10 + 3 = 13 against AC 10 → hit
+      rollOf(4, 6), // player's damage: 4 → skeleton goes from 4 to 0 HP → dead
+    )
+    store.getState().playerAttack('e1')
+    const state: GameState = store.getState()
+    expect(state.enemies.length).toBe(0)
+    expect(state.combat).toBeNull()
+    // West is the tile where the skeleton stood. It's free now that the
+    // skeleton is gone from state.enemies.
+    store.getState().movePlayer('west')
+    const stateAfterMove: GameState = store.getState()
+    expect(stateAfterMove.playerPosition).toEqual({ x: 0, y: 2 })
+  })
+
+  it('after the player falls, they can no longer move or attack', () => {
+    const store = storeInFight(
+      // Initiative: player 1 + 2 = 3, skeleton 10 + 1 = 11 → skeleton goes first
+      rollOf(1, 20),
+      rollOf(10, 20),
+      // Skeleton's first turn: natural 20 → critical hit, two d4 damage rolls
+      rollOf(20, 20),
+      rollOf(4, 4),
+      rollOf(4, 4), // 8 damage → player goes from 12 to 4 HP
+      // Player's attack: natural 1 → always a miss, no damage roll
+      rollOf(1, 20),
+      // Skeleton's second turn: another critical hit for 8 → player goes from 4 to 0
+      rollOf(20, 20),
+      rollOf(4, 4),
+      rollOf(4, 4),
+    )
+
+    // The fight: the player misses, then the skeleton strikes the killing blow.
+    store.getState().playerAttack('e1')
+    const afterFight: GameState = store.getState()
+    expect(afterFight.player.currentHealth).toBe(0)
+    expect(afterFight.combat).toBeNull() // a lost fight is cleared too
+
+    // After the game is over: try to act, and count what gets logged.
+    const logLengthBefore = afterFight.log.length
+    store.getState().movePlayer('north')
+    store.getState().playerAttack('e1')
+    const state: GameState = store.getState()
+
+    // Only movePlayer writes a line. playerAttack returns early because combat is null.
+    expect(state.log.length).toBe(logLengthBefore + 1)
+    expect(state.log.at(-1)?.text).toBe('You have fallen in battle.')
+    expect(state.playerPosition).toEqual({ x: 1, y: 2 })
+  })
+
+  it('entering a room ends any fight in progress, but the player keeps their health', () => {
+    // In the middle of a fight (the skeleton has hit the player for 3, leaving
+    // 9 HP), the room is loaded again, as if the player entered a new room.
+    // The fight is gone and the player is at the room's start position, but
+    // still has 9 HP, because health carries over between rooms.
+    const store = storeInFight(
+      ...playerWinsInitiative, // initiative: player 22, skeleton 2 → player goes first
+      rollOf(10, 20), // player's attack: 10 + 3 = 13 against AC 10 → hit
+      rollOf(2, 6), // player's damage: 2 → skeleton goes from 4 to 2 HP
+      rollOf(15, 20), // skeleton's attack: 15 + 2 = 17 against AC 12 → hit
+      rollOf(3, 4), // skeleton's damage: 3 → player goes from 12 to 9 HP
+    )
+    store.getState().playerAttack('e1')
+    const stateInFight: GameState = store.getState()
+    // Check the setup: the fight is still going, and the player is hurt.
+    expect(stateInFight.combat).not.toBeNull()
+    expect(stateInFight.player.currentHealth).toBe(9)
+
+    store.getState().loadRoom(roomWithSkeleton, validMap)
+    const state: GameState = store.getState()
+    expect(state.combat).toBeNull()
+    expect(state.player.currentHealth).toBe(9)
+    expect(state.playerPosition).toEqual({ x: 1, y: 1 })
   })
 })

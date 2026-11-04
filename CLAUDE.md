@@ -117,24 +117,24 @@ npm run typecheck   # TypeScript check
 
 ## Current status
 
-**Sprint 2 (Oct 19–25): Reference room, core gameplay**
-Goal: the player moves around the reference room on the deployed site, every move is announced in the adventure log, and the lantern visibility rules are written and tested. Full plan: `docs/sprint-2-plan.md`.
+**Sprint 4 (Nov 2–8), planned together with Sprint 5 up to submission on Fri Nov 13**
+Goal: finish the reference room, start the agents on rooms 2 and 3, then settings, saves, accounts and the evaluations. Full plan and timeline: `docs/sprint-4-plan.md`.
 
-Sprint 1 ran over, so this sprint first finishes it:
+Sprints 1–3 are finished (Phases H and I done; J, K and L moved here). Decided Nov 2: the dungeon has **3 rooms**, all Shoulds wait until after submission, and Playwright and axe-core are reduced to one axe scan (plus one keyboard Playwright path if there's time). Thu Nov 5 is a morning only; Sun Nov 8 is a full working day.
 
-- [x] Phase B step 4: `loadRoom`
-- [x] Phase C: narration and store
-- [x] Phase D: the reference room in Tiled
-- [ ] Phase E: Phaser rendering and keyboard input
-- [ ] Deployed to `dev` and released to `main`
+- [ ] Phase J: keyboard action menus and focus management (Tue Nov 3)
+- [ ] Phase K: lantern rendering and narration of what the light reveals (Wed Nov 4 – Thu Nov 5)
+- [ ] Exits and room changes, arriving at the doorway (Fri Nov 6)
+- [ ] "Building rooms" spec below, agents build rooms 2 and 3 (from Sun Nov 8)
+- [ ] Phase L: accessibility settings (Sun Nov 8 – Mon Nov 9)
+- [ ] Guest saves, Supabase accounts, sync and row-level security (Tue Nov 10 – Wed Nov 11)
+- [ ] Full screen reader pass, axe scan, WCAG and agent evaluations, submission (Thu Nov 12 – Fri Nov 13)
 
-Then the new Sprint 2 work:
+**Code freeze Nov 16 (heard Nov 4):** no code can be pushed after that. Submission stays Fri Nov 13; Sprint 6 is gone.
 
-- [ ] Phase F: adventure log as an ARIA live region (Must)
-- [ ] Phase G: lantern visibility rules, logic and tests only (Must)
-- **Supervision Oct 21**
+**Goal of the game (decision 8, Nov 4):** find the key in one room to unlock the final exit in another. A simple inventory is back; health potions looted from barrels and crates are the first stretch item (go or no-go Wed Nov 11). The UI skin is cut.
 
-Moved to Sprint 3: lantern rendering and narration, dice, combat, action menus. Sprints are planned on weekdays only.
+Work split (decision 7 in `docs/sprint-4-plan.md`, Nov 4): for pure helpers in `src/game/`, I write the tests and Claude writes the implementation and explains it. **Agents** build Phaser rendering (Phase K steps 5–6), the Supabase foundation, exits and room changes (with the item format and a locked exit), items and inventory, and guest saves with sync, each as a PR from its own worktree that I review. I write the settings dialog and focus code, the login form, and do all VoiceOver testing myself.
 
 *Update this section at the start of each sprint.*
 
