@@ -827,11 +827,33 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **How I verified it:** Typecheck, lint, Prettier and all 293 tests pass (Claude Code ran them). VoiceOver in Safari with hints off, both fast and slow, for the earlier versions. Path A tested by ear: a loss now reads the whole last batch through to the game over line. A win and three wall bumps in a row were also read as intended.
 - **Afterwards:** hearing it, I noticed "You are defeated." followed by "Defeat. Game over…" repeated the word. At my request, Claude Code changed the player's line to "You have fallen." (enemies keep "is defeated") and updated the three test lines. I also noticed the first log line is read twice after a reload. I guessed the hidden announcer text; Claude Code said it could also be VoiceOver reading the page on load, and suggested a test. Reading through with VO + right arrow confirmed the hidden copy was read again after the log. Claude Code made the announcer clear its batch after 7 seconds (React Aria's default). I tested it again in VoiceOver, and it works.
 
+
+#### 2026-11-04 — Re-plan for the code freeze: agents take more of the engine
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I heard there's a code freeze on Nov 16, and asked how to go on, since I thought I needed to give up some control and send agents out to build things that I approve afterwards.
+- **What I got:** Claude Code read `docs/sprint-4-plan.md` and pointed out that the freeze doesn't move any dates: I already submit on Fri Nov 13, and what's lost is Sprint 6 as a safety net. It said handing off work could still be worth it, because the plan was already tight (10.5–13 days of Musts for about 10 days). It warned that handing off settings and Supabase is the riskiest, because dialog focus and row-level security are what I most need to understand and defend. It then proposed a split: four agent tasks (Phaser rendering, the Supabase foundation, exits, guest saves and sync), each a PR in its own git worktree. I keep Phase J step 7, the Phase K helper tests, the decor, the settings dialog, the login form, all VoiceOver testing and the evaluations. Agents that touch the same files run one after the other. Claude Code also updated decision 7 and the timeline in the sprint plan, "Plan changes" in the project plan, and the status in `CLAUDE.md`.
+- **Outcome:** ✏️
+- **Why:** At first I chose all four areas to hand off, settings included. When Claude Code explained the risk, I chose "hand off some" instead and kept settings and the login form. Handing off more changes my method (the reference room is no longer fully hand-built), so it goes in "Plan changes", and the agent engine work is evaluated like the agent rooms.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the sprint plan and the project plan.
+
+
+#### 2026-11-04 — Phase J step 7: VoiceOver checklist and keeping `role="application"`
+
+- **Tool:** Claude Code
+- **Category:** Accessibility
+- **What I asked:** A list of everything to test in the step 7 VoiceOver check, so I wouldn't miss anything. Before that, I said I would keep `role="application"` on the map, because I can only test on a Mac.
+- **What I got:** A checklist: reload, moving and wall bumps, a fight with one enemy (the opening line, focus on the button, Enter and Space, no moving in a fight, a win), a fight with two enemies, a loss, and hints on vs off. Claude Code checked the room and found that no tile is next to two enemies, because adjacency only counts the four directions. So it suggested moving the orc to (7, 4) for the test, with the key presses to get between the demon and the orc. It agreed with keeping the role: NVDA and JAWS on Windows catch arrow keys in browse mode, and `role="application"` is what lets them reach the game. It said it wasn't sure how VoiceOver behaves without the role. Afterwards, Claude Code found that the orc change was still in the room file and moved it back (only that line), then ticked step 7 and wrote down the decision in the sprint plan.
+- **Outcome:** ✅
+- **Why:** The checklist covered everything Phase J changed. Keeping the role protects players I can't test for, and the hints problem has a known workaround (hints off).
+- **How I verified it:** VoiceOver in Safari, following the checklist: everything worked as intended. `git status` shows the room file is unchanged.
+
 ---
 
 ## Agent-built rooms: evaluation
 
-Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room.
+Filled in from Sprint 3 onwards. One row per agent-built room, compared with the hand-built reference room. From Nov 4, agent-built engine work (rendering, exits, Supabase foundation, saves and sync) gets a row too, with the task in the Room column.
 
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |

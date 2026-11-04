@@ -130,7 +130,9 @@ Sprints 1–3 are finished (Phases H and I done; J, K and L moved here). Decided
 - [ ] Guest saves, Supabase accounts, sync and row-level security (Tue Nov 10 – Wed Nov 11)
 - [ ] Full screen reader pass, axe scan, WCAG and agent evaluations, submission (Thu Nov 12 – Fri Nov 13)
 
-Work split for pure helpers in `src/game/`: I write the tests, Claude writes the implementation and explains it. I write store wiring, React, focus and Phaser code myself.
+**Code freeze Nov 16 (heard Nov 4):** no code can be pushed after that. Submission stays Fri Nov 13; Sprint 6 is gone.
+
+Work split (decision 7 in `docs/sprint-4-plan.md`, Nov 4): for pure helpers in `src/game/`, I write the tests and Claude writes the implementation and explains it. **Agents** build Phaser rendering (Phase K steps 5–6), the Supabase foundation, exits and room changes, and guest saves with sync, each as a PR from its own worktree that I review. I write the settings dialog and focus code, the login form, and do all VoiceOver testing myself.
 
 *Update this section at the start of each sprint.*
 

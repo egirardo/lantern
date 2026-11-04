@@ -19,6 +19,24 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
 5. **Work split for Phases J, K and L:** for pure helpers in `src/game/` (e.g. reveal narration, verbosity), I write the tests and Claude Code writes the implementation, the same as for the combat helpers on Nov 2. I write the React components, focus handling, Phaser code and store wiring myself. Logged in `docs/ai-log.md`, and recorded in "Plan changes" so the evaluation is honest about what was AI-written.
 6. **UI skin with the Pixel RPG UI Pack, built by an agent (added Nov 3).** I slice the pieces I need from the sheet myself and choose an accessible font; an agent writes the CSS. It's a third agent task for the evaluation, next to rooms 2 and 3. **License:** the pack's custom license allows editing and commercial use but doesn't mention redistribution. I asked the author and have had no reply. I accept the risk of committing the pieces I use to the public repo, and mitigate it (see "UI skin"). This deviates from the project plan's "CC0 asset pack", so it goes in "Plan changes" and in the report.
 
+7. **Code freeze Nov 16, and agents take more of the engine (added Nov 4).** I heard on Nov 4 that no code can be pushed after Nov 16, so the supervisors can review everything. The submission date doesn't change, but Sprint 6 (Nov 16–22) is gone as a safety net, and the plan was already tight. So agents now build the lower-risk engine work as well as the rooms. Each agent works in its own git worktree and delivers a PR that I review and play. I keep everything that is critical for accessibility. Logged in "Plan changes" in `docs/project-plan.md`, and the agent work is evaluated the same way as the agent rooms.
+
+   | Work | Who |
+   | --- | --- |
+   | Phase J step 7 (VoiceOver check, PR) | Me |
+   | Phase K steps 1–3 and 7 (names table, features, blocked-move text, reveal narration) | I write the tests, Claude Code implements (as before) |
+   | Phase K step 4 (decor in Tiled) | Me |
+   | **Phase K steps 5–6** (Phaser: the dark, enemies in the light) | **Agent A** |
+   | **Supabase foundation** (SQL tables, RLS policies, RLS tests, auth client) | **Agent B** |
+   | **Exits and room changes** (all steps, incl. final exit, victory, "How to play") | **Agent C** |
+   | Phase L settings (store, dialog, focus, applying them) | Me. Claude Code implements the verbosity helper against my tests |
+   | **Guest saves and sync** (localStorage, newest version wins) | **Agent D** |
+   | Login and sign-up form | Me (WCAG 2.2 Accessible Authentication) |
+   | Rooms 2 and 3, UI skin | Agents (as before) |
+   | VoiceOver checks, screen reader pass, evaluations, report | Me |
+
+   **Rules for the agents:** they follow the architecture rules in `CLAUDE.md`, write unit tests for new helpers in `src/game/`, and the PR must pass test, lint and typecheck. Agents don't write focus code, and don't change log wording without asking. Agents don't install anything: if a dependency is needed, they stop, and I run the install. Each PR description has a "How it works" walkthrough, so I can explain and defend the code. Agents that touch the same files (`game-store.ts`, `room-scene.ts`) run one after the other, not at the same time.
+
 **What gives first if a day slips:** the weekend buffer (Nov 14–15), then the UI skin (the game works without it, so it's the first thing to cut), then the Playwright path, then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
 
 ---
@@ -29,13 +47,13 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
 | --- | --- |
 | Mon Nov 2, afternoon | Re-plan (this file). Tick Phase I. Update the status in `CLAUDE.md`. Read through Phase J |
 | Tue Nov 3 | **Phase J:** action menu, focus, choosing a target, "It's your turn" |
-| Wed Nov 4 | **Supervision:** demo keyboard combat and the re-plan. Then start **Phase K** |
-| Thu Nov 5 (morning) | Finish **Phase K:** lantern light and narration of what it reveals |
-| Fri Nov 6 | **Exits and room changes** |
-| Sun Nov 8 | **Slice the UI pieces** from the sheet in Aseprite and choose the font (morning, about 1–1.5 h). **Agent spec** ("Building rooms" in `CLAUDE.md`) and the **UI skin brief**, start the agents on rooms 2 and 3. Start **Phase L** |
-| Mon Nov 9 | Finish **Phase L:** settings. When the Phase L PR is merged, **start the UI skin agent** |
-| Tue Nov 10 | **Guest saves** (localStorage), then **Supabase sign-in** with accessible login and sign-up |
-| Wed Nov 11 | **Sync** saves and settings to the account, **row-level security** and its tests. Review the agent rooms and the **UI skin PR** |
+| Wed Nov 4 | **Supervision:** demo keyboard combat and the re-plan. Phase J step 7. Start the **Phase K** helpers. **Start Agents A (Phaser rendering) and B (Supabase foundation)** in parallel (decision 7) |
+| Thu Nov 5 (morning) | Phase K helpers (steps 1–3, 7) |
+| Fri Nov 6 | Phase K step 4 (decor in Tiled). Review and merge **Agent A**, then **start Agent C (exits)**. Review **Agent B** |
+| Sun Nov 8 | **Slice the UI pieces** from the sheet in Aseprite (morning, about 1–1.5 h). Review and merge **Agent C**, VoiceOver check of a room change. **Agent spec** ("Building rooms" in `CLAUDE.md`) and the **UI skin brief**, start the agents on rooms 2 and 3. Start **Phase L** |
+| Mon Nov 9 | Finish **Phase L:** settings. When the Phase L PR is merged, **start Agent D (saves and sync)** and the **UI skin agent** |
+| Tue Nov 10 | **Login and sign-up form** (me) against Agent B's auth client. Review **Agent D** |
+| Wed Nov 11 | Wire **sync** to login, check **row-level security** with its tests. Review the agent rooms and the **UI skin PR** |
 | Thu Nov 12 | **Full screen reader pass** (VoiceOver), one axe scan, fixes. Finish reviewing the agent rooms |
 | Fri Nov 13 | **WCAG 2.2 evaluation**, agent-workflow evaluation, README, AI log summary, Result section. **Submit** |
 | Sat–Sun Nov 14–15 | Buffer |
@@ -84,11 +102,13 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
    - [x] VoiceOver (Nov 4): a loss reads the whole last batch through to the game over line
    - [x] VoiceOver (Nov 4): a win is unchanged; three wall bumps in a row are all read
 7. **VoiceOver check** of a fight with one enemy and with two (the full pass is on Nov 12).
-   - [ ] Done, PR reviewed
+   - [x] VoiceOver (Nov 4): a fight with one enemy and with two (the orc moved next to the demon for the test, then moved back) work as intended
+   - **Decided Nov 4: keep `role="application"` on the map.** I can only test VoiceOver on a Mac. On Windows, NVDA and JAWS have a browse mode that catches the arrow keys, and the role is what lets them reach the game. Removing it to fix a VoiceOver hint could break movement for screen reader users I can't test. The hint problem stays a known issue (below), and goes in the WCAG evaluation.
+   - [ ] PR reviewed
 
 **Known issues after testing (Nov 3), for step 7 on Wed:**
 
-- **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** Decide: keep `role="application"` (and document it), or drop it so the map has no long hint, if arrow keys still reach the game for VoiceOver users. Test first.
+- **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** **Decided Nov 4: keep `role="application"`** (see step 7) and accept this as a known issue. VoiceOver's hint text can't be changed from the page. For the README and the WCAG evaluation: VoiceOver users get the best experience with hints off.
 - **At the start of a fight, the button is read before the lines** ("Attack the demon, button", then "The demon attacks you!…"). Accepted: nothing is lost, and the button names the enemy.
 - **The first log line is read twice after a reload** (found Nov 4). Confirmed part: reading through the log with VO + right arrow read the last line again after the log, from the announcer's hidden copy. **Fixed:** the announcer clears its batch 7 seconds after it appears. Confirmed in VoiceOver (Nov 4).
 - **Pressing quickly skips lines** (found Nov 3). Each attack replaces the announcer's batch, and a key press cuts off VoiceOver's speech. Accepted: the player chooses to skip, like skimming, and the full log can be read afterwards (it's focusable). A point for the screen reader pass and the evaluation on Nov 12.
@@ -123,7 +143,7 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
    - [ ] Tests written, implemented
 4. **Name the decor (Tiled):** add the barrels, tables and so on to the entrance hall, and their tile ids to the table.
    - [ ] Done
-5. **Render the dark (Phaser):** tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
+5. **Render the dark (Phaser), Agent A (decision 7, also step 6):** tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
    - [ ] Done
 6. **Enemies in the light (Phaser):** enemies drawn only inside the light, looked up through the asset manifest.
    - [ ] Done
@@ -136,6 +156,8 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
 ## Exits and room changes (Fri Nov 6)
 
 The room format already has exits (doors and ladders on blocked tiles with a walkable neighbour). What's missing is using them.
+
+**Built by Agent C (decision 7),** after Agent A is merged, because both change `room-scene.ts`. I review the PR and do the VoiceOver check of a room change myself.
 
 1. **Going through an exit.** The player stands next to an exit and uses it (a key, plus a button for the action menu style). This loads the room in the exit's `to`.
 2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbour. `playerStart` is only for the first room of a new game. Pure helper with tests.
@@ -225,6 +247,8 @@ As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save
 ## Saves, accounts and sync (Tue Nov 10 – Wed Nov 11)
 
 Rule 8: local-first. Saves and settings always go to localStorage; when logged in they also go to Supabase, and the most recently updated version wins. Guest and logged-in mode use the same code path.
+
+**Split (decision 7):** Agent B builds the Supabase foundation from Nov 4 (SQL tables, RLS policies and their tests, the auth client), in new files only. Agent D builds guest saves and sync after Phase L, because saves need the settings shape. I write the login and sign-up form myself, and review the RLS policies line by line.
 
 - [ ] Guest saves and settings in localStorage
 - [ ] Supabase sign-in: accessible login and sign-up (pasting and password managers work, no puzzles)
