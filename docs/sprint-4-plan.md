@@ -77,7 +77,12 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 5. **Assertive announcements:** a visually hidden `aria-live="assertive"` region in `AdventureLog` that holds only the newest assertive line, and a `.visually-hidden` CSS class.
    - [x] Done (Nov 3), **as a `LiveAnnouncer`** instead: two visually hidden regions (polite and assertive) that only hold the newest batch of lines. The visible log is now a plain named region, not a live region. Why: VoiceOver in Safari stopped announcing the growing `role="log"` after about 16 lines. A batch is as urgent as its most urgent line and goes whole to one region, because a separate assertive line interrupted and dropped the polite lines before it. Every other batch gets an invisible non-breaking space, because VoiceOver skips text identical to the previous announcement. Written by Claude Code at my request.
 6. **Game over:** when the player falls, show "You have fallen. Reload the page to try again." and move focus to it (the same pattern as the error in `RoomLoader`: `tabIndex={-1}` and `.focus()`). A real "try again" comes with the save layer.
-   - [ ] Done
+   - **Changed Nov 3–4 (path A):** focus does **not** move to the message. Moving focus there made VoiceOver drop the last batch of lines (the killing blow and the defeat lines), even when playing slowly. Instead, a loss works like a win: the click handler moves focus to the map before the button disappears, and the defeat line in the log carries the message ("Defeat. Game over. Reload the page to try again."). `GameOver.tsx` only shows the visible message. Rule: never move focus to something that doesn't exist yet when the old target disappears.
+   - **Also fixed:** two natural 1s in a row, and the second one wasn't read. That line has no numbers, so it was identical, and VoiceOver compares each line on its own. The invisible space now goes on every line of every other batch.
+   - **Wording:** the player's line is now "You have fallen." instead of "You are defeated.", so it doesn't say "defeated" right before "Defeat. Game over…". Enemies still get "The demon is defeated."
+   - [x] Implemented, all 293 tests pass
+   - [x] VoiceOver (Nov 4): a loss reads the whole last batch through to the game over line
+   - [x] VoiceOver (Nov 4): a win is unchanged; three wall bumps in a row are all read
 7. **VoiceOver check** of a fight with one enemy and with two (the full pass is on Nov 12).
    - [ ] Done, PR reviewed
 
@@ -85,6 +90,8 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 
 - **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** Decide: keep `role="application"` (and document it), or drop it so the map has no long hint, if arrow keys still reach the game for VoiceOver users. Test first.
 - **At the start of a fight, the button is read before the lines** ("Attack the demon, button", then "The demon attacks you!…"). Accepted: nothing is lost, and the button names the enemy.
+- **The first log line is read twice after a reload** (found Nov 4). Confirmed part: reading through the log with VO + right arrow read the last line again after the log, from the announcer's hidden copy. **Fixed:** the announcer clears its batch 7 seconds after it appears. Confirmed in VoiceOver (Nov 4).
+- **Pressing quickly skips lines** (found Nov 3). Each attack replaces the announcer's batch, and a key press cuts off VoiceOver's speech. Accepted: the player chooses to skip, like skimming, and the full log can be read afterwards (it's focusable). A point for the screen reader pass and the evaluation on Nov 12.
 
 **Risks**
 
