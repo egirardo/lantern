@@ -70,8 +70,12 @@ export function CombatMenu() {
     const after = gameStore.getState().combat
 
     if (after === null) {
-      // The fight is over (won or lost). Move focus to the map now, while the
+      // The fight is over, won or lost. Move focus to the map now, while the
       // button still exists. VoiceOver reads the map, then the queued lines.
+      // On a loss, those lines end with the game over message. Focus doesn't
+      // go to GameOver's message: it doesn't exist yet at this point, and
+      // moving focus there afterwards made VoiceOver drop the last batch of
+      // lines (tested Nov 4).
       returnFocus(previousFocusRef.current)
       return
     }

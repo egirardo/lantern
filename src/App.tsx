@@ -1,5 +1,6 @@
 import { AdventureLog } from './ui/AdventureLog'
 import { CombatMenu } from './ui/CombatMenu'
+import { GameOver } from './ui/GameOver'
 import { PhaserGame } from './ui/PhaserGame'
 import { RoomLoader } from './ui/RoomLoader'
 
@@ -16,6 +17,7 @@ function App() {
         <div className="game-column">
           <PhaserGame />
           <CombatMenu />
+          <GameOver />
         </div>
         <AdventureLog />
       </div>

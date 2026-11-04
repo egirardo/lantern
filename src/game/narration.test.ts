@@ -216,7 +216,7 @@ describe('describeCombatEvent', () => {
           type: 'defeated',
           combatantId: PLAYER_ID,
         }),
-      ).toBe('You are defeated.')
+      ).toBe('You have fallen.')
     })
   })
 
@@ -233,7 +233,7 @@ describe('describeCombatEvent', () => {
     it('describes a defeat', () => {
       expect(
         describeCombatEvent(state, { type: 'combat-ended', outcome: 'defeat' }),
-      ).toBe('Defeat. The fight is over.')
+      ).toBe('Defeat. Game over. Reload the page to try again.')
     })
   })
 })

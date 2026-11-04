@@ -167,8 +167,8 @@ describe('beginCombat', () => {
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
       'The skeleton hits you for 6 damage (15 + 3 = 18 against armor class 12).',
-      'You are defeated.',
-      'Defeat. The fight is over.',
+      'You have fallen.',
+      'Defeat. Game over. Reload the page to try again.',
     ])
   })
 })
@@ -315,7 +315,7 @@ describe('playerAttackStep', () => {
     expect(step.player.currentHealth).toBe(0)
     expect(step.combat).toBeNull()
     expect(urgencies(step)).not.toContain('assertive')
-    expect(texts(step).at(-2)).toBe('You are defeated.')
+    expect(texts(step).at(-2)).toBe('You have fallen.')
   })
 
   it('does not change its inputs', () => {

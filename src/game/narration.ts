@@ -90,12 +90,19 @@ export function describeCombatEvent(
     }
     case 'defeated': {
       const { combatantId } = event
+      // The player "falls" instead of "is defeated", so the next line
+      // ("Defeat. Game over…") doesn't repeat the same word, and it matches
+      // the visible game over message ("You have fallen…").
+      if (combatantId === PLAYER_ID) return 'You have fallen.'
       return `${subject(state, combatantId)} ${verb(combatantId, 'are', 'is')} defeated.`
     }
     case 'combat-ended': {
       return event.outcome === 'victory'
         ? 'Victory. No enemies are left standing.'
-        : 'Defeat. The fight is over.'
+        : // The game over message is a log line too, so a screen reader hears
+          // it in the same batch as the killing blow. Moving focus to a
+          // separate message dropped that batch in VoiceOver (tested Nov 4).
+          'Defeat. Game over. Reload the page to try again.'
     }
   }
 }
