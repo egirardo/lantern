@@ -153,7 +153,7 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
    - [ ] Tests written, implemented
 4. **Name the decor (Tiled):** add the barrels, tables and so on to the entrance hall, and their tile ids to the table.
    - [ ] Done
-5. **Render the dark (Phaser), Agent A (decision 7, also step 6).** **Changed Nov 4 after my playtest:** the radius is 2.5 (rounder than 2, smaller than 3), and the dark is one image with a soft round hole instead of black squares: fully clear up to 2 tiles, black from 3. The high contrast setting will switch to a hard edge (Phase L). tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
+5. **Render the dark (Phaser), Agent A (decision 7, also step 6).** **Changed Nov 4 after my playtest:** the radius is 2.5 (rounder than 2, smaller than 3), and the dark is one image with a soft round hole instead of black squares: fully clear up to 2 tiles, black from 3. The high contrast setting will switch to a hard edge (Phase L). The dark is redrawn on every move.
    - [ ] Done
 6. **Enemies in the light (Phaser):** enemies drawn only inside the light, looked up through the asset manifest.
    - [ ] Done
