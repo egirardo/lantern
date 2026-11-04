@@ -862,6 +862,19 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Afterwards:** I wanted the key to be behind an enemy, for some difficulty. Claude Code suggested placing the key where every path to it passes next to an enemy. That's only a rule in the room spec, because a fight already starts next to an enemy and enemies block movement. The other option, an enemy that drops the key, needs new code, so it became a future improvement. I chose the guard.
 - **Then:** I also wanted health potions to loot from barrels and crates. Claude Code said it's the biggest addition so far: a search action (it can use the door key), containers in the room file, a drink button, and balance. The risky part is focus: drinking the last potion removes the focused button, the same problem as on Nov 3. It recommended making it the first stretch item, with the design written now, and building it only if the reviews are on schedule on Wed Nov 11 (Agent F). I agreed.
 
+
+#### 2026-11-04 — Agent B: Supabase foundation (tables, row-level security, auth client)
+
+- **Tool:** Claude Code (an agent in its own git worktree, started by Claude Code from a brief I approved)
+- **Category:** Coding / Security / Agent rooms (agent-built engine work, decision 7)
+- **What I asked:** The Supabase foundation for the save layer, in new files only: the `saves` and `settings` tables with grants and RLS policies, the shared client, auth functions, a thin remote store, and RLS tests run against my hosted project with two test users (option 1, skipped when the logins are missing).
+- **What I got:** Five commits in about 7 minutes. A SQL file to paste into the SQL editor, with comments on every policy (`using` vs `with check`, why grants and policies are both needed, why `updated_at` comes from the device). `supabase-client.ts` (created on first use, so a guest's game can't crash without the env variables), `auth.ts` (throws on errors, signs out this browser only), `remote-store.ts` (upsert on `user_id`), 18 RLS integration tests, a `supabase/README.md`, and test-user variables in `.env.example`, loaded only by Vitest through `vite.config.ts`.
+  - **Not in the brief:** two new type files, `src/vite-env.d.ts` (typed env variables) and a hand-written `src/save/database-types.ts`. The worktree had no `node_modules`. The brief said to stop then, but the agent linked to my packages to run the checks and removed the link afterwards. Nothing was installed.
+  - **Unproven:** the RLS tests haven't run against the real project yet. The agent wasn't sure about two of them: whether Postgres checks the policy before the duplicate-key constraint.
+- **Outcome:** (to fill in after my review and the RLS test run)
+- **Why:** (to fill in after my review)
+- **How I verified it:** Claude Code read the SQL and every TypeScript file, and ran typecheck, lint, Prettier, the tests (293 pass, 18 RLS tests skipped) and the build in the agent's worktree, and checked that the built files contain no test logins or secret key. (Add: applying the SQL, the RLS test result, and the policies in the dashboard.)
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -870,6 +883,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |
+| Engine: Supabase foundation (Agent B) | Claude Code (Opus 5.5) | | Yes: typecheck, lint, Prettier, tests, build. RLS tests not run yet | (after review) | (after the RLS test run) | (after review) | |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
