@@ -8,7 +8,7 @@ import {
 import type { TiledMap } from '../rooms/tiled-schema'
 import { toTileIndices } from '../rooms/tile-indices'
 import { gameStore, type GameState } from '../state/game-store'
-import type { Grid, Position } from '../game/movement'
+import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
 
@@ -21,9 +21,23 @@ const DARKNESS_DEPTH = 1
 const ENEMY_DEPTH = 2
 const PLAYER_DEPTH = 3
 
-// Fully black, the same colour as the game's background (create-game.ts), so a
-// dark tile looks exactly like the empty space around the room.
-const DARKNESS_COLOR = 0x000000
+// The name the dark image is stored under in Phaser's texture manager.
+const DARKNESS_TEXTURE = 'lantern-darkness'
+
+// Where the soft edge of the light starts and ends, in tiles from the centre
+// of the player's tile. The picture must agree with the rule in
+// getVisibleTiles (a tile is lit when its centre is within LANTERN_RADIUS):
+// - Fully clear up to half a tile inside the radius. Lit tiles straight out
+//   (2 tiles away) are fully clear in the middle, and the lit tiles at
+//   (±2, ±1), about 2.24 tiles away, are only about a quarter dark there.
+// - Fully black from half a tile outside the radius, so unlit tiles are
+//   mostly or fully dark (the (±2, ±2) corners, about 2.83 away, are about
+//   83% dark in the middle; tiles 3 or more away are solid black).
+// - In between it fades, so the edge looks like lantern light, not squares.
+// Enemies don't use the picture at all: they are shown only when isLit says
+// their tile is lit, so a half-dark edge tile can never hide or show one wrongly.
+const LIGHT_CLEAR_RADIUS = LANTERN_RADIUS - 0.5
+const LIGHT_DARK_RADIUS = LANTERN_RADIUS + 0.5
 
 // Enemy types are plain strings in the store, but SPRITES only has keys for the
 // sprites in the manifest. This type guard checks at runtime that the name
@@ -36,9 +50,9 @@ function isSpriteName(name: string): name is SpriteName {
 
 export class RoomScene extends Phaser.Scene {
   private playerSprite?: Phaser.GameObjects.Sprite
-  // One Graphics object that paints a black square over every unlit tile. It
-  // is cleared and painted again whenever the light changes.
-  private darkness?: Phaser.GameObjects.Graphics
+  // One big black image with a soft round hole in the middle. It is made when
+  // the room is drawn and moved so the hole is always over the player.
+  private darkness?: Phaser.GameObjects.Image
   // The enemy sprites currently on screen: only the lit enemies. They are
   // Phaser objects, not game state: where the enemies are and who is alive is
   // always read from the store.
@@ -60,11 +74,6 @@ export class RoomScene extends Phaser.Scene {
   }
 
   create() {
-    // A Graphics object draws shapes (here squares) instead of images. Made
-    // once, here, and redrawn later, so there is only ever one layer of dark.
-    this.darkness = this.add.graphics()
-    this.darkness.setDepth(DARKNESS_DEPTH)
-
     // The room may already be in the store (if it loaded before the scene started)
     const state = gameStore.getState()
     if (state.tiledMap) {
@@ -154,6 +163,75 @@ export class RoomScene extends Phaser.Scene {
       )
       phaserLayer.putTilesAt(tileIndices, 0, 0)
     }
+
+    // 5. The dark over the tiles. Its size depends on the map, so it's made here.
+    this.createDarkness(
+      tiledMap.width * tiledMap.tilewidth,
+      tiledMap.height * tiledMap.tileheight,
+    )
+  }
+
+  // Makes the dark: a texture painted with the browser's canvas drawing API,
+  // and one Image that shows it. A texture is the picture itself (stored once in
+  // the texture manager); an Image is a game object that shows a texture at a
+  // position. drawLight only moves the Image, so the picture is painted once.
+  private createDarkness(mapWidth: number, mapHeight: number) {
+    // Twice the map's size in both directions. The hole is in the middle, so
+    // even with the player in a corner, the image still reaches past the
+    // opposite corner and covers the whole map.
+    const width = mapWidth * 2
+    const height = mapHeight * 2
+
+    // If a room was drawn before, throw away its dark. Texture keys must be
+    // unique, so createCanvas returns null if the key is still in use. Making
+    // it again (instead of reusing it) is simplest, because a new room can
+    // have a different size. The Image goes first, since it uses the texture.
+    this.darkness?.destroy()
+    if (this.textures.exists(DARKNESS_TEXTURE)) {
+      this.textures.remove(DARKNESS_TEXTURE)
+    }
+
+    // A canvas texture is a blank <canvas> that Phaser uses as a texture. We
+    // paint on it with the normal CanvasRenderingContext2D, like on any canvas.
+    const texture = this.textures.createCanvas(DARKNESS_TEXTURE, width, height)
+    if (!texture) {
+      throw new Error('Failed to create the darkness texture')
+    }
+    const context = texture.getContext()
+
+    // A radial gradient blends colours outwards from a centre point. It goes
+    // from a circle of radius 0 to one of radius LIGHT_DARK_RADIUS, both at
+    // the middle of the texture. The colour stops are fractions of that
+    // distance (0 = centre, 1 = the outer circle). Past the outer circle the
+    // last colour, solid black, carries on to the edges.
+    const centerX = width / 2
+    const centerY = height / 2
+    const darkRadius = LIGHT_DARK_RADIUS * this.tileSize
+    const gradient = context.createRadialGradient(
+      centerX,
+      centerY,
+      0,
+      centerX,
+      centerY,
+      darkRadius,
+    )
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)') // see-through
+    gradient.addColorStop(
+      LIGHT_CLEAR_RADIUS / LIGHT_DARK_RADIUS,
+      'rgba(0, 0, 0, 0)', // still see-through: the fade starts here
+    )
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 1)') // solid black
+    context.fillStyle = gradient
+    context.fillRect(0, 0, width, height)
+
+    // Painting on the canvas doesn't reach the screen by itself. refresh()
+    // sends the new pixels to the GPU (WebGL), so Phaser can draw them.
+    texture.refresh()
+
+    // An Image's origin is its centre by default, so placing it at a point
+    // puts the middle of the hole exactly on that point.
+    this.darkness = this.add.image(0, 0, DARKNESS_TEXTURE)
+    this.darkness.setDepth(DARKNESS_DEPTH)
   }
 
   private drawPlayer(position: Position) {
@@ -182,38 +260,13 @@ export class RoomScene extends Phaser.Scene {
     // No room loaded yet, so there is nothing to light.
     if (grid === null || playerPosition === null) return
 
+    // Move the hole to the player. setPosition jumps straight there, with no
+    // sliding animation (that would need a tween and the reduced motion setting).
+    const { x, y } = this.tileCenter(playerPosition)
+    this.darkness?.setPosition(x, y)
+
     const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
-    this.drawDarkness(grid, visibleTiles)
     this.drawEnemies(enemies, visibleTiles)
-  }
-
-  // Paints a black square over every tile the lantern doesn't reach.
-  private drawDarkness(grid: Grid, visibleTiles: Position[]) {
-    const darkness = this.darkness
-    if (!darkness) return
-
-    // clear() wipes everything drawn before, so the old dark (around the
-    // player's previous tile) doesn't stay on screen.
-    darkness.clear()
-    // fillStyle sets the colour (and opacity, 1 = solid) for the fillRect
-    // calls after it, like picking up a paintbrush.
-    darkness.fillStyle(DARKNESS_COLOR, 1)
-
-    for (const [y, row] of grid.entries()) {
-      for (let x = 0; x < row.length; x++) {
-        if (!isLit(visibleTiles, { x, y })) {
-          // A tile's pixel position is its top-left corner: tile x times the
-          // tile size. (Sprites use tileToSpritePosition instead, because their
-          // origin is at their feet.)
-          darkness.fillRect(
-            x * this.tileSize,
-            y * this.tileSize,
-            this.tileSize,
-            this.tileSize,
-          )
-        }
-      }
-    }
   }
 
   // Draws a sprite for every enemy on a lit tile, and none for the others.
@@ -251,6 +304,19 @@ export class RoomScene extends Phaser.Scene {
       sprite.setOrigin(0.5, 1)
       sprite.setDepth(ENEMY_DEPTH)
       this.enemySprites.push(sprite)
+    }
+  }
+
+  // Tile position -> the pixel at the middle of that tile. A tile starts at its
+  // top-left corner (tile x times the tile size), so the middle is half a tile
+  // further. The light is measured from the middle of the player's tile, like
+  // the rule in getVisibleTiles. This gives the same numbers as
+  // tileToSpritePosition below, but means something else: that one is where a
+  // sprite's feet go, this one is the centre of the tile itself.
+  private tileCenter(position: Position): { x: number; y: number } {
+    return {
+      x: position.x * this.tileSize + this.tileSize / 2,
+      y: position.y * this.tileSize + this.tileSize / 2,
     }
   }
 
