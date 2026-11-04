@@ -11,6 +11,12 @@ type Batch = {
   lines: string[]
 }
 
+// How long a batch stays in the hidden regions before it's cleared. Long
+// enough for VoiceOver to finish reading a long batch (removing the text
+// while it's being read could cut it off). 7 seconds is also React Aria's
+// default for its announcer.
+const CLEAR_AFTER_MS = 7000
+
 // Reads new log lines aloud for screen readers. The visible adventure log is
 // a plain list for reading and browsing back; this does the announcing.
 //
@@ -42,8 +48,14 @@ export function LiveAnnouncer() {
     // Flips on every batch. VoiceOver skips an announcement whose text is the
     // same as the one before, even in a new element, so walking into a wall
     // twice was only read once (tested Nov 3). Every other batch gets an
-    // invisible non-breaking space at the end, which VoiceOver doesn't read,
-    // so two batches in a row are never identical.
+    // invisible non-breaking space, which VoiceOver doesn't read, so two
+    // batches in a row are never identical.
+    //
+    // The space goes on every line, not only the last: VoiceOver compares
+    // each line (<p>) on its own. Two natural 1s in a row start two batches
+    // with the same line ("You roll a natural 1 and miss the demon!"), and
+    // the second one was skipped while only the last line had the space
+    // (tested Nov 4).
     let addSpace = false
 
     return gameStore.subscribe((state, previous) => {
@@ -53,12 +65,10 @@ export function LiveAnnouncer() {
       if (!first) return
 
       addSpace = !addSpace
-      const lines = added.map((entry) => entry.text)
-      if (addSpace) {
-        // The last line gets the space. `lines` is a new array from map, so
-        // this doesn't change the store's entries.
-        lines[lines.length - 1] += '\u00A0'
-      }
+      // map makes new strings, so this doesn't change the store's entries.
+      const lines = added.map((entry) =>
+        addSpace ? entry.text + '\u00A0' : entry.text,
+      )
 
       setBatch({
         key: first.id,
@@ -69,6 +79,19 @@ export function LiveAnnouncer() {
       })
     })
   }, [])
+
+  // Clear the batch a while after it appears. The hidden copy is only for
+  // announcing: left on the page, a screen reader reading in order (VO + right
+  // arrow, or VoiceOver reading the page on load) reached the newest lines a
+  // second time, right after the visible log (tested Nov 4). Removing text is
+  // silent: live regions announce additions, not removals.
+  // A new batch runs the cleanup first, which cancels the old timer, so the
+  // newest batch always gets its full time.
+  useEffect(() => {
+    if (!batch) return
+    const timeoutId = setTimeout(() => setBatch(null), CLEAR_AFTER_MS)
+    return () => clearTimeout(timeoutId)
+  }, [batch])
 
   // Both regions are always on the page, even when empty: a live region must
   // exist before its text changes, or screen readers miss the first message.
