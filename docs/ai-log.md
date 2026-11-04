@@ -635,9 +635,9 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **What I asked:** I had caught up on Sprints 1 and 2. I asked for a Sprint 3 plan that includes weekend work, so I'm back on track for Sprint 4 on Monday. First I asked for one weekend day, then added the second.
 - **What I got:** `docs/sprint-3-plan.md`: 5 working days (Wed, Thu, Fri, Sat and Sun), with six decisions to make first, then Phase H (dice and combat rules), Phase I (enemies as data, combat in the store, narration), Phase J (action menus and focus) and Phase K (lantern rendering and narration). With the second weekend day, Claude Code added Phase L (accessibility settings). It said plainly that the original Sprint 3 scope plus the work moved from Sprint 2 still doesn't fit. The full-room screen reader test, guest saves, Playwright and axe-core, the agent spec and room exits are listed as not fitting, with three options for Sprint 4.
 - **Also that day:** I picked the three enemies (`skeleton`, `demon`, `orc`) from the tileset and sent Claude Code screenshots of each sprite set. It found their positions on the sheet by cropping and enlarging regions of the PNG, and added 24 frames to `public/assets/dungeon/sprites.json` (data only, no code). Its first crops with `sips` were wrong (the offsets landed in the wrong area), so it wrote a small throwaway PNG cropper instead. It checked the result by rendering the three rows and comparing them with my screenshots.
-- **Outcome:** ⏳ (to fill in after I review it)
-- **Why:** ✏️ (to fill in: what I kept or changed, and I chose option A for Sprint 4: use Sprint 5 as the buffer)
-- **How I verified it:** ✏️ (to fill in)
+- **Outcome:** ✏️
+- **Why:** I kept the plan and its six decisions, and added Phase L when I added the second weekend day. Of the three options for what didn't fit, I chose **option A: use Sprint 5 as the buffer**. The screen reader pass and the agent spec would go first in Sprint 4, accounts after, and inventory and colorblind design (Shoulds) would be cut first. I kept the three enemy sprite sets as data in `sprites.json`, after Claude Code's first wrong crops were fixed. In the end, Sprint 3 still ran over: only Phases H and I were finished, and J, K and L moved to the Nov 2 re-plan.
+- **How I verified it:** Compared the plan with the MoSCoW and the timeline in `docs/project-plan.md`, and recorded option A in "Plan changes". For the sprites: compared Claude Code's rendered rows with my screenshots of the tileset.
 
 #### 2026-10-28 — Phase H part 1: dice, attack roll and damage
 
@@ -862,6 +862,18 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Afterwards:** I wanted the key to be behind an enemy, for some difficulty. Claude Code suggested placing the key where every path to it passes next to an enemy. That's only a rule in the room spec, because a fight already starts next to an enemy and enemies block movement. The other option, an enemy that drops the key, needs new code, so it became a future improvement. I chose the guard.
 - **Then:** I also wanted health potions to loot from barrels and crates. Claude Code said it's the biggest addition so far: a search action (it can use the door key), containers in the room file, a drink button, and balance. The risky part is focus: drinking the last potion removes the focused button, the same problem as on Nov 3. It recommended making it the first stretch item, with the design written now, and building it only if the reviews are on schedule on Wed Nov 11 (Agent F). I agreed.
 
+
+#### 2026-11-04 — Agent A: drawing the dark and enemies in the light (Phase K steps 5–6)
+
+- **Tool:** Claude Code (an agent in its own git worktree, started by Claude Code from a brief I approved)
+- **Category:** Coding / Agent rooms (agent-built engine work, decision 7)
+- **What I asked:** Phase K steps 5–6 as the first agent task: tiles outside the lantern drawn dark, and enemies drawn only when their tile is lit. Branch `feature/lantern-rendering`, from my Phase J commit, because PR #30 couldn't be merged during GitHub's outage.
+- **What I got:** Two commits in about 4.5 minutes. `LANTERN_RADIUS = 3` and an `isLit` helper with 5 tests in `visibility.ts`. In `room-scene.ts`: one Graphics object that paints a black square over every unlit tile, enemy sprites looked up by name through `SPRITES` and rebuilt on every move, and depths so the dark covers the tiles and the enemies and player are on top. The agent had no `node_modules` in its worktree and linked to the main checkout's packages instead of installing anything. It pointed out a rule 5 gap itself: an enemy now appears on the canvas before any log line says so, until the reveal narration (Phase K step 7) is in.
+- **Outcome:** (to fill in after my review)
+- **Why:** (to fill in after my review)
+- **How I verified it:** Claude Code read the whole diff and ran typecheck, lint, Prettier, the tests (298 pass) and the build in the agent's worktree. (Add: my own review and what I saw in `npm run dev`.)
+- **Afterwards (my playtest):** the light looked too big and boxy. I asked for a smaller light with soft, round edges. Claude Code explained that the radius is a game rule, not only looks (it decides which enemies are shown, what the reveal narration will say, and the "How to play" text), so the picture and the rule must shrink together. It also said a soft edge is harder to read for low-vision players, so the high contrast setting should switch back to a hard edge (added to Phase L). I chose a radius of 2.5. Agent A replaced the black squares with one image with a soft round hole (a canvas texture with a radial gradient), in two more commits in about 2.5 minutes. Claude Code ran the checks again (298 tests pass). Agent A said the fade will look slightly stepped because of pixel-art scaling.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -870,6 +882,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |
+| Engine: lantern rendering (Agent A) | Claude Code (Opus 5.5) | | Yes: typecheck, lint, Prettier, 298 tests, build | (after review) | Rule 5 gap until the reveal narration: enemies appear on the canvas with no log line | (after review) | |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**

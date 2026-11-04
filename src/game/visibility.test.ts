@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getVisibleTiles } from './visibility'
+import { getVisibleTiles, isLit } from './visibility'
 import type { Position, Grid } from './movement'
 
 const grid: Grid = [
@@ -118,5 +118,35 @@ describe('getVisibleTiles', () => {
     const positionCopy = { ...position }
     getVisibleTiles(grid, position, 2)
     expect(position).toEqual(positionCopy)
+  })
+})
+
+describe('isLit', () => {
+  const visibleTiles: Position[] = [
+    { x: 2, y: 1 },
+    { x: 3, y: 1 },
+  ]
+
+  it('returns true for a tile in the list', () => {
+    expect(isLit(visibleTiles, { x: 3, y: 1 })).toBe(true)
+  })
+
+  it('returns false for a tile not in the list', () => {
+    expect(isLit(visibleTiles, { x: 4, y: 1 })).toBe(false)
+  })
+
+  // Compares x and y, not object identity: a new object with the same
+  // coordinates (like an enemy's position) must still count as lit.
+  it('matches by coordinates, not by the same object', () => {
+    const samePlace = { x: 2, y: 1 }
+    expect(isLit(visibleTiles, samePlace)).toBe(true)
+  })
+
+  it('does not mix up x and y', () => {
+    expect(isLit(visibleTiles, { x: 1, y: 2 })).toBe(false)
+  })
+
+  it('returns false when nothing is lit', () => {
+    expect(isLit([], { x: 2, y: 1 })).toBe(false)
   })
 })
