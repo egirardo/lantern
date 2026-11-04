@@ -849,6 +849,19 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The checklist covered everything Phase J changed. Keeping the role protects players I can't test for, and the hints problem has a known workaround (hints off).
 - **How I verified it:** VoiceOver in Safari, following the checklist: everything worked as intended. `git status` shows the room file is unchanged.
 
+
+#### 2026-11-04 — The key, the inventory, and cutting the UI skin
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** Because agents now do more of the work, I wanted to bring back the inventory and health potions. The goal would be to find a key to get out of the dungeon, and the key would be in a different room from the exit.
+- **What I got:** Claude Code listed what it would take: items in the room format, a locked exit, picking up, the inventory in the store and in the save, an inventory list, a potion button in the combat menu, and new balance numbers. It pointed out that the format has to be decided today, before the exits agent starts on Friday and the room spec on Sunday. It also said that agents write the code, but my review time is the bottleneck. It recommended the key, the locked exit and a simple inventory list in place of the UI skin, with potions only if there's time, because the key needs no new combat action and doesn't touch the focus code I had just tested. Then it wrote decision 8 into the sprint plan: Agent C also does the item format and the locked exit, and a new Agent E builds picking up, the inventory and the list. It also moved Agent D after E, cut the UI skin, and updated the "How to play" text, "Plan changes" and `CLAUDE.md`.
+- **Outcome:** ✅
+- **Why:** I chose the recommended option. The key gives the game a real goal and tests the room format across two rooms. The UI skin was already first in line to be cut. Potions would mean changing the combat menu and the healing I decided on Nov 2–3.
+- **How I verified it:** Compared with the timeline and the MoSCoW in the project plan.
+- **Afterwards:** I wanted the key to be behind an enemy, for some difficulty. Claude Code suggested placing the key where every path to it passes next to an enemy. That's only a rule in the room spec, because a fight already starts next to an enemy and enemies block movement. The other option, an enemy that drops the key, needs new code, so it became a future improvement. I chose the guard.
+- **Then:** I also wanted health potions to loot from barrels and crates. Claude Code said it's the biggest addition so far: a search action (it can use the door key), containers in the room file, a drink button, and balance. The risky part is focus: drinking the last potion removes the focused button, the same problem as on Nov 3. It recommended making it the first stretch item, with the design written now, and building it only if the reviews are on schedule on Wed Nov 11 (Agent F). I agreed.
+
 ---
 
 ## Agent-built rooms: evaluation

@@ -28,16 +28,26 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
    | Phase K step 4 (decor in Tiled) | Me |
    | **Phase K steps 5–6** (Phaser: the dark, enemies in the light) | **Agent A** |
    | **Supabase foundation** (SQL tables, RLS policies, RLS tests, auth client) | **Agent B** |
-   | **Exits and room changes** (all steps, incl. final exit, victory, "How to play") | **Agent C** |
+   | **Exits and room changes** (all steps, incl. final exit, victory, "How to play"; from decision 8 also the item format and the locked exit) | **Agent C** |
+   | **Items and inventory** (picking up, inventory in the store, the inventory list), decision 8 | **Agent E** |
    | Phase L settings (store, dialog, focus, applying them) | Me. Claude Code implements the verbosity helper against my tests |
    | **Guest saves and sync** (localStorage, newest version wins) | **Agent D** |
    | Login and sign-up form | Me (WCAG 2.2 Accessible Authentication) |
-   | Rooms 2 and 3, UI skin | Agents (as before) |
+   | Rooms 2 and 3 | Agents (as before). The UI skin is cut (decision 8) |
    | VoiceOver checks, screen reader pass, evaluations, report | Me |
 
    **Rules for the agents:** they follow the architecture rules in `CLAUDE.md`, write unit tests for new helpers in `src/game/`, and the PR must pass test, lint and typecheck. Agents don't write focus code, and don't change log wording without asking. Agents don't install anything: if a dependency is needed, they stop, and I run the install. Each PR description has a "How it works" walkthrough, so I can explain and defend the code. Agents that touch the same files (`game-store.ts`, `room-scene.ts`) run one after the other, not at the same time.
 
-**What gives first if a day slips:** the weekend buffer (Nov 14–15), then the UI skin (the game works without it, so it's the first thing to cut), then the Playwright path, then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
+8. **The goal is a key, and the UI skin is cut (added Nov 4).** The player is locked in the dungeon and must find the way out. The final exit is **locked**, and the key for it lies in **a different room** from the exit. Because agents now take more of the work, I'm bringing back part of the inventory Should, in place of the UI skin. It's more useful for the thesis, because an inventory you can use with the keyboard is accessibility work, and the skin is cosmetic.
+   - **In:** items in the room file (schema and tests), an exit that needs a key (`requires: "<item id>"`), picking up an item by stepping on it, the inventory in the store, and a simple inventory list in React (a heading and a `<ul>`, with no focus moves). Every step has a log line: "You pick up a rusty key." "The door is locked. You need a key." "You unlock the door with the rusty key."
+   - **The key is used automatically** at the locked exit, so there's no new menu action and the combat menu doesn't change.
+   - **First stretch item (decided Nov 4): health potions looted from barrels and crates.** Only built if the reviews are on schedule on Wed Nov 11, by a new Agent F. Otherwise it goes in the report as future work. Design in "Stretch: potions in containers" below. Until then, healing stays as decided (+4 after a won fight, full health per room).
+   - **Cut:** the UI skin agent (decision 6). The game works without it, and it was already first in line to cut. The Pixel Operator font stays.
+   - **Who:** Agent C adds the item format and the locked exit to its exits work, so both are merged before the room spec on Sun Nov 8. A new **Agent E** builds picking up, the inventory in the store and the list, after Agent C (both change the store). Agent D (saves) starts after E, so the inventory is in the save.
+   - **Room spec:** the agents place the key in room 2 and the locked final exit in room 3.
+   - **The key is guarded (added Nov 4).** In room 2, the key lies where the player can only reach it by passing next to an enemy (an alcove or a dead-end corridor), so getting out means winning that fight. It's only a rule in the room spec, not new code: a fight already starts when the player steps next to an enemy, and enemies block movement. The spec's checklist says: "every path to the key passes a tile next to an enemy". An enemy that carries the key and drops it when it's defeated would need new code, so it goes in the report as a future improvement.
+
+**What gives first if a day slips:** the weekend buffer (Nov 14–15), then the UI skin (the game works without it, so it's the first thing to cut; **cut on Nov 4**, decision 8), then the Playwright path, then the inventory list (the key still works without showing a list, if the pickup and unlock lines are in the log), then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
 
 ---
 
@@ -50,10 +60,10 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
 | Wed Nov 4 | **Supervision:** demo keyboard combat and the re-plan. Phase J step 7. Start the **Phase K** helpers. **Start Agents A (Phaser rendering) and B (Supabase foundation)** in parallel (decision 7) |
 | Thu Nov 5 (morning) | Phase K helpers (steps 1–3, 7) |
 | Fri Nov 6 | Phase K step 4 (decor in Tiled). Review and merge **Agent A**, then **start Agent C (exits)**. Review **Agent B** |
-| Sun Nov 8 | **Slice the UI pieces** from the sheet in Aseprite (morning, about 1–1.5 h). Review and merge **Agent C**, VoiceOver check of a room change. **Agent spec** ("Building rooms" in `CLAUDE.md`) and the **UI skin brief**, start the agents on rooms 2 and 3. Start **Phase L** |
-| Mon Nov 9 | Finish **Phase L:** settings. When the Phase L PR is merged, **start Agent D (saves and sync)** and the **UI skin agent** |
+| Sun Nov 8 | Review and merge **Agent C**, VoiceOver check of a room change and a locked door. **Start Agent E (items and inventory)**. **Agent spec** ("Building rooms" in `CLAUDE.md`, with the key in room 2 and the locked exit in room 3), start the agents on rooms 2 and 3. Start **Phase L** |
+| Mon Nov 9 | Finish **Phase L:** settings. Review **Agent E**. When Phase L and Agent E are merged, **start Agent D (saves and sync)** |
 | Tue Nov 10 | **Login and sign-up form** (me) against Agent B's auth client. Review **Agent D** |
-| Wed Nov 11 | Wire **sync** to login, check **row-level security** with its tests. Review the agent rooms and the **UI skin PR** |
+| Wed Nov 11 | Wire **sync** to login, check **row-level security** with its tests. Review the agent rooms |
 | Thu Nov 12 | **Full screen reader pass** (VoiceOver), one axe scan, fixes. Finish reviewing the agent rooms |
 | Fri Nov 13 | **WCAG 2.2 evaluation**, agent-workflow evaluation, README, AI log summary, Result section. **Submit** |
 | Sat–Sun Nov 14–15 | Buffer |
@@ -159,6 +169,8 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Built by Agent C (decision 7),** after Agent A is merged, because both change `room-scene.ts`. I review the PR and do the VoiceOver check of a room change myself.
 
+**Added Nov 4 (decision 8):** Agent C also adds the **item format** to the room schema (`items: [{ id, type, position }]`, with item types in a Zod-validated table like `enemies.json`) and a **locked exit** (`requires: "<item id>"`). Using a locked exit without the item gives "The door is locked. You need a key." and doesn't leave the room. With the item, it unlocks with a log line. The final exit (step 7) is the locked one. Agent C tests the lock with a fixture inventory. Picking items up comes with Agent E.
+
 1. **Going through an exit.** The player stands next to an exit and uses it (a key, plus a button for the action menu style). This loads the room in the exit's `to`.
 2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbour. `playerStart` is only for the first room of a new game. Pure helper with tests.
 3. **No leaving in a fight.** Moving is already blocked during combat. Using an exit must be blocked too, with a log line.
@@ -178,7 +190,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 ```markdown
 ## How to play
 
-**Your goal:** find the way out of the dungeon. The exit is somewhere in the last room.
+**Your goal:** you are locked in the dungeon. Find the key and the way out. The key and the locked exit are in different rooms.
 
 **Moving.** Focus the dungeon map and use the arrow keys. Each key press is one step. Walls, objects and enemies block your way, and the adventure log tells you what happened.
 
@@ -190,7 +202,9 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Health.** You have 12 health. After you win a fight, you recover 4 health. When you go through a door into a new room, you recover fully. The game warns you when you're down to 3 or less. At 0 you fall, and the game is over.
 
-**Doors.** [key to be decided] Use a door when you're next to it. You can't leave a room during a fight.
+**Doors.** [key to be decided] Use a door when you're next to it. You can't leave a room during a fight. A locked door opens if you carry its key.
+
+**Items.** Step onto an item to pick it up. Your inventory lists what you carry.
 
 **No hurry.** The game always waits for you. There are no time limits.
 ```
@@ -207,7 +221,38 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 - [ ] Room 2 merged, corrections logged
 - [ ] Room 3 merged, corrections logged
 
-## UI skin (agent): Pixel RPG UI Pack (Sun Nov 8 – Wed Nov 11)
+## Items and inventory (Agent E, Sun Nov 8 – Mon Nov 9)
+
+Decision 8. Starts after Agent C is merged, because it builds on the item format and changes the store.
+
+1. **Picking up:** stepping onto an item's tile picks it up, with a log line ("You pick up a rusty key."). The item is no longer drawn. Pure helper with tests.
+2. **The inventory in the store:** a list of item ids, read by the locked-exit check from Agent C. A room change keeps it, and loading a room doesn't reset it.
+3. **Reveal narration:** an item in the light is announced like a feature ("A rusty key lies to the west."), using the Phase K reveal helper.
+4. **Drawing items** in Phaser, only inside the light, looked up through the asset manifest (rule 7).
+5. **`Inventory.tsx`:** a section with an "Inventory" heading and a `<ul>`, "Empty" when there's nothing. Plain HTML, no focus moves. I check it with VoiceOver.
+
+- [ ] Agent E PR reviewed and merged, corrections logged
+
+## Stretch: potions in containers (Agent F, Wed Nov 11, only if on schedule)
+
+Decided Nov 4 as the **first stretch item**. **Go or no-go on Wed Nov 11 morning:** go only if Agents A–E and both rooms are merged or nearly reviewed. If not, it goes in the report as future work.
+
+**Design (written now, so the room agents can leave room for it):**
+
+1. **Containers are room data:** `containers: [{ id, position, contains: "<item type>" | null }]`, placed on a named blocking decor tile from Phase K (a barrel, a crate). An empty container (`null`) is allowed, so not every barrel has loot.
+2. **Searching uses the same key as doors** (Agent C's interact key), next to the container. Not during a fight, the same as exits. Log lines: "You search the barrel and find a health potion." / "The barrel is empty." Searching a container again says it's empty.
+3. **A potion is an item type** in the same item table as the key, and goes in the inventory (Agent E).
+4. **Drinking:** a "Drink a health potion" button in the combat menu (it uses your turn), and one in the inventory outside fights. **Focus risk:** drinking the last potion removes the focused button. Use the same rule as `CombatMenu` (move focus before the button disappears) and check it in VoiceOver. I write or closely review this focus code myself.
+5. **Balance:** how much a potion heals is decided in the balance check (data in the item table, not code).
+
+**Room agents (Sun Nov 8):** they place barrels and crates as named decor as usual. If F goes ahead, I add `containers` to rooms 2 and 3 afterwards. It's only data, so the rooms don't need rebuilding.
+
+- [ ] Go or no-go decided (Wed Nov 11)
+- [ ] Agent F PR reviewed and merged, VoiceOver check of drinking the last potion
+
+## UI skin (agent): Pixel RPG UI Pack — **cut on Nov 4** (decision 8)
+
+Kept below for the report ("future improvements"). The font choice stays.
 
 Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sheet, `Ui.png` (plus `Ui.aseprite` and `Ui.psd`), with no data saying where each piece is. An agent reading pixel coordinates by eye would get seams in the frames, so **I cut the pieces out myself** and the agent only writes CSS.
 
@@ -248,7 +293,7 @@ As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save
 
 Rule 8: local-first. Saves and settings always go to localStorage; when logged in they also go to Supabase, and the most recently updated version wins. Guest and logged-in mode use the same code path.
 
-**Split (decision 7):** Agent B builds the Supabase foundation from Nov 4 (SQL tables, RLS policies and their tests, the auth client), in new files only. Agent D builds guest saves and sync after Phase L, because saves need the settings shape. I write the login and sign-up form myself, and review the RLS policies line by line.
+**Split (decision 7):** Agent B builds the Supabase foundation from Nov 4 (SQL tables, RLS policies and their tests, the auth client), in new files only. Agent D builds guest saves and sync after Phase L and Agent E, because saves need the settings shape and the inventory. I write the login and sign-up form myself, and review the RLS policies line by line.
 
 - [ ] Guest saves and settings in localStorage
 - [ ] Supabase sign-in: accessible login and sign-up (pasting and password managers work, no puzzles)

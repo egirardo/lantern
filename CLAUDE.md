@@ -132,7 +132,9 @@ Sprints 1–3 are finished (Phases H and I done; J, K and L moved here). Decided
 
 **Code freeze Nov 16 (heard Nov 4):** no code can be pushed after that. Submission stays Fri Nov 13; Sprint 6 is gone.
 
-Work split (decision 7 in `docs/sprint-4-plan.md`, Nov 4): for pure helpers in `src/game/`, I write the tests and Claude writes the implementation and explains it. **Agents** build Phaser rendering (Phase K steps 5–6), the Supabase foundation, exits and room changes, and guest saves with sync, each as a PR from its own worktree that I review. I write the settings dialog and focus code, the login form, and do all VoiceOver testing myself.
+**Goal of the game (decision 8, Nov 4):** find the key in one room to unlock the final exit in another. A simple inventory is back; health potions looted from barrels and crates are the first stretch item (go or no-go Wed Nov 11). The UI skin is cut.
+
+Work split (decision 7 in `docs/sprint-4-plan.md`, Nov 4): for pure helpers in `src/game/`, I write the tests and Claude writes the implementation and explains it. **Agents** build Phaser rendering (Phase K steps 5–6), the Supabase foundation, exits and room changes (with the item format and a locked exit), items and inventory, and guest saves with sync, each as a PR from its own worktree that I review. I write the settings dialog and focus code, the login form, and do all VoiceOver testing myself.
 
 *Update this section at the start of each sprint.*
 
