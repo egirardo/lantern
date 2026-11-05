@@ -45,7 +45,9 @@ export function isLit(visibleTiles: Position[], position: Position): boolean {
 // that appears on the canvas must also appear in the log).
 // - Every time, not once (decided Nov 4): an enemy that leaves the light and
 //   comes back is in the result again, because the player really lost sight
-//   of it. So nothing needs to be remembered between steps.
+//   of it. So this function remembers nothing between steps. The store does
+//   keep `seenEnemyIds`, but only to choose "A skeleton" or "The skeleton" in
+//   the log line, not to decide whether an enemy is announced.
 // - Loading a room passes an empty `visibleBefore`, so every enemy that is
 //   already lit is announced.
 // It loops over the enemies, not the tiles, so the result keeps the store's
