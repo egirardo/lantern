@@ -7,9 +7,10 @@ import {
   describeRecovery,
   describeYourTurn,
   getAttackOptions,
+  describeReveal,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
-import { makeCombatant, makeState } from './test-helpers'
+import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
 
 describe('describeMove', () => {
   it('describes a successful move', () => {
@@ -401,6 +402,53 @@ describe('describeCombatStart', () => {
     const state = makeState({ enemies: [] })
     expect(() => describeCombatStart(state)).toThrow(
       'A fight needs at least one enemy',
+    )
+  })
+})
+
+describe('describeReveal', () => {
+  // makeStoreEnemy defaults type and name to the same string, so each test
+  // sets them apart: the name must come from combatant.name.
+  function enemyNamed(name: string) {
+    return makeStoreEnemy('e1', {
+      type: 'skeleton',
+      combatant: makeCombatant({ name }),
+    })
+  }
+
+  it('uses "a" the first time an enemy is seen', () => {
+    expect(describeReveal(enemyNamed('skeleton'), 'west', false)).toBe(
+      'A skeleton appears to the west.',
+    )
+  })
+
+  it('uses "an" before a name that starts with a vowel', () => {
+    expect(describeReveal(enemyNamed('orc'), 'south-east', false)).toBe(
+      'An orc appears to the south-east.',
+    )
+  })
+
+  it('uses "the" when the enemy has been seen before', () => {
+    expect(describeReveal(enemyNamed('orc'), 'north', true)).toBe(
+      'The orc appears to the north.',
+    )
+  })
+
+  it('uses no article for a numbered name, the first time', () => {
+    expect(describeReveal(enemyNamed('skeleton 1'), 'north', false)).toBe(
+      'Skeleton 1 appears to the north.',
+    )
+  })
+
+  it('uses no article for a numbered name, when seen before', () => {
+    expect(describeReveal(enemyNamed('skeleton 12'), 'east', true)).toBe(
+      'Skeleton 12 appears to the east.',
+    )
+  })
+
+  it('uses the combatant name, not the type', () => {
+    expect(describeReveal(enemyNamed('demon'), 'west', false)).toBe(
+      'A demon appears to the west.',
     )
   })
 })
