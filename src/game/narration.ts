@@ -5,6 +5,8 @@ import {
   type CombatEvent,
   type CombatState,
 } from './combat'
+import type { CompassDirection } from './compass'
+import type { StoreEnemy } from './spawn-enemies'
 
 // Record requires an entry for every BlockedReason, so adding a new reason
 // without a corresponding message is a type error instead of a silent default.
@@ -201,4 +203,49 @@ export function describeCombatStart(combat: CombatState): string {
   // English changes the verb with the number of attackers.
   const verb = names.length === 1 ? 'attacks' : 'attack'
   return `${attackers} ${verb} you! A fight begins.`
+}
+
+// Announces an enemy that has just come into the lantern light (rule 5: the
+// canvas now shows it, so the log must say so too). The store calls this once
+// for each enemy from getNewlyLit, with the direction from directionFrom.
+// - The name comes from combatant.name, not type, so two skeletons are told
+//   apart as "skeleton 1" and "skeleton 2", the same names the combat log and
+//   the attack menu use.
+// - First sighting: "A skeleton appears to the west." / "An orc appears…".
+//   Coming back into the light: "The skeleton appears…", so a screen reader
+//   user doesn't think it's a second skeleton (decided Nov 4).
+// - A numbered name works like a proper name and gets no article:
+//   "Skeleton 1 appears to the west." The number already says which one.
+export function describeReveal(
+  enemy: StoreEnemy,
+  direction: CompassDirection,
+  seenBefore: boolean,
+): string {
+  return `${nameWithArticle(enemy.combatant.name, seenBefore)} appears to the ${direction}.`
+}
+
+// spawnEnemies only adds a number when a room has two of the same type
+// ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
+// The regex: \s = a space, \d+ = one or more digits, $ = end of the string.
+function isNumbered(name: string): boolean {
+  return /\s\d+$/.test(name)
+}
+
+// "an" before a vowel, otherwise "a". This is a spelling rule, and English
+// goes by sound, so it would be wrong for e.g. "hour" or "unicorn". It's right
+// for every enemy we have (skeleton, demon, orc). If a new type breaks it,
+// add an article field to enemies.json instead.
+function indefiniteArticle(name: string): string {
+  return /^[aeiou]/i.test(name) ? 'an' : 'a'
+}
+
+// The sentence starts with the name, so the first letter is capitalised.
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function nameWithArticle(name: string, seenBefore: boolean): string {
+  if (isNumbered(name)) return capitalise(name)
+  const article = seenBefore ? 'the' : indefiniteArticle(name)
+  return capitalise(`${article} ${name}`)
 }
