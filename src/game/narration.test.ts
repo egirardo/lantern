@@ -8,6 +8,14 @@ import {
   describeYourTurn,
   getAttackOptions,
   describeReveal,
+  describeExitInFight,
+  describeNoExitNearby,
+  describeLocked,
+  describeUnlock,
+  describeGoThrough,
+  describeFullHealth,
+  describeEscape,
+  describeAlreadyEscaped,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -46,6 +54,13 @@ describe('describeMove', () => {
     expect(result).toBe(
       'You cannot move to the south. An enemy blocks your path.',
     )
+  })
+  it('describes walking into an exit: where it is and how to use it', () => {
+    const result = describeMove(
+      { moved: false, newPosition: { x: 1, y: 1 }, reason: 'exit' },
+      'north',
+    )
+    expect(result).toBe('An exit leads north. Press Enter to use it.')
   })
 })
 
@@ -449,6 +464,34 @@ describe('describeReveal', () => {
   it('uses the combatant name, not the type', () => {
     expect(describeReveal(enemyNamed('demon'), 'west', false)).toBe(
       'A demon appears to the west.',
+    )
+  })
+})
+
+describe('exit lines', () => {
+  // The exact wording, so a changed line shows up in review.
+  it('has a line for each exit event', () => {
+    expect(describeExitInFight()).toBe("You can't leave during a fight.")
+    expect(describeNoExitNearby()).toBe('There is no exit next to you.')
+    expect(describeLocked()).toBe('The door is locked. You need a key.')
+    expect(describeUnlock('rusty key')).toBe(
+      'You unlock the door with the rusty key.',
+    )
+    expect(describeGoThrough('north')).toBe(
+      'You go through the exit to the north.',
+    )
+    expect(describeEscape()).toBe(
+      'Victory! You climb out of the dungeon. Reload the page to play again.',
+    )
+    expect(describeAlreadyEscaped()).toBe(
+      'You have already escaped the dungeon.',
+    )
+  })
+
+  it('says the health total after the full heal', () => {
+    const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
+    expect(describeFullHealth(player)).toBe(
+      'You recover to full health. You have 12 out of 12 health.',
     )
   })
 })

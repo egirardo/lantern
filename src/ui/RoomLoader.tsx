@@ -1,11 +1,25 @@
 import { useState, useEffect, useRef } from 'react'
+import { useStore } from 'zustand'
 import { fetchRoomFiles } from '../rooms/fetch-room-files'
 import { gameStore } from '../state/game-store'
 
 type LoadStatus =
   { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string }
 
-export function RoomLoader({ roomId }: { roomId: string }) {
+// Loads the room the store says the player is in (rule 2: the store is the
+// one source of truth). At the start that's the first room. When the player
+// uses an exit, takeExit changes currentRoomId, this component re-renders
+// with the new id, and the effect below fetches that room and hands it to
+// loadRoom. React only does the fetching: which room, and where the player
+// stands in it, is decided in the store and src/game/.
+export function RoomLoader() {
+  const roomId = useStore(gameStore, (state) => state.currentRoomId)
+  // True from the start until the first room is loaded, and again between an
+  // exit and the next room being loaded (`room` is still the old room then).
+  const isLoading = useStore(
+    gameStore,
+    (state) => state.room?.id !== state.currentRoomId,
+  )
   const [status, setStatus] = useState<LoadStatus>({ kind: 'loading' })
   // A ref gives us the real DOM element, so we can call .focus() on it.
   const errorRef = useRef<HTMLDivElement>(null)
@@ -52,8 +66,10 @@ export function RoomLoader({ roomId }: { roomId: string }) {
 
   return (
     <>
+      {/* Read from the store, not from `status`, so it also shows while the
+          next room loads after an exit. Hidden once an error is shown. */}
       <div role="status">
-        {status.kind === 'loading' ? 'Loading the room…' : ''}
+        {isLoading && status.kind !== 'error' ? 'Loading the room…' : ''}
       </div>
       {/* tabIndex={-1} makes the div focusable by code, without adding it to the Tab order */}
       <div ref={errorRef} tabIndex={-1}>

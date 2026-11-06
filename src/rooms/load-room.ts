@@ -23,7 +23,7 @@ export function loadRoom(
 }
 
 export function checkPositions(grid: Grid, room: Room) {
-  const { playerStart, enemies, exits } = room
+  const { playerStart, enemies, exits, items } = room
 
   // Check player start position
   if (!isInsideGrid(grid, playerStart)) {
@@ -53,6 +53,17 @@ export function checkPositions(grid: Grid, room: Room) {
       throw new Error(
         `Enemy ${enemy.id} is on the same position as another enemy`,
       )
+    }
+  }
+
+  // Check item positions. The player picks an item up by stepping on it, so
+  // it must lie on a tile inside the grid that isn't a wall.
+  for (const item of items) {
+    if (!isInsideGrid(grid, item.position)) {
+      throw new Error(`Item ${item.id} is outside the grid`)
+    }
+    if (isWall(grid, item.position)) {
+      throw new Error(`Item ${item.id} is inside a wall`)
     }
   }
 

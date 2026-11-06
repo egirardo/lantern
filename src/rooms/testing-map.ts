@@ -91,4 +91,5 @@ export const validRoom: Room = {
     { tiles: [{ x: 2, y: 0 }], to: 'room-3' },
   ],
   enemies: [],
+  items: [],
 }

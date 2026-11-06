@@ -49,6 +49,9 @@ function isSpriteName(name: string): name is SpriteName {
 }
 
 export class RoomScene extends Phaser.Scene {
+  // The tilemap of the room on screen. Kept so it can be destroyed (with all
+  // its layers) when the player goes through an exit to another room.
+  private map?: Phaser.Tilemaps.Tilemap
   private playerSprite?: Phaser.GameObjects.Sprite
   // One big black image with a soft round hole in the middle. It is made when
   // the room is drawn and moved so the hole is always over the player.
@@ -85,8 +88,11 @@ export class RoomScene extends Phaser.Scene {
     }
 
     const unsubscribe = gameStore.subscribe((state, previousState) => {
-      // 1. The room has just loaded: draw it, then the player on top
+      // 1. A room has just loaded (the first one, or the next one after an
+      // exit): throw away everything from the old room, then draw the new
+      // room and the player on top.
       if (state.tiledMap !== previousState.tiledMap && state.tiledMap) {
+        this.clearRoom()
         this.drawRoom(state.tiledMap)
         if (state.playerPosition) {
           this.drawPlayer(state.playerPosition)
@@ -94,8 +100,8 @@ export class RoomScene extends Phaser.Scene {
       }
 
       // 2. The player has moved: move the existing sprite. This is a separate
-      // check (not nested in the one above) because after the room has loaded,
-      // tiledMap never changes again, but playerPosition does.
+      // check (not nested in the one above) because tiledMap only changes when
+      // a room loads, but playerPosition changes on every step.
       if (
         state.playerPosition !== previousState.playerPosition &&
         state.playerPosition
@@ -120,6 +126,26 @@ export class RoomScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe)
   }
 
+  // Removes everything the old room put in the scene, before the next room is
+  // drawn. Without this, the new tiles would be drawn on top of the old ones,
+  // and the old player sprite would stay behind where the player used to be.
+  // destroy() removes a game object from the scene and frees it. `?.` skips
+  // what doesn't exist yet (on the first room there's nothing to clear).
+  private clearRoom() {
+    // Destroying the tilemap also destroys all of its layers.
+    this.map?.destroy()
+    this.map = undefined
+    this.playerSprite?.destroy()
+    this.playerSprite = undefined
+    for (const sprite of this.enemySprites) {
+      sprite.destroy()
+    }
+    this.enemySprites = []
+    // The dark's texture is removed in createDarkness, which runs next.
+    this.darkness?.destroy()
+    this.darkness = undefined
+  }
+
   private drawRoom(tiledMap: TiledMap) {
     this.tileSize = tiledMap.tilewidth
 
@@ -130,6 +156,8 @@ export class RoomScene extends Phaser.Scene {
       tileWidth: tiledMap.tilewidth,
       tileHeight: tiledMap.tileheight,
     })
+    // Kept so clearRoom can destroy it when the next room loads.
+    this.map = map
 
     // 2. The Tiled tileset info (name + firstgid)
     const tiledTileset = tiledMap.tilesets[0]
