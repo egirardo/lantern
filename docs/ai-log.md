@@ -909,6 +909,16 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** At first I chose to shorten the label now and let the verbosity setting control it in Phase L. Claude Code then corrected its own claim: with the controls in an `aria-describedby`, VoiceOver still reads them after a pause on every focus, so the repetition wouldn't really go away. I decided to leave the label as it is for now and shorten it to "Dungeon map" when the start screen is built, with the controls behind its "How to play" button. Whether the verbosity option is still needed after that will be checked in Phase L. For the start and end screens, priority, who builds them and when are still open.
 - **How I verified it:** Prettier and ESLint pass on the changed files. Only docs and a comment changed, so no tests were affected. The shorter label isn't built yet; I'll check it with VoiceOver when it is.
 
+#### 2026-11-06 — Agent C: exits, room changes, the item format and a locked exit
+
+- **Tool:** Claude Code (an agent in its own git worktree, started by Claude Code from a brief I approved)
+- **Category:** Coding / Agent rooms (agent-built engine work, decision 7)
+- **What I asked:** Build exits and room changes on branch `feature/exits`: using an exit with Enter on the map or a button (no focus moves), the current room id in the store with the room loading reacting to it, arriving at the doorway instead of `playerStart` (pure helper, with a fallback), no leaving during a fight, full health when going through an exit, redrawing the room in Phaser, the item format (`items` in the room file and `items.json`), a locked exit (`requires`) with `inventory` in the store, and a final exit that wins the game. Every new log line listed in the PR description, no new real rooms, no push and no PR.
+- **What I got:** 9 commits. Code by the agent: `items.json` and `item-schema.ts`; `items`, `requires` and `final` in the room schema (the final exit is a separate shape in a Zod union, so it has no `to`); an `'exit'` blocked reason in `movement.ts` with its own line; `healFully` in `recovery.ts`; `src/game/exits.ts` with `findAdjacentExit`, `findArrivalPosition` and `exitStep`; `currentRoomId`, `arrivingFrom`, `inventory`, `hasEscaped` and `takeExit` in the store; `RoomLoader` reading the room id from the store; Enter in `PhaserGame.tsx`; new `ExitButton.tsx` and `Victory.tsx`; `clearRoom` in `room-scene.ts`. 69 new tests with fixture rooms (399 in total). The agent made one decision that differs from the brief: `requires` and `inventory` hold item **types** (`rusty-key`), not the ids of items placed in a room, because the key lies in a different room from the door, and so Zod can check the type exists. It wrote all exit lines with "exit" instead of "door" (except the locked and unlock lines from the brief), because a room file doesn't say whether an exit is a door or a ladder. It didn't test a room change in a browser (there's no second room and no Playwright in `node_modules`), and it left the exit button visible after victory so focus isn't lost from a disappearing button.
+- **Outcome:** To fill in after review
+- **Why:** To fill in after review
+- **How I verified it:** To fill in after review. The agent ran typecheck, lint, Prettier, the tests (399 pass) and the build in its worktree.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -918,6 +928,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 | Room | Agent / model | PR | Passed checks on first try? (schema, tests, axe) | Corrections needed | Accessibility issues found | Time spent reviewing | Estimated time to build by hand |
 | ---- | ------------- | -- | ------------------------------------------------ | ------------------ | -------------------------- | -------------------- | ------------------------------- |
 | Engine: lantern rendering (Agent A) | Claude Code (Opus 5.5) | #32 | Yes: typecheck, lint, Prettier, 298 tests, build | None in review. One design change after my playtest (radius 2.5, soft round light), done by the agent in 2 commits | Rule 5 gap until the reveal narration: enemies appear on the canvas with no log line | About 20 min (10 min code, 10 min playtest) | Several hours |
+| Engine: exits and locked exit (Agent C) | Claude Code (Opus 5.5) | not opened yet | Yes (agent's own run): typecheck, lint, Prettier, 399 tests, build | To fill in | To fill in. Not yet checked: VoiceOver on a room change and a locked door, the "Loading the room…" status during a room change | To fill in | To fill in |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
