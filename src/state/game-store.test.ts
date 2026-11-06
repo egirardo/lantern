@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { createGameStore } from './game-store'
-import { validMap, validRoom } from '../rooms/testing-map'
+import {
+  floorLayer,
+  validMap,
+  validRoom,
+  wallsLayer,
+} from '../rooms/testing-map'
 import type { GameState } from './game-store'
 import { describeMove } from '../game/narration'
 import type { Room } from '../rooms/room-schema'
@@ -158,7 +163,7 @@ describe('gameStore', () => {
       { moved: false, newPosition: { x: 1, y: 2 }, reason: 'enemy' },
       'south',
     )
-    expect(state.log[1]?.text).toBe(describeMoveResult)
+    expect(state.log.at(-1)?.text).toBe(describeMoveResult)
   })
 
   it('moving next to an enemy is allowed', () => {
@@ -177,7 +182,9 @@ describe('gameStore', () => {
       { moved: true, newPosition: { x: 1, y: 2 } },
       'south',
     )
-    expect(state.log[1]?.text).toBe(describeMoveResult)
+    // The step starts a fight, so the newest line is the turn cue. Check that
+    // the step line is somewhere in the log instead.
+    expect(state.log.map((entry) => entry.text)).toContain(describeMoveResult)
   })
 
   it('reloading a room replaces the old enemies', () => {
@@ -216,7 +223,7 @@ describe('gameStore', () => {
     // The fight start is narrated: the room description, the step, the
     // "attacks you" line, one initiative line each for the player and the
     // skeleton, and the turn cue.
-    expect(state.log.length).toBe(6)
+    expect(state.log.length).toBe(7)
   })
 
   it('does not allow a player to move while in combat', () => {
@@ -329,5 +336,106 @@ describe('gameStore', () => {
     expect(state.combat).toBeNull()
     expect(state.player.currentHealth).toBe(9)
     expect(state.playerPosition).toEqual({ x: 1, y: 1 })
+  })
+
+  describe('reveal narration in loadRoom and movePlayer', () => {
+    // 7 tiles wide, so an enemy can start outside the lantern (radius 2.5).
+    // validMap is too small: from anywhere in it, every floor tile is lit.
+    // Walls along the top row, floor below, like validMap.
+    const wideMap = {
+      ...validMap,
+      width: 7,
+      layers: [
+        { ...floorLayer, width: 7, data: new Array<number>(21).fill(258) },
+        {
+          ...wallsLayer,
+          width: 7,
+          data: [
+            ...new Array<number>(7).fill(66),
+            ...new Array<number>(14).fill(0),
+          ],
+        },
+      ],
+    }
+
+    // The player starts at (1, 1). The skeleton at (4, 1) is 3 tiles east:
+    // dark (9 > 6.25). One step east makes it 2 tiles away: lit (4 <= 6.25),
+    // but not adjacent, so no fight starts.
+    const roomWithDistantSkeleton: Room = {
+      ...validRoom,
+      enemies: [{ id: 'e1', type: 'skeleton', position: { x: 4, y: 1 } }],
+    }
+
+    // The strings are written out instead of calling describeReveal, so the
+    // tests check the whole chain from the store to the log line.
+
+    it('logs the step, then the enemy that came into the light', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantSkeleton, wideMap)
+      store.getState().movePlayer('east')
+      expect(store.getState().log.map((entry) => entry.text)).toEqual([
+        validRoom.description,
+        'You have taken a step to the east.',
+        'A skeleton appears to the east.',
+      ])
+    })
+
+    it('does not announce an enemy in the dark when the room loads', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantSkeleton, wideMap)
+      expect(store.getState().log.map((entry) => entry.text)).toEqual([
+        validRoom.description,
+      ])
+    })
+
+    it('announces an enemy that is already lit when the room loads', () => {
+      const store = createGameStore()
+      // The skeleton at (0, 2) is one step west and one south of the start.
+      store.getState().loadRoom(roomWithSkeleton, validMap)
+      expect(store.getState().log.map((entry) => entry.text)).toEqual([
+        validRoom.description,
+        'A skeleton appears to the south-west.',
+      ])
+    })
+
+    it('does not announce the enemy again after a blocked move', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithSkeleton, validMap)
+      // North of the start is the wall row, so the player stays put.
+      store.getState().movePlayer('north')
+      expect(store.getState().log.map((entry) => entry.text)).toEqual([
+        validRoom.description,
+        'A skeleton appears to the south-west.',
+        'You cannot move to the north. A wall blocks your path.',
+      ])
+    })
+
+    it('announces the enemy again with "the" each time it comes back into the light', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantSkeleton, wideMap)
+      store.getState().movePlayer('east') // lit
+      store.getState().movePlayer('west') // dark again
+      store.getState().movePlayer('east') // lit again
+      // "A" the first time, "The" when it comes back, so it doesn't sound
+      // like a second skeleton.
+      const reveals = store
+        .getState()
+        .log.map((entry) => entry.text)
+        .filter((text) => text.includes('appears'))
+      expect(reveals).toEqual([
+        'A skeleton appears to the east.',
+        'The skeleton appears to the east.',
+      ])
+    })
+
+    it('forgets the seen enemies when a room loads', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithSkeleton, validMap)
+      // Same room again: the enemy ids repeat, but it's a new visit.
+      store.getState().loadRoom(roomWithSkeleton, validMap)
+      expect(store.getState().log.at(-1)?.text).toBe(
+        'A skeleton appears to the south-west.',
+      )
+    })
   })
 })
