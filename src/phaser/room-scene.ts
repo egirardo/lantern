@@ -11,6 +11,8 @@ import { gameStore, type GameState } from '../state/game-store'
 import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
+import { prefersReducedMotion } from './reduced-motion'
+import { animationKey } from './sprite-motion'
 
 // Depth decides what is drawn on top: a higher depth covers a lower one. The
 // tilemap layers keep the default depth 0. The dark goes over the tiles, and
@@ -56,10 +58,11 @@ export class RoomScene extends Phaser.Scene {
   // One big black image with a soft round hole in the middle. It is made when
   // the room is drawn and moved so the hole is always over the player.
   private darkness?: Phaser.GameObjects.Image
-  // The enemy sprites currently on screen: only the lit enemies. They are
-  // Phaser objects, not game state: where the enemies are and who is alive is
-  // always read from the store.
-  private enemySprites: Phaser.GameObjects.Sprite[] = []
+  // The enemy sprites currently on screen: only the lit enemies, by enemy id.
+  // They are Phaser objects, not game state: where the enemies are and who is
+  // alive is always read from the store. A Map (not a list) so drawEnemies can
+  // find the sprite an enemy already has and keep it, see drawEnemies.
+  private enemySprites = new Map<string, Phaser.GameObjects.Sprite>()
   private readonly PLAYER_SPRITE = 'hero-girl'
   // Width and height of one tile in pixels. Set in drawRoom from the map, so
   // drawPlayer and the move code share one value instead of passing it around.
@@ -77,6 +80,10 @@ export class RoomScene extends Phaser.Scene {
   }
 
   create() {
+    // Turn the frame lists in the manifest into Phaser animations, before any
+    // sprite needs one.
+    this.createAnimations()
+
     // The room may already be in the store (if it loaded before the scene started)
     const state = gameStore.getState()
     if (state.tiledMap) {
@@ -137,13 +144,67 @@ export class RoomScene extends Phaser.Scene {
     this.map = undefined
     this.playerSprite?.destroy()
     this.playerSprite = undefined
-    for (const sprite of this.enemySprites) {
+    for (const sprite of this.enemySprites.values()) {
       sprite.destroy()
     }
-    this.enemySprites = []
+    this.enemySprites.clear()
     // The dark's texture is removed in createDarkness, which runs next.
     this.darkness?.destroy()
     this.darkness = undefined
+  }
+
+  // Makes one Phaser animation per animation in the asset manifest, e.g.
+  // 'hero-girl-idle' and 'skeleton-run'. An animation is a list of atlas
+  // frames plus a speed; any sprite can then play it by key. The frames come
+  // from the manifest (rule 7), so new art only means changing the manifest.
+  private createAnimations() {
+    for (const [spriteName, art] of Object.entries(SPRITES)) {
+      for (const [animationName, animation] of Object.entries(art.animations)) {
+        const key = animationKey(spriteName, animationName)
+        // The animation manager belongs to the whole game, not to this scene,
+        // so animations made earlier are still there if the scene is started
+        // again. Phaser warns about a key that already exists, so skip it.
+        if (this.anims.exists(key)) continue
+
+        this.anims.create({
+          key,
+          // generateFrameNames builds the atlas frame names from the prefix
+          // and the frame numbers: 'skeleton-' + [0, 1, 2, 3] ->
+          // 'skeleton-0' … 'skeleton-3'. The spread makes a normal array from
+          // the manifest's read-only one, which is the type Phaser asks for.
+          frames: this.anims.generateFrameNames(art.texture, {
+            prefix: art.framePrefix,
+            frames: [...animation.frames],
+          }),
+          frameRate: animation.frameRate,
+          repeat: animation.repeat,
+        })
+      }
+    }
+  }
+
+  // Starts a sprite's idle loop, or shows a still frame if the player prefers
+  // reduced motion. Called whenever a sprite should stand still: when it is
+  // made, after the player's walk, and on every redraw of the enemies.
+  private playIdle(sprite: Phaser.GameObjects.Sprite, spriteName: SpriteName) {
+    if (prefersReducedMotion()) {
+      // stop() halts any animation but leaves whatever frame it was on, so
+      // set the first idle frame by hand: the same still picture as before
+      // there were animations.
+      sprite.stop()
+      const art = SPRITES[spriteName]
+      sprite.setFrame(`${art.framePrefix}${art.animations.idle.frames[0]}`)
+      return
+    }
+    // The second argument, ignoreIfPlaying, is what keeps the loop smooth:
+    // if the sprite is already playing its idle animation, play() does
+    // nothing, instead of starting again from the first frame.
+    // randomFrame starts a new idle loop on a random frame, so enemies that
+    // appear together don't bob in step like a choir.
+    sprite.play(
+      { key: animationKey(spriteName, 'idle'), randomFrame: true },
+      true,
+    )
   }
 
   private drawRoom(tiledMap: TiledMap) {
@@ -278,6 +339,7 @@ export class RoomScene extends Phaser.Scene {
     // The player is always visible, so they go above the dark.
     sprite.setDepth(PLAYER_DEPTH)
     this.playerSprite = sprite
+    this.playIdle(sprite, this.PLAYER_SPRITE)
   }
 
   // Everything that depends on where the lantern shines. The store decides
@@ -298,40 +360,60 @@ export class RoomScene extends Phaser.Scene {
   }
 
   // Draws a sprite for every enemy on a lit tile, and none for the others.
-  // The simplest way to keep the screen in step with the store: throw away
-  // all the old sprites and make new ones from the current enemy list. A
-  // defeated enemy is no longer in the list, so it gets no new sprite.
+  // This runs on every step, so an enemy that stays in the light keeps the
+  // sprite it already has. Making new sprites each time (as before the
+  // animations) would restart every idle loop from its first frame on every
+  // step, which looks like a stutter. So: remove the sprites that must go,
+  // keep the ones that stay, and make sprites only for newly lit enemies.
   private drawEnemies(enemies: StoreEnemy[], visibleTiles: Position[]) {
-    // destroy() removes a sprite from the scene and frees it. Only hiding it
-    // would leave a pile of invisible sprites behind after every move.
-    for (const sprite of this.enemySprites) {
-      sprite.destroy()
+    const litEnemies = enemies.filter((enemy) =>
+      isLit(visibleTiles, enemy.position),
+    )
+    const litIds = new Set(litEnemies.map((enemy) => enemy.id))
+
+    // 1. Remove the sprites of enemies that are no longer lit, or no longer
+    // in the store at all (defeated). destroy() removes a sprite from the
+    // scene and frees it; only hiding it would leave invisible sprites behind.
+    // Deleting from a Map while looping over it with for…of is safe in
+    // JavaScript: the loop just doesn't visit the deleted entry.
+    for (const [id, sprite] of this.enemySprites) {
+      if (!litIds.has(id)) {
+        sprite.destroy()
+        this.enemySprites.delete(id)
+      }
     }
-    this.enemySprites = []
 
-    for (const enemy of enemies) {
-      if (!isLit(visibleTiles, enemy.position)) continue
-
+    // 2. Keep or make a sprite for every lit enemy.
+    for (const enemy of litEnemies) {
       // Rule 7: the sprite is found by its logical name (the enemy type, e.g.
       // 'demon'), never by a file path.
       if (!isSpriteName(enemy.type)) {
         throw new Error(`No sprite in the asset manifest for ${enemy.type}`)
       }
-      const art = SPRITES[enemy.type]
       const { x, y } = this.tileToSpritePosition(enemy.position)
-      const sprite = this.add.sprite(
-        x,
-        y,
-        art.texture,
-        // The first idle frame, standing still. Animations wait until the
-        // reduced motion setting exists.
-        `${art.framePrefix}${art.animations.idle.frames[0]}`,
-      )
-      // Enemy frames are 16×32 like the hero's, so they use the same
-      // bottom-centre origin (see drawPlayer).
-      sprite.setOrigin(0.5, 1)
-      sprite.setDepth(ENEMY_DEPTH)
-      this.enemySprites.push(sprite)
+
+      let sprite = this.enemySprites.get(enemy.id)
+      if (!sprite) {
+        const art = SPRITES[enemy.type]
+        sprite = this.add.sprite(
+          x,
+          y,
+          art.texture,
+          `${art.framePrefix}${art.animations.idle.frames[0]}`,
+        )
+        // Enemy frames are 16×32 like the hero's, so they use the same
+        // bottom-centre origin (see drawPlayer).
+        sprite.setOrigin(0.5, 1)
+        sprite.setDepth(ENEMY_DEPTH)
+        this.enemySprites.set(enemy.id, sprite)
+      }
+      // Enemies don't move today, but placing a kept sprite again costs
+      // nothing and keeps the screen right if they ever do.
+      sprite.setPosition(x, y)
+      // Starts the loop on a new sprite. On a kept sprite it changes nothing
+      // (see playIdle), unless reduced motion was turned on since the last
+      // step: then it stops the loop.
+      this.playIdle(sprite, enemy.type)
     }
   }
 
