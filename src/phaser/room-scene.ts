@@ -12,16 +12,26 @@ import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
 import { prefersReducedMotion } from './reduced-motion'
-import { animationKey } from './sprite-motion'
+import {
+  animationKey,
+  facingAfterStep,
+  isSingleStep,
+  type Facing,
+} from './sprite-motion'
 
 // Depth decides what is drawn on top: a higher depth covers a lower one. The
 // tilemap layers keep the default depth 0. The dark goes over the tiles, and
 // enemies and the player go over the dark. Without depths, the order would
 // depend on what happened to be created last, which changes as the game runs
-// (enemy sprites are made again on every move).
+// (enemy sprites come and go as the light moves).
 const DARKNESS_DEPTH = 1
 const ENEMY_DEPTH = 2
 const PLAYER_DEPTH = 3
+
+// How long the player's sprite takes to slide one tile, in milliseconds.
+// Short enough that walking feels quick, long enough to see the step. The
+// game never waits for it: the store has already moved the player.
+const WALK_DURATION = 150
 
 // The name the dark image is stored under in Phaser's texture manager.
 const DARKNESS_TEXTURE = 'lantern-darkness'
@@ -64,6 +74,9 @@ export class RoomScene extends Phaser.Scene {
   // find the sprite an enemy already has and keep it, see drawEnemies.
   private enemySprites = new Map<string, Phaser.GameObjects.Sprite>()
   private readonly PLAYER_SPRITE = 'hero-girl'
+  // Which way the player's sprite looks. Kept between steps, because a step
+  // north or south keeps the facing of the last step east or west.
+  private playerFacing: Facing = 'right'
   // Width and height of one tile in pixels. Set in drawRoom from the map, so
   // drawPlayer and the move code share one value instead of passing it around.
   // It stays 0 until a room is drawn, and drawRoom always runs before drawPlayer.
@@ -113,9 +126,14 @@ export class RoomScene extends Phaser.Scene {
         state.playerPosition !== previousState.playerPosition &&
         state.playerPosition
       ) {
-        // ?. does nothing if the sprite doesn't exist yet
-        const { x, y } = this.tileToSpritePosition(state.playerPosition)
-        this.playerSprite?.setPosition(x, y)
+        // After a room change the old position belongs to the old room, and
+        // drawPlayer has already put the sprite on the new tile. Passing null
+        // as `from` means "no step to slide, just stand there".
+        const sameRoom = state.tiledMap === previousState.tiledMap
+        this.movePlayerSprite(
+          sameRoom ? previousState.playerPosition : null,
+          state.playerPosition,
+        )
       }
 
       // 3. The light: redraw the dark and the enemies when the room loads, the
@@ -142,7 +160,13 @@ export class RoomScene extends Phaser.Scene {
     // Destroying the tilemap also destroys all of its layers.
     this.map?.destroy()
     this.map = undefined
-    this.playerSprite?.destroy()
+    if (this.playerSprite) {
+      // A walk may still be sliding the old sprite. Stop it first, so no
+      // tween is left behind moving a destroyed sprite (and the destroyed dark
+      // in its onUpdate).
+      this.tweens.killTweensOf(this.playerSprite)
+      this.playerSprite.destroy()
+    }
     this.playerSprite = undefined
     for (const sprite of this.enemySprites.values()) {
       sprite.destroy()
@@ -338,8 +362,80 @@ export class RoomScene extends Phaser.Scene {
     sprite.setOrigin(0.5, 1)
     // The player is always visible, so they go above the dark.
     sprite.setDepth(PLAYER_DEPTH)
+    // Keep the facing from the last room, so going through an exit doesn't
+    // turn the player around.
+    sprite.setFlipX(this.playerFacing === 'left')
     this.playerSprite = sprite
     this.playIdle(sprite, this.PLAYER_SPRITE)
+  }
+
+  // Shows the player's move on screen. The store has already moved the
+  // player; this is only the picture catching up, so nothing here may delay
+  // input or game state (no turn waits for the slide to finish).
+  //
+  // A tween changes a property of an object (here the sprite's x and y) a
+  // little on every frame, from where it is now to a target value, over a set
+  // time. While it slides, the sprite plays its run frames; when the tween
+  // completes, it goes back to idle.
+  private movePlayerSprite(from: Position | null, to: Position) {
+    const sprite = this.playerSprite
+    // No sprite yet (no room drawn), so there is nothing to move.
+    if (!sprite) return
+
+    // 1. If the last step's slide is still running (arrow keys pressed
+    // quickly), stop it. Its onComplete doesn't run, but the code below
+    // starts the next slide or the idle loop anyway.
+    this.tweens.killTweensOf(sprite)
+
+    // 2. Face the way the player stepped. Flipping isn't motion, so it
+    // happens even with reduced motion.
+    if (from) {
+      this.playerFacing = facingAfterStep(from, to, this.playerFacing)
+    }
+    // flipX mirrors the picture left to right. The art faces right.
+    sprite.setFlipX(this.playerFacing === 'left')
+
+    const target = this.tileToSpritePosition(to)
+
+    // 3. Jump straight to the tile when there's no step to slide (a new room,
+    // a blocked move, a jump of more than one tile) or the player prefers
+    // reduced motion. This is how the sprite moved before the animations.
+    if (from === null || !isSingleStep(from, to) || prefersReducedMotion()) {
+      sprite.setPosition(target.x, target.y)
+      this.playIdle(sprite, this.PLAYER_SPRITE)
+      return
+    }
+
+    // 4. Slide. First put the sprite on the tile it's stepping from. Usually
+    // it's already there. If a slide was cut short in step 1, it was
+    // somewhere between two tiles, and this snaps it on to the tile it was
+    // heading for. So the sprite is never more than one tile behind the real
+    // position.
+    const start = this.tileToSpritePosition(from)
+    sprite.setPosition(start.x, start.y)
+    // true = ignoreIfPlaying: on quick steps the run loop carries on instead
+    // of restarting from its first frame.
+    sprite.play(animationKey(this.PLAYER_SPRITE, 'run'), true)
+
+    this.tweens.add({
+      targets: sprite,
+      x: target.x,
+      y: target.y,
+      duration: WALK_DURATION,
+      // 'Linear' = the same speed the whole way, like a walk.
+      ease: 'Linear',
+      // The lantern is carried by the player, so the hole in the dark follows
+      // the sprite on every frame of the slide instead of jumping ahead to
+      // the new tile. The sprite's anchor (its feet) is at the tile centre,
+      // the same point the hole is centred on (see tileToSpritePosition and
+      // tileCenter), so the sprite's x and y can be used as they are.
+      onUpdate: () => {
+        this.darkness?.setPosition(sprite.x, sprite.y)
+      },
+      onComplete: () => {
+        this.playIdle(sprite, this.PLAYER_SPRITE)
+      },
+    })
   }
 
   // Everything that depends on where the lantern shines. The store decides
@@ -350,8 +446,9 @@ export class RoomScene extends Phaser.Scene {
     // No room loaded yet, so there is nothing to light.
     if (grid === null || playerPosition === null) return
 
-    // Move the hole to the player. setPosition jumps straight there, with no
-    // sliding animation (that would need a tween and the reduced motion setting).
+    // Move the hole to the player's tile. During a walk, the tween in
+    // movePlayerSprite then moves it along with the sprite on every frame,
+    // and it ends up back here on the same tile.
     const { x, y } = this.tileCenter(playerPosition)
     this.darkness?.setPosition(x, y)
 
