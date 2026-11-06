@@ -154,6 +154,73 @@ describe('roomSchema', () => {
   })
 })
 
+describe('roomSchema exits', () => {
+  it('accepts a locked exit that requires a known item type', () => {
+    const room: Room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' }],
+    }
+    expect(roomSchema.safeParse(room).success).toBe(true)
+  })
+
+  it('rejects a locked exit that requires an unknown item type', () => {
+    const room: Room = {
+      ...validRoom,
+      exits: [
+        { tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'golden-key' },
+      ],
+    }
+    const result = roomSchema.safeParse(room)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['exits', 0, 'requires'])
+  })
+
+  it('accepts a final exit with no room to lead to', () => {
+    const room: Room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], final: true }],
+    }
+    expect(roomSchema.safeParse(room).success).toBe(true)
+  })
+
+  it('accepts a locked final exit', () => {
+    const room: Room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], final: true, requires: 'rusty-key' }],
+    }
+    expect(roomSchema.safeParse(room).success).toBe(true)
+  })
+
+  // The next three are not valid Rooms, so TypeScript would reject them as
+  // Room. Plain objects let the test give Zod the broken data on purpose.
+  it('rejects an exit with both a room to lead to and final', () => {
+    const room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', final: true }],
+    }
+    const result = roomSchema.safeParse(room)
+    expect(result.success).toBe(false)
+    // A union reports one issue for the whole exit when no shape matches.
+    expect(result.error?.issues[0]?.path).toEqual(['exits', 0])
+  })
+
+  it('rejects an exit with neither a room to lead to nor final', () => {
+    const room = { ...validRoom, exits: [{ tiles: [{ x: 0, y: 0 }] }] }
+    const result = roomSchema.safeParse(room)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['exits', 0])
+  })
+
+  it('rejects final: false', () => {
+    // Only `true` is allowed: an exit that isn't final has `to` instead.
+    const room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', final: false }],
+    }
+    expect(roomSchema.safeParse(room).success).toBe(false)
+  })
+})
+
 describe('roomSchema items', () => {
   it('accepts a room with an item of a known type', () => {
     const room: Room = {
