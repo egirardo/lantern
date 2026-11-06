@@ -234,6 +234,20 @@ export function describeReveal(
   return `${nameWithArticle(enemy.combatant.name, seenBefore)} appears to the ${direction}.`
 }
 
+// Announces an exit that has just come into the lantern light, with the
+// direction from the player (the store calls this for each exit from
+// getNewlyLitExits). Same rules as describeReveal, decided Nov 6: "An exit"
+// the first time, "The exit" when it comes back into the light, so a screen
+// reader user knows it's the same one. A separate function from
+// describeReveal, because an exit has no name and can't be numbered.
+export function describeExitReveal(
+  direction: CompassDirection,
+  seenBefore: boolean,
+): string {
+  const article = seenBefore ? 'The' : 'An'
+  return `${article} exit appears to the ${direction}.`
+}
+
 // spawnEnemies only adds a number when a room has two of the same type
 // ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
 // The regex: \s = a space, \d+ = one or more digits, $ = end of the string.

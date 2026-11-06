@@ -16,6 +16,7 @@ import {
   describeFullHealth,
   describeEscape,
   describeAlreadyEscaped,
+  describeExitReveal,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -464,6 +465,26 @@ describe('describeReveal', () => {
   it('uses the combatant name, not the type', () => {
     expect(describeReveal(enemyNamed('demon'), 'west', false)).toBe(
       'A demon appears to the west.',
+    )
+  })
+})
+
+describe('describeExitReveal', () => {
+  it('uses "An" for the first time an exit is seen', () => {
+    expect(describeExitReveal('north', false)).toBe(
+      'An exit appears to the north.',
+    )
+  })
+
+  it('uses "The" when the exit has been seen before', () => {
+    expect(describeExitReveal('north', true)).toBe(
+      'The exit appears to the north.',
+    )
+  })
+
+  it('works for a diagonal direction', () => {
+    expect(describeExitReveal('south-east', false)).toBe(
+      'An exit appears to the south-east.',
     )
   })
 })
