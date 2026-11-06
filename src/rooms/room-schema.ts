@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { enemies, enemyIdSchema } from '../game/enemy-schema'
 import { PLAYER_ID } from '../game/combat'
+import { isItemType, itemIdSchema } from '../game/item-schema'
 
 export const positionSchema = z.strictObject({
   x: z.number().int().nonnegative(),
@@ -57,6 +58,34 @@ export const roomSchema = z.strictObject({
           })
         }
         seenIds.add(enemy.id)
+      })
+    }),
+  // Items lying in the room, e.g. a key. Required like `enemies` (an empty
+  // room writes "items": []), so a room file always says what's in it.
+  // Picking items up comes later (Agent E): for now they're only data.
+  items: z
+    .array(
+      z.strictObject({
+        id: itemIdSchema,
+        // The item type, a key in items.json (e.g. 'rusty-key'). It decides
+        // the name the log uses.
+        type: z.string().refine(isItemType, { message: 'Unknown item type' }),
+        position: positionSchema,
+      }),
+    )
+    // Item ids must be unique in the room, for the same reason as enemy
+    // ids: the game finds an item by its id (to remove it when picked up).
+    .superRefine((roomItems, ctx) => {
+      const seenIds = new Set<string>()
+      roomItems.forEach((item, index) => {
+        if (seenIds.has(item.id)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `Duplicate item ID "${item.id}"`,
+            path: [index, 'id'],
+          })
+        }
+        seenIds.add(item.id)
       })
     }),
 })

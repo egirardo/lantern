@@ -153,3 +153,55 @@ describe('roomSchema', () => {
     expect(result.success).toBe(true)
   })
 })
+
+describe('roomSchema items', () => {
+  it('accepts a room with an item of a known type', () => {
+    const room: Room = {
+      ...validRoom,
+      items: [{ id: 'key-1', type: 'rusty-key', position: { x: 2, y: 2 } }],
+    }
+    expect(roomSchema.safeParse(room).success).toBe(true)
+  })
+
+  it('rejects a room with a missing items field', () => {
+    const invalidRoom: Partial<Room> = { ...validRoom }
+    delete invalidRoom.items
+    const result = roomSchema.safeParse(invalidRoom)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['items'])
+  })
+
+  it('rejects an item with an unknown type', () => {
+    const invalidRoom: Room = {
+      ...validRoom,
+      items: [{ id: 'key-1', type: 'golden-key', position: { x: 2, y: 2 } }],
+    }
+    const result = roomSchema.safeParse(invalidRoom)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['items', 0, 'type'])
+  })
+
+  it('rejects an item with an id that is not kebab-case', () => {
+    const invalidRoom: Room = {
+      ...validRoom,
+      items: [{ id: 'Key 1', type: 'rusty-key', position: { x: 2, y: 2 } }],
+    }
+    const result = roomSchema.safeParse(invalidRoom)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['items', 0, 'id'])
+  })
+
+  it('rejects items with the same id', () => {
+    const invalidRoom: Room = {
+      ...validRoom,
+      items: [
+        { id: 'key-1', type: 'rusty-key', position: { x: 2, y: 2 } },
+        { id: 'key-1', type: 'rusty-key', position: { x: 0, y: 2 } },
+      ],
+    }
+    const result = roomSchema.safeParse(invalidRoom)
+    expect(result.success).toBe(false)
+    // The second item is the duplicate, so the issue points at it.
+    expect(result.error?.issues[0]?.path).toEqual(['items', 1, 'id'])
+  })
+})
