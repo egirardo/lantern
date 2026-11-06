@@ -11,6 +11,15 @@ export function PhaserGame() {
       return
     }
 
+    // Enter uses the exit next to the player. The store decides whether
+    // there is one, and logs a line either way.
+    if (event.key === 'Enter') {
+      // Same as the arrow keys: a held Enter is one action, not many.
+      if (event.repeat) return
+      gameStore.getState().takeExit()
+      return
+    }
+
     const direction = keyToDirection(event.key)
     if (!direction) {
       return

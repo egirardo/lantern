@@ -1,8 +1,10 @@
 import { AdventureLog } from './ui/AdventureLog'
 import { CombatMenu } from './ui/CombatMenu'
+import { ExitButton } from './ui/ExitButton'
 import { GameOver } from './ui/GameOver'
 import { PhaserGame } from './ui/PhaserGame'
 import { RoomLoader } from './ui/RoomLoader'
+import { Victory } from './ui/Victory'
 
 function App() {
   return (
@@ -18,8 +20,10 @@ function App() {
       <div className="game-layout">
         <div className="game-column">
           <PhaserGame />
+          <ExitButton />
           <CombatMenu />
           <GameOver />
+          <Victory />
         </div>
         <AdventureLog />
       </div>
