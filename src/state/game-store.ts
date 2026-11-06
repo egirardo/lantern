@@ -7,7 +7,11 @@ import {
 } from '../game/movement'
 import { loadRoom as loadRoomFromFiles } from '../rooms/load-room'
 import type { Room } from '../rooms/room-schema'
-import { describeMove, describeReveal } from '../game/narration'
+import {
+  describeAlreadyEscaped,
+  describeMove,
+  describeReveal,
+} from '../game/narration'
 import type { TiledMap } from '../rooms/tiled-schema'
 import { spawnEnemies, type StoreEnemy } from '../game/spawn-enemies'
 import {
@@ -24,24 +28,59 @@ import {
   LANTERN_RADIUS,
 } from '../game/visibility'
 import { directionFrom } from '../game/compass'
+import { exitStep, findArrivalPosition } from '../game/exits'
 
 type LogEntry = LogLine & { id: string }
+
+// The room a new game starts in. RoomLoader loads whatever currentRoomId
+// says, so this is where the first fetch comes from.
+export const FIRST_ROOM_ID = 'entrance-hall'
+
+// The line when the player tries to act after falling. Used by movePlayer
+// and takeExit, so both say the same thing.
+const FALLEN_TEXT = 'You have fallen in battle.'
 
 export type GameState = {
   playerPosition: Position | null
   grid: Grid | null
   room: Room | null
   tiledMap: TiledMap | null
+  // The id of the room the player is in, or is on the way to. RoomLoader
+  // watches it: when an exit changes it, RoomLoader fetches that room's files
+  // and calls loadRoom. Until loadRoom has run, `room` is still the old room,
+  // so room.id !== currentRoomId means "the next room is loading".
+  currentRoomId: string
+  // The room the player just left through an exit, so loadRoom can place
+  // them at the doorway that leads back there. null at the start of a game,
+  // which places the player at playerStart. loadRoom sets it back to null.
+  arrivingFrom: string | null
+  // The item types the player carries, e.g. ['rusty-key']. Empty for now:
+  // picking items up comes with Agent E. A locked exit checks this list.
+  inventory: string[]
+  // True once the player has gone through the final exit and won. Like
+  // game over (health 0), nothing can be done after that.
+  hasEscaped: boolean
   enemies: StoreEnemy[]
   // Ids of the enemies the player has already seen in this room, so the
   // reveal can say "a skeleton" the first time and "the skeleton" after.
   seenEnemyIds: string[]
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
+  // Use the exit next to the player (Enter on the map, or the exit button).
+  takeExit: () => void
   log: LogEntry[]
   player: Combatant
   combat: CombatState | null
   playerAttack: (targetId: string) => void
+}
+
+// True between an exit and the next room being loaded. Moving and using
+// exits are ignored then: the old room is still on screen, but the player
+// has already left it. It's usually a few milliseconds, so a key press in
+// that gap is ignored without a log line (the "Loading the room…" status
+// in RoomLoader covers a slow connection).
+function isChangingRoom(state: GameState): boolean {
+  return state.room !== null && state.room.id !== state.currentRoomId
 }
 
 function withIds(log: LogLine[]): LogEntry[] {
@@ -87,6 +126,10 @@ export function createGameStore(random: () => number = Math.random) {
     grid: null,
     room: null,
     tiledMap: null,
+    currentRoomId: FIRST_ROOM_ID,
+    arrivingFrom: null,
+    inventory: [],
+    hasEscaped: false,
     enemies: [],
     seenEnemyIds: [],
     player: PLAYER,
@@ -94,28 +137,91 @@ export function createGameStore(random: () => number = Math.random) {
     loadRoom: (roomData, mapData) => {
       const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
-      const { log } = get()
+      const { log, arrivingFrom } = get()
+      const enemies = spawnEnemies(room.enemies)
+      // At the doorway that leads back where the player came from, or at
+      // playerStart in a new game (arrivingFrom is null). Enemy tiles are
+      // passed so the player is never placed on top of an enemy.
+      const start = findArrivalPosition(
+        grid,
+        room.exits,
+        room.playerStart,
+        arrivingFrom,
+        enemies.map((enemy) => enemy.position),
+      )
       // nothing was lit before the room existed
       const litBefore: Position[] = []
-      const litAfter = getVisibleTiles(grid, room.playerStart, LANTERN_RADIUS)
-      const enemies = spawnEnemies(room.enemies)
+      const litAfter = getVisibleTiles(grid, start, LANTERN_RADIUS)
       // A new room starts with nobody seen ([]), so ids from the last room
       // (which can repeat, e.g. 'e1') don't count.
       const reveal = revealEntries(
         getNewlyLit(litBefore, litAfter, enemies),
-        room.playerStart,
+        start,
         [],
       )
       set({
         grid,
-        playerPosition: room.playerStart,
+        playerPosition: start,
         room,
         tiledMap,
+        // The loaded room is now the current one, and the arrival is done.
+        // Setting currentRoomId here too keeps the two in step when loadRoom
+        // is called directly (as the tests do).
+        currentRoomId: room.id,
+        arrivingFrom: null,
         enemies,
         seenEnemyIds: reveal.seenEnemyIds,
         log: [...log, politeEntry(text), ...reveal.entries],
         combat: null, // loading a new room ends any fight in progress
       })
+    },
+    takeExit: () => {
+      const state = get()
+      const { playerPosition, room, combat, inventory, player, log } = state
+      // No room loaded yet, or the next room is still loading: nothing to use.
+      if (playerPosition === null || room === null) return
+      if (isChangingRoom(state)) return
+
+      // The game is over, lost or won: the player can't act any more.
+      if (player.currentHealth <= 0) {
+        set({ log: [...log, politeEntry(FALLEN_TEXT)] })
+        return
+      }
+      if (state.hasEscaped) {
+        set({ log: [...log, politeEntry(describeAlreadyEscaped())] })
+        return
+      }
+
+      // exitStep decides everything (fight, no exit, lock, final exit) and
+      // the store only saves the result, like the combat steps.
+      const step = exitStep({
+        position: playerPosition,
+        exits: room.exits,
+        inCombat: combat !== null,
+        inventory,
+        player,
+      })
+      const lines = withIds(step.lines)
+
+      switch (step.kind) {
+        case 'stay':
+          set({ log: [...log, ...lines] })
+          return
+        case 'escape':
+          set({ hasEscaped: true, log: [...log, ...lines] })
+          return
+        case 'leave':
+          // Changing currentRoomId is what makes RoomLoader fetch the next
+          // room. The heal happens here, not in loadRoom, so loading a room
+          // in another way (e.g. a save later) doesn't heal (decided Nov 3).
+          set({
+            player: step.player,
+            currentRoomId: step.to,
+            arrivingFrom: room.id,
+            log: [...log, ...lines],
+          })
+          return
+      }
     },
     movePlayer: (direction) => {
       const {
@@ -132,11 +238,20 @@ export function createGameStore(random: () => number = Math.random) {
       // After this check, TypeScript knows both values aren't null (narrowing).
       if (playerPosition === null || grid === null) return
 
+      // The player has gone through an exit and the next room is loading.
+      if (isChangingRoom(get())) return
+
       // Game over: the player can't act any more.
       if (player.currentHealth <= 0) {
         set({
-          log: [...log, politeEntry('You have fallen in battle.')],
+          log: [...log, politeEntry(FALLEN_TEXT)],
         })
+        return
+      }
+
+      // Won: the player has left the dungeon, so there's nothing to move in.
+      if (get().hasEscaped) {
+        set({ log: [...log, politeEntry(describeAlreadyEscaped())] })
         return
       }
 

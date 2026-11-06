@@ -452,4 +452,180 @@ describe('gameStore', () => {
       )
     })
   })
+
+  describe('exits and room changes', () => {
+    // Fixture rooms on validMap (walls along the top row, floor below):
+    //   [W, W, W]
+    //   [F, F, F]
+    //   [F, F, F]
+    // validRoom ('room-1') has exits at (0, 0) to 'room-2' and (2, 0) to
+    // 'room-3'. Stepping west from its start (1, 1) puts the player at
+    // (0, 1), right below the exit to 'room-2'.
+
+    // 'room-2' leads back to 'room-1' through (2, 0), so arriving from
+    // 'room-1' puts the player at (2, 1). Its playerStart is (0, 2), so a
+    // test can tell the two apart.
+    const room2: Room = {
+      ...validRoom,
+      id: 'room-2',
+      description: 'The second room.',
+      playerStart: { x: 0, y: 2 },
+      exits: [{ tiles: [{ x: 2, y: 0 }], to: 'room-1' }],
+    }
+
+    // 'room-1', but its exit to 'room-2' is locked with the rusty key.
+    const lockedRoom: Room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' }],
+    }
+
+    // 'room-1', but its only exit is the final exit out of the dungeon.
+    const finalRoom: Room = {
+      ...validRoom,
+      exits: [{ tiles: [{ x: 0, y: 0 }], final: true }],
+    }
+
+    // A store with `room` loaded and the player moved below the exit at (0, 0).
+    function storeNextToExit(room: Room = validRoom) {
+      const store = createGameStore()
+      store.getState().loadRoom(room, validMap)
+      store.getState().movePlayer('west')
+      return store
+    }
+
+    function texts(store: ReturnType<typeof createGameStore>): string[] {
+      return store.getState().log.map((entry) => entry.text)
+    }
+
+    it('starts in the first room, carrying nothing, not escaped', () => {
+      const state: GameState = createGameStore().getState()
+      expect(state.currentRoomId).toBe('entrance-hall')
+      expect(state.arrivingFrom).toBeNull()
+      expect(state.inventory).toEqual([])
+      expect(state.hasEscaped).toBe(false)
+    })
+
+    it('loadRoom makes the loaded room the current one', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(validRoom, validMap)
+      expect(store.getState().currentRoomId).toBe('room-1')
+    })
+
+    it('takeExit changes the current room, remembers where the player came from and logs it', () => {
+      const store = storeNextToExit()
+      store.getState().takeExit()
+      const state: GameState = store.getState()
+      expect(state.currentRoomId).toBe('room-2')
+      expect(state.arrivingFrom).toBe('room-1')
+      // The old room stays until RoomLoader has fetched and loaded the new one.
+      expect(state.room?.id).toBe('room-1')
+      expect(texts(store).slice(-2)).toEqual([
+        'You go through the exit to the north.',
+        'You recover to full health. You have 12 out of 12 health.',
+      ])
+    })
+
+    it('takeExit heals the player to full health', () => {
+      const store = storeNextToExit()
+      // setState writes straight into the store, so the test can start
+      // from a hurt player without playing a whole fight.
+      store.setState({ player: { ...PLAYER, currentHealth: 3 } })
+      store.getState().takeExit()
+      expect(store.getState().player.currentHealth).toBe(PLAYER.maxHealth)
+    })
+
+    it('loading the next room places the player at the doorway back, not playerStart', () => {
+      const store = storeNextToExit()
+      store.getState().takeExit()
+      store.getState().loadRoom(room2, validMap)
+      const state: GameState = store.getState()
+      expect(state.room?.id).toBe('room-2')
+      expect(state.playerPosition).toEqual({ x: 2, y: 1 })
+      expect(state.arrivingFrom).toBeNull()
+      expect(state.log.at(-1)?.text).toBe('The second room.')
+    })
+
+    it('uses playerStart when the next room has no exit back', () => {
+      const oneWayRoom: Room = { ...room2, exits: [] }
+      const store = storeNextToExit()
+      store.getState().takeExit()
+      store.getState().loadRoom(oneWayRoom, validMap)
+      expect(store.getState().playerPosition).toEqual({ x: 0, y: 2 })
+    })
+
+    it('ignores moves and exits while the next room is loading', () => {
+      const store = storeNextToExit()
+      store.getState().takeExit()
+      const before: GameState = store.getState()
+      store.getState().movePlayer('east')
+      store.getState().takeExit()
+      const after: GameState = store.getState()
+      expect(after.playerPosition).toEqual(before.playerPosition)
+      expect(after.log).toEqual(before.log)
+    })
+
+    it('takeExit away from any exit stays and says so', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(validRoom, validMap)
+      // The start (1, 1) is diagonal to both exits, so neither counts.
+      store.getState().takeExit()
+      expect(store.getState().currentRoomId).toBe('room-1')
+      expect(texts(store).at(-1)).toBe('There is no exit next to you.')
+    })
+
+    it('takeExit during a fight stays and says so', () => {
+      const store = storeInFight(...playerWinsInitiative)
+      store.getState().takeExit()
+      const state: GameState = store.getState()
+      expect(state.currentRoomId).toBe('room-1')
+      expect(state.combat).not.toBeNull()
+      expect(texts(store).at(-1)).toBe("You can't leave during a fight.")
+    })
+
+    it('a locked exit stays shut without the key', () => {
+      const store = storeNextToExit(lockedRoom)
+      store.getState().takeExit()
+      expect(store.getState().currentRoomId).toBe('room-1')
+      expect(texts(store).at(-1)).toBe('The door is locked. You need a key.')
+    })
+
+    it('a locked exit opens with the key in the inventory', () => {
+      const store = storeNextToExit(lockedRoom)
+      // A fixture inventory: picking items up comes later (Agent E).
+      store.setState({ inventory: ['rusty-key'] })
+      store.getState().takeExit()
+      expect(store.getState().currentRoomId).toBe('room-2')
+      expect(texts(store).slice(-3)).toEqual([
+        'You unlock the door with the rusty key.',
+        'You go through the exit to the north.',
+        'You recover to full health. You have 12 out of 12 health.',
+      ])
+    })
+
+    it('the final exit wins the game, and the player can no longer move or use exits', () => {
+      const store = storeNextToExit(finalRoom)
+      store.getState().takeExit()
+      expect(store.getState().hasEscaped).toBe(true)
+      expect(texts(store).at(-1)).toBe(
+        'Victory! You climb out of the dungeon. Reload the page to play again.',
+      )
+
+      store.getState().movePlayer('east')
+      store.getState().takeExit()
+      const state: GameState = store.getState()
+      expect(state.playerPosition).toEqual({ x: 0, y: 1 })
+      expect(texts(store).slice(-2)).toEqual([
+        'You have already escaped the dungeon.',
+        'You have already escaped the dungeon.',
+      ])
+    })
+
+    it('takeExit after the player has fallen only says they have fallen', () => {
+      const store = storeNextToExit()
+      store.setState({ player: { ...PLAYER, currentHealth: 0 } })
+      store.getState().takeExit()
+      expect(store.getState().currentRoomId).toBe('room-1')
+      expect(texts(store).at(-1)).toBe('You have fallen in battle.')
+    })
+  })
 })
