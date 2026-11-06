@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { getVisibleTiles, isLit, getNewlyLit } from './visibility'
+import {
+  getVisibleTiles,
+  isLit,
+  getNewlyLit,
+  getNewlyLitExits,
+} from './visibility'
 import type { Position, Grid } from './movement'
 import { makeStoreEnemy } from './test-helpers'
+import type { Exit } from '../rooms/room-schema'
 
 const grid: Grid = [
   ['wall', 'wall', 'wall', 'wall', 'wall'],
@@ -256,5 +262,107 @@ describe('getNewlyLit', () => {
     expect(before).toEqual(beforeCopy)
     expect(after).toEqual(afterCopy)
     expect(enemies).toEqual(enemiesCopy)
+  })
+})
+
+describe('getNewlyLitExits', () => {
+  it('returns an exit that comes into the light', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    const exits: Exit[] = [{ tiles: [{ x: 3, y: 1 }], to: 'cellar' }]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([
+      exits[0],
+    ])
+  })
+
+  it('does not return an exit that was already lit', () => {
+    const visibleBefore: Position[] = [{ x: 3, y: 1 }]
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    const exits: Exit[] = [{ tiles: [{ x: 3, y: 1 }], to: 'cellar' }]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([])
+  })
+
+  it('does not return an exit that is still in the dark', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [{ x: 4, y: 1 }]
+    const exits: Exit[] = [{ tiles: [{ x: 3, y: 1 }], to: 'cellar' }]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([])
+  })
+
+  it('returns a two-tile exit when one tile comes into the light', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [{ x: 4, y: 1 }]
+    const exits: Exit[] = [
+      {
+        tiles: [
+          { x: 3, y: 1 },
+          { x: 4, y: 1 },
+        ],
+        to: 'cellar',
+      },
+    ]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([
+      exits[0],
+    ])
+  })
+
+  it('does not return a two-tile exit when the second tile comes into the light but the first was already lit', () => {
+    const visibleBefore: Position[] = [{ x: 3, y: 1 }]
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    const exits: Exit[] = [
+      {
+        tiles: [
+          { x: 3, y: 1 },
+          { x: 4, y: 1 },
+        ],
+        to: 'cellar',
+      },
+    ]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([])
+  })
+
+  it('returns every exit that is already lit when visibleBefore is empty', () => {
+    const visibleBefore: Position[] = []
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    const exits: Exit[] = [
+      { tiles: [{ x: 3, y: 1 }], to: 'cellar' },
+      { tiles: [{ x: 4, y: 1 }], to: 'attic' },
+    ]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual(exits)
+  })
+
+  it('keeps the room file order of the exits', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    const exits: Exit[] = [
+      { tiles: [{ x: 4, y: 1 }], to: 'attic' },
+      { tiles: [{ x: 3, y: 1 }], to: 'cellar' },
+    ]
+
+    expect(getNewlyLitExits(visibleBefore, visibleAfter, exits)).toEqual([
+      exits[0],
+      exits[1],
+    ])
   })
 })
