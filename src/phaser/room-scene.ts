@@ -12,6 +12,7 @@ import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
 import { prefersReducedMotion } from './reduced-motion'
+import { hitEnemies, wasHit } from './hits'
 import {
   animationKey,
   facingAfterStep,
@@ -32,6 +33,14 @@ const PLAYER_DEPTH = 3
 // Short enough that walking feels quick, long enough to see the step. The
 // game never waits for it: the store has already moved the player.
 const WALK_DURATION = 150
+
+// The hit flash: a red tint for a short moment on the sprite that was hit.
+// setTint multiplies the sprite's colours by this colour, so the picture
+// stays visible and just turns reddish (setTintFill would paint it solid red).
+// It flashes once per hit and never blinks on and off, so it stays far from
+// the flashing limits in WCAG 2.3.1.
+const HIT_TINT = 0xff5555
+const HIT_FLASH_DURATION = 150
 
 // The name the dark image is stored under in Phaser's texture manager.
 const DARKNESS_TEXTURE = 'lantern-darkness'
@@ -77,6 +86,13 @@ export class RoomScene extends Phaser.Scene {
   // Which way the player's sprite looks. Kept between steps, because a step
   // north or south keeps the facing of the last step east or west.
   private playerFacing: Facing = 'right'
+  // The timer of each sprite's hit flash that hasn't cleared yet. Kept so a
+  // second hit can restart the timer instead of starting a second one, and so
+  // a sprite's timer can be cancelled when the sprite is destroyed.
+  private hitTimers = new Map<
+    Phaser.GameObjects.Sprite,
+    Phaser.Time.TimerEvent
+  >()
   // Width and height of one tile in pixels. Set in drawRoom from the map, so
   // drawPlayer and the move code share one value instead of passing it around.
   // It stays 0 until a room is drawn, and drawRoom always runs before drawPlayer.
@@ -146,6 +162,29 @@ export class RoomScene extends Phaser.Scene {
       ) {
         this.drawLight(state)
       }
+
+      // 4. Hits: flash the sprites whose health just went down. This comes
+      // after the light, so a sprite that came into the light this update
+      // already exists. The combat code has already decided who was hit;
+      // this only reads the change in health from the store (rule 3).
+      if (
+        wasHit(previousState.player.currentHealth, state.player.currentHealth)
+      ) {
+        if (this.playerSprite) {
+          this.flashHit(this.playerSprite, this.PLAYER_SPRITE)
+        }
+      }
+      if (state.enemies !== previousState.enemies) {
+        for (const enemy of hitEnemies(previousState.enemies, state.enemies)) {
+          // An enemy outside the light has no sprite, so nothing to flash.
+          const sprite = this.enemySprites.get(enemy.id)
+          // drawEnemies has already checked the type, so isSpriteName is
+          // only here to tell TypeScript that it's a SpriteName.
+          if (sprite && isSpriteName(enemy.type)) {
+            this.flashHit(sprite, enemy.type)
+          }
+        }
+      }
     })
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)
     this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe)
@@ -165,11 +204,11 @@ export class RoomScene extends Phaser.Scene {
       // tween is left behind moving a destroyed sprite (and the destroyed dark
       // in its onUpdate).
       this.tweens.killTweensOf(this.playerSprite)
-      this.playerSprite.destroy()
+      this.destroySprite(this.playerSprite)
     }
     this.playerSprite = undefined
     for (const sprite of this.enemySprites.values()) {
-      sprite.destroy()
+      this.destroySprite(sprite)
     }
     this.enemySprites.clear()
     // The dark's texture is removed in createDarkness, which runs next.
@@ -433,9 +472,68 @@ export class RoomScene extends Phaser.Scene {
         this.darkness?.setPosition(sprite.x, sprite.y)
       },
       onComplete: () => {
-        this.playIdle(sprite, this.PLAYER_SPRITE)
+        // If the player was hit during the slide, the hit frame is showing
+        // and its timer will go back to idle. Going to idle here would cut
+        // the hit frame short.
+        if (!this.hitTimers.has(sprite)) {
+          this.playIdle(sprite, this.PLAYER_SPRITE)
+        }
       },
     })
+  }
+
+  // Shows that a sprite was just hit: a red tint and, if the manifest gives
+  // the sprite a hit animation (the heroes have one, frame 8), the hit frame.
+  // After HIT_FLASH_DURATION both are cleared and the sprite goes back to
+  // idle. Nothing waits for it: like the walk, it is only a picture.
+  private flashHit(sprite: Phaser.GameObjects.Sprite, spriteName: SpriteName) {
+    // A flash is motion on screen, so it is skipped with reduced motion.
+    // The hit is still in the adventure log, like every game event (rule 5).
+    if (prefersReducedMotion()) return
+
+    // A second hit before the first flash cleared: cancel the old timer and
+    // start a new one below, so there is one longer flash, not two stacked.
+    this.hitTimers.get(sprite)?.remove()
+
+    sprite.setTint(HIT_TINT)
+
+    // Object.hasOwn checks the manifest, so the code works for any sprite:
+    // the enemies have no hit animation and only get the tint.
+    const art = SPRITES[spriteName]
+    const hasHitFrame = Object.hasOwn(art.animations, 'hit')
+    const hitKey = animationKey(spriteName, 'hit')
+    if (hasHitFrame) {
+      // The hit animation is one frame that plays once, so the sprite stays
+      // on it until something else is played.
+      sprite.play(hitKey)
+    }
+
+    // delayedCall runs a function once after a delay, on the scene's clock.
+    // The clock belongs to the scene, so its timers stop if the scene shuts
+    // down.
+    const timer = this.time.delayedCall(HIT_FLASH_DURATION, () => {
+      this.hitTimers.delete(sprite)
+      // destroySprite cancels the timer, so this should never run for a
+      // destroyed sprite. `active` is false once a sprite is destroyed, so
+      // this check is a second guard that costs nothing.
+      if (!sprite.active) return
+      sprite.clearTint()
+      // Only go back to idle if the hit frame is still showing. If the
+      // player has started walking since, the run frames are playing and
+      // the walk will go back to idle itself.
+      if (hasHitFrame && sprite.anims.currentAnim?.key === hitKey) {
+        this.playIdle(sprite, spriteName)
+      }
+    })
+    this.hitTimers.set(sprite, timer)
+  }
+
+  // Destroys a sprite and cancels its hit flash timer first, so the timer
+  // can't run later on a sprite that no longer exists.
+  private destroySprite(sprite: Phaser.GameObjects.Sprite) {
+    this.hitTimers.get(sprite)?.remove()
+    this.hitTimers.delete(sprite)
+    sprite.destroy()
   }
 
   // Everything that depends on where the lantern shines. The store decides
@@ -475,7 +573,7 @@ export class RoomScene extends Phaser.Scene {
     // JavaScript: the loop just doesn't visit the deleted entry.
     for (const [id, sprite] of this.enemySprites) {
       if (!litIds.has(id)) {
-        sprite.destroy()
+        this.destroySprite(sprite)
         this.enemySprites.delete(id)
       }
     }

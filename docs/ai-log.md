@@ -942,6 +942,7 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Outcome:** To fill in after review
 - **Why:** To fill in after review
 - **How I verified it:** To fill in after review
+- **Then (hit reaction, after my first playtest):** my playtest with Reduce motion on found the still frames and jumps correct, and I kept "one key press is one turn" (holding an arrow key moves one step). I asked for a hit reaction in one more commit, with my decisions: who was hit is read from the store by comparing health before and after (health going up is not a hit), a translucent red `setTint` cleared after about 150 ms by `this.time.delayedCall`, one flash per hit with the timer restarted on a second hit, the hero's hit frame (frame 8) only for sprites the manifest gives a hit animation, nothing with reduced motion, no timer touching a destroyed sprite, and no death animation. The agent added `src/phaser/hits.ts` (`wasHit` and `hitEnemies`, 9 Vitest tests) and `flashHit` and `destroySprite` in `room-scene.ts`. One limit: the killing blow on an enemy shows no flash, because the store removes a defeated enemy in the same update and its sprite is destroyed. Not checked visually by the agent.
 
 ---
 
