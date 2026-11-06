@@ -47,6 +47,13 @@ describe('describeMove', () => {
       'You cannot move to the south. An enemy blocks your path.',
     )
   })
+  it('describes walking into an exit: where it is and how to use it', () => {
+    const result = describeMove(
+      { moved: false, newPosition: { x: 1, y: 1 }, reason: 'exit' },
+      'north',
+    )
+    expect(result).toBe('An exit leads north. Press Enter to use it.')
+  })
 })
 
 describe('describeCombatEvent', () => {

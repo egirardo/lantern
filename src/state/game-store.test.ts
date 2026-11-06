@@ -88,6 +88,20 @@ describe('gameStore', () => {
     expect(state.log.length).toBe(2)
   })
 
+  it('movePlayer into an exit keeps the position and says how to use it', () => {
+    const store = createGameStore()
+    store.getState().loadRoom(validRoom, validMap)
+    // validRoom has an exit at (0, 0). From the start (1, 1), step west to
+    // (0, 1), then walk north into the exit.
+    store.getState().movePlayer('west')
+    store.getState().movePlayer('north')
+    const state: GameState = store.getState()
+    expect(state.playerPosition).toEqual({ x: 0, y: 1 })
+    expect(state.log.at(-1)?.text).toBe(
+      'An exit leads north. Press Enter to use it.',
+    )
+  })
+
   it('movePlayer before loadRoom does nothing', () => {
     const store = createGameStore()
     store.getState().movePlayer('south')

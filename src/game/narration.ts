@@ -10,7 +10,9 @@ import type { StoreEnemy } from './spawn-enemies'
 
 // Record requires an entry for every BlockedReason, so adding a new reason
 // without a corresponding message is a type error instead of a silent default.
-const BLOCKED_TEXT: Record<BlockedReason, string> = {
+// 'exit' is left out with Exclude: its line needs the direction, so
+// describeMove writes it separately.
+const BLOCKED_TEXT: Record<Exclude<BlockedReason, 'exit'>, string> = {
   wall: 'A wall blocks your path',
   edge: 'The edge of the world blocks your path',
   enemy: 'An enemy blocks your path',
@@ -112,9 +114,17 @@ export function describeCombatEvent(
 export function describeMove(result: MoveResult, direction: Direction): string {
   if (result.moved) {
     return `You have taken a step to the ${direction}.`
-  } else {
-    return `You cannot move to the ${direction}. ${BLOCKED_TEXT[result.reason]}.`
   }
+  // Walking into an exit isn't a mistake, so the line doesn't start with
+  // "You cannot move". It says where the exit is and how to use it.
+  // "exit" (not "door") because a room file doesn't say whether an exit is
+  // a door or a ladder; the room description does.
+  if (result.reason === 'exit') {
+    return `An exit leads ${direction}. Press Enter to use it.`
+  }
+  // TypeScript knows result.reason isn't 'exit' here (narrowing), so it
+  // allows the lookup in BLOCKED_TEXT, which has no 'exit' entry.
+  return `You cannot move to the ${direction}. ${BLOCKED_TEXT[result.reason]}.`
 }
 
 // The one assertive announcement in the game (see low-health.ts for when it

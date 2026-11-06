@@ -163,6 +163,37 @@ describe('movePlayer', () => {
     })
   })
 
+  it('reports an exit, not a wall, when the player walks into an exit tile', () => {
+    // (1, 0) is a wall in the grid, like every exit tile.
+    const result = movePlayer(
+      { x: 1, y: 1 },
+      'north',
+      grid,
+      [],
+      [{ x: 1, y: 0 }],
+    )
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'exit',
+    })
+  })
+
+  it('still reports a wall when the exit is somewhere else', () => {
+    const result = movePlayer(
+      { x: 1, y: 1 },
+      'north',
+      grid,
+      [],
+      [{ x: 0, y: 0 }],
+    )
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'wall',
+    })
+  })
+
   it('should still report a wall when the player encounters a wall', () => {
     const playerPosition = { x: 1, y: 1 }
     const direction = 'north'

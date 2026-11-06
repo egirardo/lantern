@@ -121,6 +121,7 @@ export function createGameStore(random: () => number = Math.random) {
       const {
         playerPosition,
         grid,
+        room,
         enemies,
         seenEnemyIds,
         log,
@@ -149,11 +150,17 @@ export function createGameStore(random: () => number = Math.random) {
 
       // Enemies are solid, so movement needs to know which tiles they stand on.
       const enemyPositions = enemies.map((enemy) => enemy.position)
+      // Every tile of every exit, so walking into one says how to use it.
+      // flatMap turns the list of exits (each with a list of tiles) into one
+      // flat list of tiles. `?? []` covers the type: room can't really be
+      // null when grid isn't, but TypeScript doesn't know that.
+      const exitTiles = room?.exits.flatMap((exit) => exit.tiles) ?? []
       const result = computeMove(
         playerPosition,
         direction,
         grid,
         enemyPositions,
+        exitTiles,
       )
       const text = describeMove(result, direction)
 

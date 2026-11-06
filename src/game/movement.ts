@@ -6,7 +6,10 @@ export type Tile = 'floor' | 'wall'
 
 export type Grid = Tile[][]
 
-export type BlockedReason = 'wall' | 'edge' | 'enemy'
+// 'exit': the tile is part of an exit (a door or ladder). Exits are blocked
+// tiles like walls, but the log must say how to use them instead of "A wall
+// blocks your path".
+export type BlockedReason = 'wall' | 'edge' | 'enemy' | 'exit'
 
 export type MoveResult =
   | { moved: true; newPosition: Position }
@@ -30,6 +33,9 @@ export function movePlayer(
   direction: Direction,
   grid: Grid,
   enemyPositions: Position[] = [],
+  // Every tile of every exit in the room. A default of [] keeps the older
+  // calls (and tests) that don't care about exits working unchanged.
+  exitTiles: Position[] = [],
 ): MoveResult {
   // Look up how far one step in this direction moves, then add it to the current position
   const offset = DIRECTION_OFFSETS[direction]
@@ -50,6 +56,13 @@ export function movePlayer(
   // length, not the first row's, because rows could have different lengths.
   if (newX < 0 || newX >= targetRow.length) {
     return { moved: false, newPosition: playerPosition, reason: 'edge' }
+  }
+
+  // Check if the new position is an exit. This must come before the wall
+  // check: exit tiles are always walls in the grid (load-room checks that),
+  // so the wall check would catch them first and give the wrong reason.
+  if (exitTiles.some((tile) => samePosition(tile, { x: newX, y: newY }))) {
+    return { moved: false, newPosition: playerPosition, reason: 'exit' }
   }
 
   // Check if the new position is a wall
