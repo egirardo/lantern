@@ -60,6 +60,16 @@ export type GameState = {
   // True once the player has gone through the final exit and won. Like
   // game over (health 0), nothing can be done after that.
   hasEscaped: boolean
+  // The exit lines ("You go through the exit…", "You recover to full
+  // health…") waiting for the next room to load. takeExit puts them here
+  // instead of in the log, and loadRoom logs them before the description, in
+  // the same set(). That makes a room change one log batch: LiveAnnouncer
+  // replaces its batch on every log update, so with two updates a few ms
+  // apart, VoiceOver skipped the exit lines and only read the description
+  // (found in the VoiceOver playtest, Nov 6). If the next room fails to load,
+  // these lines are never shown; that's accepted, because RoomLoader's error
+  // message takes over then.
+  pendingExitLines: LogEntry[]
   enemies: StoreEnemy[]
   // Ids of the enemies the player has already seen in this room, so the
   // reveal can say "a skeleton" the first time and "the skeleton" after.
@@ -130,6 +140,7 @@ export function createGameStore(random: () => number = Math.random) {
     arrivingFrom: null,
     inventory: [],
     hasEscaped: false,
+    pendingExitLines: [],
     enemies: [],
     seenEnemyIds: [],
     player: PLAYER,
@@ -137,7 +148,7 @@ export function createGameStore(random: () => number = Math.random) {
     loadRoom: (roomData, mapData) => {
       const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
-      const { log, arrivingFrom } = get()
+      const { log, arrivingFrom, pendingExitLines } = get()
       const enemies = spawnEnemies(room.enemies)
       // At the doorway that leads back where the player came from, or at
       // playerStart in a new game (arrivingFrom is null). Enemy tiles are
@@ -171,7 +182,15 @@ export function createGameStore(random: () => number = Math.random) {
         arrivingFrom: null,
         enemies,
         seenEnemyIds: reveal.seenEnemyIds,
-        log: [...log, politeEntry(text), ...reveal.entries],
+        // One batch for the whole room change: the exit lines (empty at the
+        // start of a game), then the description, then the reveals.
+        log: [
+          ...log,
+          ...pendingExitLines,
+          politeEntry(text),
+          ...reveal.entries,
+        ],
+        pendingExitLines: [],
         combat: null, // loading a new room ends any fight in progress
       })
     },
@@ -214,11 +233,13 @@ export function createGameStore(random: () => number = Math.random) {
           // Changing currentRoomId is what makes RoomLoader fetch the next
           // room. The heal happens here, not in loadRoom, so loading a room
           // in another way (e.g. a save later) doesn't heal (decided Nov 3).
+          // The lines are not logged yet: loadRoom logs them together with
+          // the new room's description (see pendingExitLines).
           set({
             player: step.player,
             currentRoomId: step.to,
             arrivingFrom: room.id,
-            log: [...log, ...lines],
+            pendingExitLines: lines,
           })
           return
       }

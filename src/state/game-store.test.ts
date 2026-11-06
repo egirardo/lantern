@@ -511,18 +511,57 @@ describe('gameStore', () => {
       expect(store.getState().currentRoomId).toBe('room-1')
     })
 
-    it('takeExit changes the current room, remembers where the player came from and logs it', () => {
+    it('takeExit changes the current room and remembers where the player came from, but does not log yet', () => {
       const store = storeNextToExit()
+      const logBefore = store.getState().log
       store.getState().takeExit()
       const state: GameState = store.getState()
       expect(state.currentRoomId).toBe('room-2')
       expect(state.arrivingFrom).toBe('room-1')
       // The old room stays until RoomLoader has fetched and loaded the new one.
       expect(state.room?.id).toBe('room-1')
-      expect(texts(store).slice(-2)).toEqual([
+      // The exit lines wait for loadRoom, so the room change is one batch.
+      expect(state.log).toEqual(logBefore)
+      expect(state.pendingExitLines.map((entry) => entry.text)).toEqual([
         'You go through the exit to the north.',
         'You recover to full health. You have 12 out of 12 health.',
       ])
+    })
+
+    it('loadRoom logs the exit lines, the description and the reveals in one store update', () => {
+      // room2 with a skeleton at (0, 1), two tiles west of where the player
+      // arrives (2, 1): lit, but not next to the player, so no fight starts.
+      const room2WithSkeleton: Room = {
+        ...room2,
+        enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 1 } }],
+      }
+      const store = storeNextToExit()
+      store.getState().takeExit()
+      const logLengthBefore = store.getState().log.length
+
+      // Count the store updates that change the log. LiveAnnouncer reads
+      // one batch per log update, so a room change must be exactly one.
+      let logUpdates = 0
+      const unsubscribe = store.subscribe((state, previousState) => {
+        if (state.log !== previousState.log) logUpdates++
+      })
+      store.getState().loadRoom(room2WithSkeleton, validMap)
+      unsubscribe()
+
+      expect(logUpdates).toBe(1)
+      expect(texts(store).slice(logLengthBefore)).toEqual([
+        'You go through the exit to the north.',
+        'You recover to full health. You have 12 out of 12 health.',
+        'The second room.',
+        'A skeleton appears to the west.',
+      ])
+      expect(store.getState().pendingExitLines).toEqual([])
+    })
+
+    it('loading a room at the start of a game logs no exit lines', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(validRoom, validMap)
+      expect(texts(store)).toEqual([validRoom.description])
     })
 
     it('takeExit heals the player to full health', () => {
@@ -595,10 +634,14 @@ describe('gameStore', () => {
       store.setState({ inventory: ['rusty-key'] })
       store.getState().takeExit()
       expect(store.getState().currentRoomId).toBe('room-2')
-      expect(texts(store).slice(-3)).toEqual([
+      // The unlock line is part of the room change, so it waits with the
+      // others and is logged in the same batch as the next room.
+      store.getState().loadRoom(room2, validMap)
+      expect(texts(store).slice(-4)).toEqual([
         'You unlock the door with the rusty key.',
         'You go through the exit to the north.',
         'You recover to full health. You have 12 out of 12 health.',
+        'The second room.',
       ])
     })
 

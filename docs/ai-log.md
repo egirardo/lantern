@@ -931,6 +931,7 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Outcome:** To fill in after review
 - **Why:** To fill in after review
 - **How I verified it:** To fill in after review. The agent ran typecheck, lint, Prettier, the tests (399 pass) and the build in its worktree.
+- **Then (my VoiceOver playtest):** after Enter at an exit, VoiceOver never read "You go through the exit…" or "You recover to full health…", only the new room's description. `takeExit` logged those lines in one store update and `loadRoom` added the description a few ms later, and LiveAnnouncer replaces its batch on every update, so the second batch replaced the first before VoiceOver read it. I chose fix A: `takeExit` keeps the lines in a new `pendingExitLines` field, and `loadRoom` logs them before the description in the same `set()`, so a room change is one batch. The agent added it with 3 new or changed store tests (one counts the log updates during `loadRoom`) and checked that they fail when the lines are logged in `takeExit` again (2 tests fail).
 
 ---
 
