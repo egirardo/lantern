@@ -259,3 +259,54 @@ function nameWithArticle(name: string, seenBefore: boolean): string {
   const article = seenBefore ? 'the' : indefiniteArticle(name)
   return capitalise(`${article} ${name}`)
 }
+
+// --- Exits (Fri Nov 6) ---
+// The lines for using an exit. exitStep in exits.ts decides which ones are
+// said; these functions only hold the words, like the combat lines above.
+
+// The player tries to use an exit during a fight. Moving is blocked in a
+// fight, so leaving through a door is too.
+export function describeExitInFight(): string {
+  return "You can't leave during a fight."
+}
+
+// The player pressed Enter (or the exit button) but isn't standing next to
+// an exit. Without a line, the key press would seem to do nothing.
+export function describeNoExitNearby(): string {
+  return 'There is no exit next to you.'
+}
+
+// The exit needs an item the player doesn't carry. Says "key" because the
+// only item an exit can need is a key (decision 8).
+export function describeLocked(): string {
+  return 'The door is locked. You need a key.'
+}
+
+// The player carries the item, so the locked exit opens. `itemName` is the
+// display name from items.json, e.g. "rusty key".
+export function describeUnlock(itemName: string): string {
+  return `You unlock the door with the ${itemName}.`
+}
+
+// The player goes through an exit to another room. Said before the new
+// room's description, so a screen reader user knows the room is changing.
+export function describeGoThrough(direction: Direction): string {
+  return `You go through the exit to the ${direction}.`
+}
+
+// The full heal on going through an exit (decided Nov 3). `player` is the
+// player after healing. The total is always said, like after a won fight.
+export function describeFullHealth(player: Combatant): string {
+  return `You recover to full health. You have ${player.currentHealth} out of ${player.maxHealth} health.`
+}
+
+// The player uses the final exit and wins. The visible victory message says
+// the same, so the log carries the whole message (like game over).
+export function describeEscape(): string {
+  return 'Victory! You climb out of the dungeon. Reload the page to play again.'
+}
+
+// The player tries to move or use an exit after winning.
+export function describeAlreadyEscaped(): string {
+  return 'You have already escaped the dungeon.'
+}

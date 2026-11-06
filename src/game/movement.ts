@@ -24,6 +24,12 @@ export const DIRECTION_OFFSETS: Record<Direction, Position> = {
   west: { x: -1, y: 0 },
 }
 
+// The four directions as a list, in a fixed order, for code that tries every
+// direction in turn (e.g. looking for an exit next to the player). Written out
+// instead of Object.keys(DIRECTION_OFFSETS), because Object.keys returns
+// string[], not Direction[].
+export const DIRECTIONS: Direction[] = ['north', 'south', 'east', 'west']
+
 export function samePosition(a: Position, b: Position): boolean {
   return a.x === b.x && a.y === b.y
 }
