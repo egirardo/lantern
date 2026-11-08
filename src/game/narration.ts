@@ -248,6 +248,30 @@ export function describeExitReveal(
   return `${article} exit appears to the ${direction}.`
 }
 
+// Announces the exit the player arrived through, each time it comes into the
+// light (decision 11, Nov 8). It gets its own line instead of "An exit", so a
+// player who can't see the canvas can tell the way back from the way forward
+// and doesn't loop between two rooms. "is", not "appears": the player has
+// just come through it. No seenBefore: it's the same line every time.
+export function describeArrivalExit(direction: CompassDirection): string {
+  return `The way back is to the ${direction}.`
+}
+
+// The text on the exit button (decision 11). The way back says so, with no
+// direction: the button only shows while the player stands next to that
+// exit, so where it is doesn't matter. Other exits keep the direction, the
+// same word the log uses when the player walks into the exit. Not "next room",
+// because the game knows where the player came from, not which way is forward.
+// The button passes a straight Direction ('north'), which TypeScript accepts
+// here because every Direction is also a CompassDirection.
+export function exitButtonLabel(
+  isWayBack: boolean,
+  direction: CompassDirection,
+): string {
+  if (isWayBack) return 'Go back to the previous room'
+  return `Use the exit to the ${direction}`
+}
+
 // spawnEnemies only adds a number when a room has two of the same type
 // ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
 // The regex: \s = a space, \d+ = one or more digits, $ = end of the string.

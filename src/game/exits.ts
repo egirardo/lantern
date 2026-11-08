@@ -58,6 +58,28 @@ export function findAdjacentExit(
   return null
 }
 
+// Which exit in this room leads back to the room the player just left: its
+// index in `exits`, or null at the start of a game (fromRoomId is null) or
+// when no exit leads back. An index, not the exit itself, because the store
+// keeps it as `arrivalExitIndex` next to `seenExitIndexes` (exits have no id).
+// findArrivalPosition uses it too, so the player arrives next to the same
+// exit that the log calls "the way back".
+// - `'to' in exit` checks the exit's shape: the final exit has no `to`, so it
+//   never matches. After the check, TypeScript knows exit.to exists
+//   (narrowing with `in`).
+// - findIndex returns the first match, or -1 when there is none. -1 becomes
+//   null, so callers can't use it as an index by mistake.
+export function findExitBackIndex(
+  exits: Exit[],
+  fromRoomId: string | null,
+): number | null {
+  if (fromRoomId === null) return null
+  const index = exits.findIndex(
+    (exit) => 'to' in exit && exit.to === fromRoomId,
+  )
+  return index === -1 ? null : index
+}
+
 // Where the player stands when they enter a room (decided Nov 2: at the
 // doorway, not at playerStart).
 // - `fromRoomId` is the room the player just left, or null at the start of a
@@ -76,11 +98,13 @@ export function findArrivalPosition(
   fromRoomId: string | null,
   blocked: Position[] = [],
 ): Position {
-  if (fromRoomId === null) return playerStart
-
-  // `'to' in exit` checks the exit's shape: the final exit has no `to`.
-  // After the check, TypeScript knows exit.to exists (narrowing with `in`).
-  const exitBack = exits.find((exit) => 'to' in exit && exit.to === fromRoomId)
+  // The same lookup the store uses to name the way back, so where the player
+  // arrives and which exit the log calls "the way back" always agree.
+  // null at the start of a game, or when this room has no exit back.
+  const index = findExitBackIndex(exits, fromRoomId)
+  // exits[index] can't really be undefined, but noUncheckedIndexedAccess
+  // (tsconfig) makes TypeScript say it might be, so one check covers both.
+  const exitBack = index === null ? undefined : exits[index]
   if (!exitBack) return playerStart
 
   for (const tile of exitBack.tiles) {

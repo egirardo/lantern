@@ -4,6 +4,7 @@ import {
   findAdjacentExit,
   findArrivalPosition,
   type ExitStepInput,
+  findExitBackIndex,
 } from './exits'
 import type { Exit } from '../rooms/room-schema'
 import type { Grid } from './movement'
@@ -259,5 +260,35 @@ describe('exitStep', () => {
       inCombat: true,
     })
     expect(texts(step)).toEqual(["You can't leave during a fight."])
+  })
+})
+
+describe('findExitBackIndex', () => {
+  it('returns null when fromRoomId is null', () => {
+    expect(findExitBackIndex(exits, null)).toBeNull()
+  })
+
+  it('returns the index of the exit whose to matches fromRoomId', () => {
+    const exitsWithMatch: Exit[] = [
+      { tiles: [{ x: 0, y: 0 }], to: 'other-room' },
+      { tiles: [{ x: 1, y: 0 }], to: 'north-room' },
+    ]
+    expect(findExitBackIndex(exitsWithMatch, 'north-room')).toBe(1)
+  })
+
+  it('returns null when no exit matches fromRoomId', () => {
+    expect(findExitBackIndex(exits, 'nonexistent-room')).toBeNull()
+  })
+
+  it('never matches the final exit', () => {
+    expect(findExitBackIndex([finalExit], 'any-room')).toBeNull()
+  })
+
+  it('returns the first index when two exits lead to the same room', () => {
+    const exitsWithDuplicates: Exit[] = [
+      { tiles: [{ x: 0, y: 0 }], to: 'north-room' },
+      { tiles: [{ x: 1, y: 0 }], to: 'north-room' },
+    ]
+    expect(findExitBackIndex(exitsWithDuplicates, 'north-room')).toBe(0)
   })
 })

@@ -4,6 +4,7 @@ import {
   isLit,
   getNewlyLit,
   getNewlyLitExits,
+  nearestTile,
 } from './visibility'
 import type { Position, Grid } from './movement'
 import { makeStoreEnemy } from './test-helpers'
@@ -364,5 +365,48 @@ describe('getNewlyLitExits', () => {
       exits[0],
       exits[1],
     ])
+  })
+})
+
+describe('nearestTile', () => {
+  it('returns the only tile when there is one', () => {
+    const tiles: Position[] = [{ x: 3, y: 1 }]
+    const from: Position = { x: 0, y: 0 }
+    expect(nearestTile(tiles, from)).toEqual(tiles[0])
+  })
+
+  it('returns the nearer of two tiles', () => {
+    const tiles: Position[] = [
+      { x: 3, y: 1 }, // distance² = 10
+      { x: 2, y: 0 }, // distance² = 4
+    ]
+    const from: Position = { x: 0, y: 0 }
+    expect(nearestTile(tiles, from)).toEqual(tiles[1])
+  })
+
+  it('returns the first tile in a tie', () => {
+    const tiles: Position[] = [
+      { x: 3, y: 1 }, // distance² = 10
+      { x: 1, y: 3 }, // distance² = 10
+    ]
+    const from: Position = { x: 0, y: 0 }
+    expect(nearestTile(tiles, from)).toEqual(tiles[0])
+  })
+
+  it('returns the nearer diagonal tile over a farther straight-out tile', () => {
+    const tiles: Position[] = [
+      { x: 2, y: 0 }, // distance² = 4
+      { x: 1, y: 1 }, // distance² = 2
+    ]
+    const from: Position = { x: 0, y: 0 }
+    expect(nearestTile(tiles, from)).toEqual(tiles[1])
+  })
+
+  it('throws an error when the list is empty', () => {
+    const tiles: Position[] = []
+    const from: Position = { x: 0, y: 0 }
+    expect(() => nearestTile(tiles, from)).toThrowError(
+      'nearestTile: empty tiles list',
+    )
   })
 })

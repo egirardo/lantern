@@ -17,6 +17,8 @@ import {
   describeEscape,
   describeAlreadyEscaped,
   describeExitReveal,
+  describeArrivalExit,
+  exitButtonLabel,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -513,6 +515,34 @@ describe('exit lines', () => {
     const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
     expect(describeFullHealth(player)).toBe(
       'You recover to full health. You have 12 out of 12 health.',
+    )
+  })
+})
+
+describe('describeArrivalExit', () => {
+  it('says the way back is to the south', () => {
+    expect(describeArrivalExit('south')).toBe('The way back is to the south.')
+  })
+
+  it('says the way back is to the north-east', () => {
+    expect(describeArrivalExit('north-east')).toBe(
+      'The way back is to the north-east.',
+    )
+  })
+})
+
+describe('exitButtonLabel', () => {
+  it('says "Go back to the previous room" when isWayBack is true', () => {
+    expect(exitButtonLabel(true, 'north')).toBe('Go back to the previous room')
+  })
+
+  it('says "Use the exit to the north" when isWayBack is false and direction is north', () => {
+    expect(exitButtonLabel(false, 'north')).toBe('Use the exit to the north')
+  })
+
+  it('says "Use the exit to the south-east" when isWayBack is false and direction is south-east', () => {
+    expect(exitButtonLabel(false, 'south-east')).toBe(
+      'Use the exit to the south-east',
     )
   })
 })
