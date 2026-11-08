@@ -975,6 +975,16 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** Rule 5 says everything on the canvas must be in the log, and a door is the most important thing to find, so this is an accessibility fix rather than polish. The helpers follow the same pattern as the enemy reveal, so I can explain them, and the tests are mine. Testing the tests showed a real gap that I fixed myself.
 - **How I verified it:** All 446 tests pass (including the 18 RLS tests, since the main checkout has the test logins), with typecheck, ESLint and Prettier. All five broken versions of `getNewlyLitExits` fail my tests after the fix. The store wiring (direction to the nearest lit tile, `seenExitIndexes`, the log order) and a VoiceOver check are still to do, so the reveal isn't in the game yet.
 
+#### 2026-11-08 — Reviewing and merging the sprite coverage and README agent branches
+
+- **Tool:** Claude Code
+- **Category:** Review
+- **What I asked:** Pick up from my Friday handoff: read the handoff notes, then review the two agent branches waiting in their worktrees (`test/sprite-coverage` and `docs/readme`). I pushed and opened both PRs myself, so I asked Claude Code for the branches to `cd` into and for the PR descriptions. Then I asked it to add the font credit to the README, to fix the AI log merge conflict on the second PR, and to clean up after both were merged.
+- **What I got:** Claude Code read both diffs and checked the README's claims against the code (the polite and assertive urgency in `LiveAnnouncer.tsx`, and the focusable log, map and combat menu). It pointed out one wording detail: the README says "live regions", but the code uses one region that switches to assertive. I kept the wording. It wrote both PR descriptions with the `pr-description` skill. For the font, it first named the author from memory and told me to check that. When I asked it to add the credit, it read the font's built-in metadata (the `.ttf` name table) instead, which names Jayvee Enaguas (HarvettFox96) and CC0. It changed the README line and left the source link out, because the files don't say where the font came from. For the conflict, it committed the credit, merged `origin/dev` into `docs/readme` and kept both log entries (sprite coverage first). After the merges it removed both worktrees and local branches, and merged `dev` into `feature/exit-reveal`, keeping all three log entries, so this entry and the exit reveal PR won't conflict again.
+- **Outcome:** ✅ kept
+- **Why:** Both PRs were small and did what the briefs asked. The font credit now comes from the font file itself instead of a guess, and resolving the log conflicts by keeping every entry means no part of the log is lost.
+- **How I verified it:** Claude Code ran the manifest tests in the sprite worktree (3 passed, 1 skipped) and Prettier on both branches before I opened the PRs, and Prettier again after each conflict fix, with no conflict markers left. I reviewed and merged both PRs on GitHub (#37 and #38). After merging `dev` into `feature/exit-reveal`, all 447 tests pass with 1 skipped (the item sprite test), and typecheck is clean.
+
 ---
 
 ## Agent-built rooms: evaluation
