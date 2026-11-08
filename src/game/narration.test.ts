@@ -20,6 +20,8 @@ import {
   describeArrivalExit,
   exitButtonLabel,
   describeNextToExit,
+  describePickUp,
+  describeItemReveal,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -558,6 +560,36 @@ describe('describeNextToExit', () => {
   it('calls the exit the player arrived through the way back', () => {
     expect(describeNextToExit(true, 'south')).toBe(
       'You are next to the way back, to the south. Press Enter to use it.',
+    )
+  })
+})
+
+describe('describePickUp', () => {
+  it('says what the player picks up, with "a"', () => {
+    expect(describePickUp('rusty key')).toBe('You pick up a rusty key.')
+  })
+
+  it('uses "an" before a name that starts with a vowel', () => {
+    expect(describePickUp('old amulet')).toBe('You pick up an old amulet.')
+  })
+})
+
+describe('describeItemReveal', () => {
+  it('uses "A" the first time an item is seen', () => {
+    expect(describeItemReveal('rusty key', 'west', false)).toBe(
+      'A rusty key lies to the west.',
+    )
+  })
+
+  it('uses "An" before a name that starts with a vowel', () => {
+    expect(describeItemReveal('old amulet', 'north-east', false)).toBe(
+      'An old amulet lies to the north-east.',
+    )
+  })
+
+  it('uses "The" when the item has been seen before', () => {
+    expect(describeItemReveal('rusty key', 'south', true)).toBe(
+      'The rusty key lies to the south.',
     )
   })
 })
