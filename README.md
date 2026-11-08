@@ -75,7 +75,7 @@ The Supabase tables, the row-level security policies and how to run their tests 
 Code: MIT, see [LICENSE](LICENSE).
 
 - **[DungeonTileset II Extended](https://nijikokun.itch.io/dungeontileset-ii-extended)** by nijikokun, an extension of **[DungeonTileset II](https://0x72.itch.io/dungeontileset-ii)** by 0x72. License: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/) (public domain dedication). Used for the dungeon tiles and characters. No attribution is required, but the authors deserve the credit.
-- **Pixel Operator** font (`public/assets/fonts/`). Its license file is the CC0 1.0 Universal legal text. The file doesn't name the author or give a link.
+- **Pixel Operator** font by Jayvee Enaguas (HarvettFox96). License: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). Used for all text in the game. The font files and their license are in `public/assets/fonts/`.
 
 ## Project context
 
