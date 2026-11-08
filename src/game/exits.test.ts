@@ -4,6 +4,8 @@ import {
   findAdjacentExit,
   findArrivalPosition,
   type ExitStepInput,
+  findExitBackIndex,
+  findNewlyAdjacentExit,
 } from './exits'
 import type { Exit } from '../rooms/room-schema'
 import type { Grid } from './movement'
@@ -259,5 +261,81 @@ describe('exitStep', () => {
       inCombat: true,
     })
     expect(texts(step)).toEqual(["You can't leave during a fight."])
+  })
+})
+
+describe('findNewlyAdjacentExit', () => {
+  // northDoor is at (1, 0), so (1, 1) is right below it.
+
+  it('finds the exit a step has just put the player next to', () => {
+    expect(
+      findNewlyAdjacentExit({ x: 2, y: 1 }, { x: 1, y: 1 }, exits),
+    ).toEqual({ exit: northDoor, direction: 'north' })
+  })
+
+  it('returns null when the step ends next to no exit', () => {
+    expect(
+      findNewlyAdjacentExit({ x: 1, y: 1 }, { x: 1, y: 2 }, exits),
+    ).toBeNull()
+  })
+
+  it('returns null when the player was already next to that exit', () => {
+    // A two-tile door at (1, 0) and (2, 0): stepping from below one half to
+    // below the other is still next to the same exit.
+    const wideDoor: Exit = {
+      tiles: [
+        { x: 1, y: 0 },
+        { x: 2, y: 0 },
+      ],
+      to: 'north-room',
+    }
+    expect(
+      findNewlyAdjacentExit({ x: 1, y: 1 }, { x: 2, y: 1 }, [wideDoor]),
+    ).toBeNull()
+  })
+
+  it('finds a different exit than the one the player was next to', () => {
+    // From below northDoor (1, 0) to (3, 1), next to lockedEastDoor (4, 1).
+    // Two exits apart in one step isn't possible on this map, so the test
+    // passes the positions directly: the helper only compares the two.
+    expect(
+      findNewlyAdjacentExit({ x: 1, y: 1 }, { x: 3, y: 1 }, exits),
+    ).toEqual({ exit: lockedEastDoor, direction: 'east' })
+  })
+
+  it('returns null for a blocked move (the same position before and after)', () => {
+    expect(
+      findNewlyAdjacentExit({ x: 1, y: 1 }, { x: 1, y: 1 }, exits),
+    ).toBeNull()
+  })
+})
+
+describe('findExitBackIndex', () => {
+  it('returns null when fromRoomId is null', () => {
+    expect(findExitBackIndex(exits, null)).toBeNull()
+  })
+
+  it('returns the index of the exit whose to matches fromRoomId', () => {
+    const exitsWithMatch: Exit[] = [
+      { tiles: [{ x: 0, y: 0 }], to: 'other-room' },
+      { tiles: [{ x: 1, y: 0 }], to: 'north-room' },
+    ]
+    expect(findExitBackIndex(exitsWithMatch, 'north-room')).toBe(1)
+  })
+
+  it('returns null when no exit matches fromRoomId', () => {
+    expect(findExitBackIndex(exits, 'nonexistent-room')).toBeNull()
+  })
+
+  it('never matches the final exit', () => {
+    expect(findExitBackIndex([finalExit], 'any-room')).toBeNull()
+  })
+
+  it('returns the first index when two exits lead to the same room', () => {
+    const exitsWithDuplicates: Exit[] = [
+      { tiles: [{ x: 0, y: 0 }], to: 'north-room' },
+      { tiles: [{ x: 1, y: 0 }], to: 'north-room' },
+    ]
+    expect(findExitBackIndex(exitsWithDuplicates, 'north-room')).toBe(0)
   })
 })

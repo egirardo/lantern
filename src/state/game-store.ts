@@ -6,10 +6,13 @@ import {
   type Position,
 } from '../game/movement'
 import { loadRoom as loadRoomFromFiles } from '../rooms/load-room'
-import type { Room } from '../rooms/room-schema'
+import type { Exit, Room } from '../rooms/room-schema'
 import {
   describeAlreadyEscaped,
+  describeArrivalExit,
+  describeExitReveal,
   describeMove,
+  describeNextToExit,
   describeReveal,
 } from '../game/narration'
 import type { TiledMap } from '../rooms/tiled-schema'
@@ -24,11 +27,19 @@ import { getAdjacentEnemies } from '../game/adjacency'
 import { PLAYER } from '../game/player'
 import {
   getNewlyLit,
+  getNewlyLitExits,
   getVisibleTiles,
+  isLit,
   LANTERN_RADIUS,
+  nearestTile,
 } from '../game/visibility'
 import { directionFrom } from '../game/compass'
-import { exitStep, findArrivalPosition } from '../game/exits'
+import {
+  exitStep,
+  findArrivalPosition,
+  findExitBackIndex,
+  findNewlyAdjacentExit,
+} from '../game/exits'
 
 type LogEntry = LogLine & { id: string }
 
@@ -74,6 +85,15 @@ export type GameState = {
   // Ids of the enemies the player has already seen in this room, so the
   // reveal can say "a skeleton" the first time and "the skeleton" after.
   seenEnemyIds: string[]
+  // The exits the player has already seen in this room, as indexes in
+  // room.exits (exits have no id), so the reveal can say "An exit" the first
+  // time and "The exit" after. Like seenEnemyIds, a room load starts it again.
+  seenExitIndexes: number[]
+  // The index in room.exits of the exit the player arrived through, or null
+  // at the start of a game or when no exit leads back. That exit is announced
+  // as "The way back is to the …" and its button says "Go back to the
+  // previous room" (decision 11), so it can't be mistaken for the way forward.
+  arrivalExitIndex: number | null
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   // Use the exit next to the player (Enter on the map, or the exit button).
@@ -126,6 +146,59 @@ function revealEntries(
   return { entries, seenEnemyIds: [...seenEnemyIds, ...newIds] }
 }
 
+// What exitRevealEntries needs. An object instead of six arguments in a row,
+// so each call names what it passes and two numbers can't swap places.
+type ExitRevealInput = {
+  newlyLit: Exit[] // from getNewlyLitExits
+  exits: Exit[] // all of the room's exits, to find each one's index
+  litAfter: Position[] // the lit tiles after the step
+  from: Position // where the player stands now
+  seenExitIndexes: number[]
+  arrivalExitIndex: number | null
+}
+
+// One log entry per exit that just came into the light (rule 5), the twin
+// of revealEntries. Also returns the updated seen indexes, for the same set().
+// - The direction points at the exit's nearest *lit* tile, so a two-tile door
+//   with one half still in the dark points at the half the player can see.
+//   The filter can't be empty: getNewlyLitExits only returns an exit if at
+//   least one of its tiles is lit. directionFrom can't throw either, because
+//   exit tiles are blocked, so the player never stands on one.
+// - indexOf finds the exit's index because getNewlyLitExits uses filter(),
+//   which returns the same objects that are in room.exits, not copies
+//   (reference equality: === on objects asks "the same object?").
+// - The way back gets its own line every time (decision 11). It's added to
+//   the seen list like the others, which changes nothing for it but keeps
+//   one simple rule: every announced exit counts as seen.
+function exitRevealEntries({
+  newlyLit,
+  exits,
+  litAfter,
+  from,
+  seenExitIndexes,
+  arrivalExitIndex,
+}: ExitRevealInput): { entries: LogEntry[]; seenExitIndexes: number[] } {
+  // Each exit paired with its index, so the steps below have both at hand.
+  const revealed = newlyLit.map((exit) => ({
+    exit,
+    index: exits.indexOf(exit),
+  }))
+  const entries = revealed.map(({ exit, index }) => {
+    const litTiles = exit.tiles.filter((tile) => isLit(litAfter, tile))
+    const direction = directionFrom(from, nearestTile(litTiles, from))
+    const text =
+      index === arrivalExitIndex
+        ? describeArrivalExit(direction)
+        : describeExitReveal(direction, seenExitIndexes.includes(index))
+    return politeEntry(text)
+  })
+  // Add only indexes that aren't in the list yet, like revealEntries.
+  const newIndexes = revealed
+    .map(({ index }) => index)
+    .filter((index) => !seenExitIndexes.includes(index))
+  return { entries, seenExitIndexes: [...seenExitIndexes, ...newIndexes] }
+}
+
 // A factory, so every test can get its own fresh store instead of sharing one.
 export function createGameStore(random: () => number = Math.random) {
   return createStore<GameState>()((set, get) => ({
@@ -143,6 +216,8 @@ export function createGameStore(random: () => number = Math.random) {
     pendingExitLines: [],
     enemies: [],
     seenEnemyIds: [],
+    seenExitIndexes: [],
+    arrivalExitIndex: null,
     player: PLAYER,
     combat: null,
     loadRoom: (roomData, mapData) => {
@@ -170,6 +245,19 @@ export function createGameStore(random: () => number = Math.random) {
         start,
         [],
       )
+      // Read before set(), while arrivingFrom still names the room just left.
+      // The same lookup findArrivalPosition uses, so the exit the player
+      // stands next to is the one the log calls the way back.
+      const arrivalExitIndex = findExitBackIndex(room.exits, arrivingFrom)
+      // The new room's exits start unseen ([]), like its enemies.
+      const exitReveal = exitRevealEntries({
+        newlyLit: getNewlyLitExits(litBefore, litAfter, room.exits),
+        exits: room.exits,
+        litAfter,
+        from: start,
+        seenExitIndexes: [],
+        arrivalExitIndex,
+      })
       set({
         grid,
         playerPosition: start,
@@ -182,13 +270,17 @@ export function createGameStore(random: () => number = Math.random) {
         arrivingFrom: null,
         enemies,
         seenEnemyIds: reveal.seenEnemyIds,
+        seenExitIndexes: exitReveal.seenExitIndexes,
+        arrivalExitIndex,
         // One batch for the whole room change: the exit lines (empty at the
-        // start of a game), then the description, then the reveals.
+        // start of a game), then the description, then the enemy reveals,
+        // then the exit reveals (decided Nov 6).
         log: [
           ...log,
           ...pendingExitLines,
           politeEntry(text),
           ...reveal.entries,
+          ...exitReveal.entries,
         ],
         pendingExitLines: [],
         combat: null, // loading a new room ends any fight in progress
@@ -251,6 +343,8 @@ export function createGameStore(random: () => number = Math.random) {
         room,
         enemies,
         seenEnemyIds,
+        seenExitIndexes,
+        arrivalExitIndex,
         log,
         player,
         combat,
@@ -290,7 +384,8 @@ export function createGameStore(random: () => number = Math.random) {
       // flatMap turns the list of exits (each with a list of tiles) into one
       // flat list of tiles. `?? []` covers the type: room can't really be
       // null when grid isn't, but TypeScript doesn't know that.
-      const exitTiles = room?.exits.flatMap((exit) => exit.tiles) ?? []
+      const exits = room?.exits ?? []
+      const exitTiles = exits.flatMap((exit) => exit.tiles)
       const result = computeMove(
         playerPosition,
         direction,
@@ -314,6 +409,14 @@ export function createGameStore(random: () => number = Math.random) {
         result.newPosition,
         seenEnemyIds,
       )
+      const exitReveal = exitRevealEntries({
+        newlyLit: getNewlyLitExits(litBefore, litAfter, exits),
+        exits,
+        litAfter,
+        from: result.newPosition,
+        seenExitIndexes,
+        arrivalExitIndex,
+      })
 
       // Only a step that actually happened can start a fight. A blocked move
       // means you're standing where you were.
@@ -322,10 +425,37 @@ export function createGameStore(random: () => number = Math.random) {
         : []
 
       if (adjacent.length === 0) {
+        // The exit this step has put the player next to, if any. Only here,
+        // where no fight starts: in a fight the exit can't be used, so
+        // "Press Enter to use it" would be wrong.
+        const nextTo = findNewlyAdjacentExit(
+          playerPosition,
+          result.newPosition,
+          exits,
+        )
+        const nextToEntries = nextTo
+          ? [
+              politeEntry(
+                describeNextToExit(
+                  exits.indexOf(nextTo.exit) === arrivalExitIndex,
+                  nextTo.direction,
+                ),
+              ),
+            ]
+          : []
         set({
           playerPosition: result.newPosition,
           seenEnemyIds: reveal.seenEnemyIds,
-          log: [...log, moveEntry, ...reveal.entries],
+          seenExitIndexes: exitReveal.seenExitIndexes,
+          // Step, then enemy reveals, then exit reveals (decided Nov 6), then
+          // the exit next to the player (Nov 8).
+          log: [
+            ...log,
+            moveEntry,
+            ...reveal.entries,
+            ...exitReveal.entries,
+            ...nextToEntries,
+          ],
         })
         return
       }
@@ -337,8 +467,16 @@ export function createGameStore(random: () => number = Math.random) {
         enemies: step.enemies,
         combat: step.combat,
         seenEnemyIds: reveal.seenEnemyIds,
-        // Step, then reveal, then the fight start (decided Nov 4).
-        log: [...log, moveEntry, ...reveal.entries, ...withIds(step.lines)],
+        seenExitIndexes: exitReveal.seenExitIndexes,
+        // Step, then enemy reveals, then exit reveals, then the fight start
+        // (decided Nov 4 and Nov 6).
+        log: [
+          ...log,
+          moveEntry,
+          ...reveal.entries,
+          ...exitReveal.entries,
+          ...withIds(step.lines),
+        ],
       })
     },
 

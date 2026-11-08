@@ -1,5 +1,8 @@
 import { samePosition, type Grid, type Position } from './movement'
 import type { StoreEnemy } from './spawn-enemies'
+// `import type` is erased when the code is built, so src/game/ doesn't load
+// anything from src/rooms/ at runtime (the same as in exits.ts).
+import type { Exit } from '../rooms/room-schema'
 
 // How far the player's lantern shines, in tiles. It doesn't have to be a whole
 // number, because the rule is dx² + dy² <= radius² (here <= 6.25). 2.5 lights
@@ -62,5 +65,58 @@ export function getNewlyLit(
     (enemy) =>
       isLit(visibleAfter, enemy.position) &&
       !isLit(visibleBefore, enemy.position),
+  )
+}
+
+// The exits that have just come into the light, so the reveal narration can
+// announce doors too (rule 5), not only enemies. Without this, a player who
+// can't see the canvas only finds an exit by walking into every wall.
+// An exit can cover several tiles (the two-tile door), but it's one exit, so
+// it's announced once: it counts as newly lit when at least one of its tiles
+// is lit after the step and none of them were lit before. That way the second
+// half of a door coming into the light doesn't announce the same door again.
+// Otherwise the same rules as getNewlyLit: every time it comes back into the
+// light, an empty `visibleBefore` on room load announces every lit exit, the
+// result keeps the room file's order, and filter() never changes the inputs.
+// The tile closest to `from`. The store passes only the lit tiles of an exit,
+// so the direction in the reveal line points at the part of the door the
+// player can actually see, not at a half that's still in the dark.
+// - Distance uses dx² + dy², the same rule as the lantern (isVisible). The
+//   square root isn't needed: if a² < b², then a < b, so comparing squares
+//   picks the same tile.
+// - A tie keeps the first tile, because `<` (not `<=`) only replaces the
+//   nearest tile when another one is strictly closer. That makes the result
+//   the same every time.
+// - An empty list throws, like directionFrom for the same tile: the store
+//   should never ask, so a throw makes that bug show up instead of hiding it.
+export function nearestTile(tiles: Position[], from: Position): Position {
+  // Destructuring: `first` is tiles[0], and `rest` is a new array of the others.
+  const [first, ...rest] = tiles
+  if (first === undefined) {
+    throw new Error('nearestTile: empty tiles list')
+  }
+
+  const distanceSquared = (tile: Position) =>
+    (tile.x - from.x) ** 2 + (tile.y - from.y) ** 2
+
+  let nearest = first
+  for (const tile of rest) {
+    if (distanceSquared(tile) < distanceSquared(nearest)) {
+      nearest = tile
+    }
+  }
+  return nearest
+}
+
+export function getNewlyLitExits(
+  visibleBefore: Position[],
+  visibleAfter: Position[],
+  exits: Exit[],
+): Exit[] {
+  return exits.filter(
+    (exit) =>
+      // some() is true if at least one tile passes the check
+      exit.tiles.some((tile) => isLit(visibleAfter, tile)) &&
+      !exit.tiles.some((tile) => isLit(visibleBefore, tile)),
   )
 }

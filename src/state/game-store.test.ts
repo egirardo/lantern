@@ -15,10 +15,16 @@ import { PLAYER } from '../game/player'
 
 const playerWinsInitiative = [rollOf(20, 20), rollOf(1, 20)]
 
+// validRoom without its exits, for tests that aren't about exits. validMap is
+// only 3×3, so the lantern lights all of it, and validRoom's two exits would
+// be announced on every load ("An exit appears to the north-west."). Without
+// them, a test about moving or enemies checks only its own log lines.
+const roomWithoutExits: Room = { ...validRoom, exits: [] }
+
 // One skeleton at (0, 2). The player starts at (1, 1), so one step south
 // puts them next to it.
 const roomWithSkeleton: Room = {
-  ...validRoom,
+  ...roomWithoutExits,
   enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
 }
 
@@ -43,7 +49,7 @@ describe('gameStore', () => {
 
   it('loadRoom sets the grid and position and logs the description', () => {
     const store = createGameStore()
-    store.getState().loadRoom(validRoom, validMap)
+    store.getState().loadRoom(roomWithoutExits, validMap)
     const state: GameState = store.getState()
     // The grid built from validMap: walls along the top row, floor below
     expect(state.grid).toEqual([
@@ -52,7 +58,7 @@ describe('gameStore', () => {
       ['floor', 'floor', 'floor'],
     ])
     expect(state.playerPosition).toEqual(validRoom.playerStart)
-    expect(state.room).toEqual(validRoom)
+    expect(state.room).toEqual(roomWithoutExits)
     expect(state.log.length).toBe(1)
     expect(state.log[0]?.text).toBe(validRoom.description)
     expect(state.tiledMap).toHaveProperty(['tilesets', 0, 'firstgid'], 1)
@@ -61,7 +67,7 @@ describe('gameStore', () => {
 
   it('movePlayer onto floor updates the position and logs it', () => {
     const store = createGameStore()
-    store.getState().loadRoom(validRoom, validMap)
+    store.getState().loadRoom(roomWithoutExits, validMap)
     store.getState().movePlayer('south')
     const state: GameState = store.getState()
     const describeMoveResult = describeMove(
@@ -75,7 +81,7 @@ describe('gameStore', () => {
 
   it('movePlayer into a wall keeps the position but still logs it', () => {
     const store = createGameStore()
-    store.getState().loadRoom(validRoom, validMap)
+    store.getState().loadRoom(roomWithoutExits, validMap)
     store.getState().movePlayer('north')
     // north is a wall in the test map
     const describeMoveResult = describeMove(
@@ -376,7 +382,7 @@ describe('gameStore', () => {
     // dark (9 > 6.25). One step east makes it 2 tiles away: lit (4 <= 6.25),
     // but not adjacent, so no fight starts.
     const roomWithDistantSkeleton: Room = {
-      ...validRoom,
+      ...roomWithoutExits,
       enemies: [{ id: 'e1', type: 'skeleton', position: { x: 4, y: 1 } }],
     }
 
@@ -450,6 +456,199 @@ describe('gameStore', () => {
       expect(store.getState().log.at(-1)?.text).toBe(
         'A skeleton appears to the south-west.',
       )
+    })
+
+    describe('exits', () => {
+      // On wideMap the top row is walls, so exits go there. The player starts
+      // at (1, 1). The exit at (4, 0) is dark from there (9 + 1 = 10 > 6.25)
+      // and lit after one step east to (2, 1) (4 + 1 = 5). From (2, 1) it's
+      // 2 east and 1 north, which is "east" (one axis at least twice the other).
+      const roomWithDistantExit: Room = {
+        ...roomWithoutExits,
+        exits: [{ tiles: [{ x: 4, y: 0 }], to: 'room-2' }],
+      }
+
+      function texts(store: ReturnType<typeof createGameStore>): string[] {
+        return store.getState().log.map((entry) => entry.text)
+      }
+
+      it('logs the step, then the exit that came into the light', () => {
+        const store = createGameStore()
+        store.getState().loadRoom(roomWithDistantExit, wideMap)
+        store.getState().movePlayer('east')
+        expect(texts(store)).toEqual([
+          validRoom.description,
+          'You have taken a step to the east.',
+          'An exit appears to the east.',
+        ])
+      })
+
+      it('does not announce an exit again while it stays lit', () => {
+        const store = createGameStore()
+        store.getState().loadRoom(roomWithDistantExit, wideMap)
+        store.getState().movePlayer('east') // lit
+        store.getState().movePlayer('east') // still lit
+        expect(texts(store)).toEqual([
+          validRoom.description,
+          'You have taken a step to the east.',
+          'An exit appears to the east.',
+          'You have taken a step to the east.',
+        ])
+      })
+
+      it('announces the exit again with "the" each time it comes back into the light', () => {
+        const store = createGameStore()
+        store.getState().loadRoom(roomWithDistantExit, wideMap)
+        store.getState().movePlayer('east') // lit
+        store.getState().movePlayer('west') // dark again
+        store.getState().movePlayer('east') // lit again
+        const reveals = texts(store).filter((text) => text.includes('appears'))
+        expect(reveals).toEqual([
+          'An exit appears to the east.',
+          'The exit appears to the east.',
+        ])
+      })
+
+      it('logs enemy reveals before exit reveals in the same step', () => {
+        // The skeleton at (4, 1) and the exit at (4, 0) both come into the
+        // light on the step to (2, 1). The skeleton is 2 tiles away, so no
+        // fight starts.
+        const room: Room = {
+          ...roomWithDistantExit,
+          enemies: [{ id: 'e1', type: 'skeleton', position: { x: 4, y: 1 } }],
+        }
+        const store = createGameStore()
+        store.getState().loadRoom(room, wideMap)
+        store.getState().movePlayer('east')
+        expect(texts(store)).toEqual([
+          validRoom.description,
+          'You have taken a step to the east.',
+          'A skeleton appears to the east.',
+          'An exit appears to the east.',
+        ])
+      })
+
+      it('logs the exit reveal before the fight starts', () => {
+        // The skeleton at (3, 1) is already lit at the start, and the step
+        // to (2, 1) puts the player next to it while lighting the exit.
+        const room: Room = {
+          ...roomWithDistantExit,
+          enemies: [{ id: 'e1', type: 'skeleton', position: { x: 3, y: 1 } }],
+        }
+        const store = createGameStore(sequence(...playerWinsInitiative))
+        store.getState().loadRoom(room, wideMap)
+        const logLengthBefore = store.getState().log.length
+        store.getState().movePlayer('east')
+        expect(store.getState().combat).not.toBeNull()
+        // The step and the exit come first, then the fight lines (at least
+        // one, the "attacks you" line).
+        const stepLines = texts(store).slice(logLengthBefore)
+        expect(stepLines.slice(0, 2)).toEqual([
+          'You have taken a step to the east.',
+          'An exit appears to the east.',
+        ])
+        expect(stepLines.length).toBeGreaterThan(2)
+      })
+
+      it('forgets the seen exits when a room loads', () => {
+        const store = createGameStore()
+        store.getState().loadRoom(roomWithDistantExit, wideMap)
+        store.getState().movePlayer('east') // "An exit"
+        // Same room again: the exit indexes repeat, but it's a new visit.
+        store.getState().loadRoom(roomWithDistantExit, wideMap)
+        store.getState().movePlayer('east')
+        expect(texts(store).at(-1)).toBe('An exit appears to the east.')
+      })
+
+      it('points at the nearest lit tile of a two-tile door', () => {
+        // A door at (4, 0) and (5, 0), and the player starts at (6, 2).
+        // (5, 0) is lit (1 + 4 = 5), (4, 0) is dark (4 + 4 = 8). From the
+        // start, (5, 0) is 1 west and 2 north: "north". The first tile
+        // (4, 0) would give "north-west", toward a tile in the dark.
+        const room: Room = {
+          ...roomWithoutExits,
+          playerStart: { x: 6, y: 2 },
+          exits: [
+            {
+              tiles: [
+                { x: 4, y: 0 },
+                { x: 5, y: 0 },
+              ],
+              to: 'room-2',
+            },
+          ],
+        }
+        const store = createGameStore()
+        store.getState().loadRoom(room, wideMap)
+        expect(texts(store)).toEqual([
+          validRoom.description,
+          'An exit appears to the north.',
+        ])
+      })
+
+      describe('the way back (decision 11)', () => {
+        // The room the player arrives in from 'room-1'. The exit back is at
+        // (0, 0), so the player arrives at (0, 1), right below it. A second
+        // exit at (6, 0) leads on, dark from the arrival tile (36 + 1).
+        const wideRoom2: Room = {
+          ...roomWithoutExits,
+          id: 'room-2',
+          description: 'The second room.',
+          exits: [
+            { tiles: [{ x: 0, y: 0 }], to: 'room-1' },
+            { tiles: [{ x: 6, y: 0 }], to: 'room-3' },
+          ],
+        }
+
+        // Go through validRoom's exit to 'room-2' and arrive in wideRoom2.
+        function storeInRoom2() {
+          const store = createGameStore()
+          store.getState().loadRoom(validRoom, validMap)
+          store.getState().movePlayer('west')
+          store.getState().takeExit()
+          store.getState().loadRoom(wideRoom2, wideMap)
+          return store
+        }
+
+        it('says "the way back" again each time it comes back into the light', () => {
+          const store = storeInRoom2()
+          // East to (3, 1): (0, 0) is 3 west and 1 north, 9 + 1 = 10, dark.
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('east')
+          // West to (2, 1): lit again (4 + 1 = 5), 2 west and 1 north: "west".
+          store.getState().movePlayer('west')
+          const wayBack = texts(store).filter((text) =>
+            text.startsWith('The way back'),
+          )
+          expect(wayBack).toEqual([
+            'The way back is to the north.',
+            'The way back is to the west.',
+          ])
+        })
+
+        it('still says "An exit" for the other exits in the room', () => {
+          const store = storeInRoom2()
+          // East to (4, 1): (6, 0) is 2 east and 1 north, 4 + 1 = 5, lit.
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('east')
+          expect(store.getState().arrivalExitIndex).toBe(0)
+          expect(texts(store).at(-1)).toBe('An exit appears to the east.')
+        })
+
+        it('says "the way back" when the player steps next to it again', () => {
+          const store = storeInRoom2()
+          // The player arrives at (0, 1), below the way back at (0, 0). Step
+          // away and back: next to it again.
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('west')
+          expect(texts(store).at(-1)).toBe(
+            'You are next to the way back, to the north. Press Enter to use it.',
+          )
+        })
+      })
     })
   })
 
@@ -554,14 +753,26 @@ describe('gameStore', () => {
         'You recover to full health. You have 12 out of 12 health.',
         'The second room.',
         'A skeleton appears to the west.',
+        // The exit back at (2, 0) is right above the arrival tile (2, 1). It's
+        // the way back, not "An exit" (decision 11), and comes after the
+        // enemy reveals.
+        'The way back is to the north.',
       ])
       expect(store.getState().pendingExitLines).toEqual([])
     })
 
-    it('loading a room at the start of a game logs no exit lines', () => {
+    it('loading a room at the start of a game logs no exit lines and no way back', () => {
       const store = createGameStore()
       store.getState().loadRoom(validRoom, validMap)
-      expect(texts(store)).toEqual([validRoom.description])
+      // No "You go through the exit…" lines. Both exits are lit (the whole
+      // 3×3 map is), and neither is the way back, because the player didn't
+      // arrive through one.
+      expect(texts(store)).toEqual([
+        validRoom.description,
+        'An exit appears to the north-west.',
+        'An exit appears to the north-east.',
+      ])
+      expect(store.getState().arrivalExitIndex).toBeNull()
     })
 
     it('takeExit heals the player to full health', () => {
@@ -581,7 +792,12 @@ describe('gameStore', () => {
       expect(state.room?.id).toBe('room-2')
       expect(state.playerPosition).toEqual({ x: 2, y: 1 })
       expect(state.arrivingFrom).toBeNull()
-      expect(state.log.at(-1)?.text).toBe('The second room.')
+      // room2's only exit (index 0) is the one the player came through.
+      expect(state.arrivalExitIndex).toBe(0)
+      expect(texts(store).slice(-2)).toEqual([
+        'The second room.',
+        'The way back is to the north.',
+      ])
     })
 
     it('uses playerStart when the next room has no exit back', () => {
@@ -637,11 +853,12 @@ describe('gameStore', () => {
       // The unlock line is part of the room change, so it waits with the
       // others and is logged in the same batch as the next room.
       store.getState().loadRoom(room2, validMap)
-      expect(texts(store).slice(-4)).toEqual([
+      expect(texts(store).slice(-5)).toEqual([
         'You unlock the door with the rusty key.',
         'You go through the exit to the north.',
         'You recover to full health. You have 12 out of 12 health.',
         'The second room.',
+        'The way back is to the north.',
       ])
     })
 
@@ -661,6 +878,56 @@ describe('gameStore', () => {
         'You have already escaped the dungeon.',
         'You have already escaped the dungeon.',
       ])
+    })
+
+    describe('stepping next to an exit (Nov 8)', () => {
+      // The exit button appears silently when the player is next to an
+      // exit, so the log says so and names the key.
+
+      it('says which exit the player is next to and how to use it', () => {
+        const store = storeNextToExit()
+        // The step west from (1, 1) to (0, 1), right below the exit at (0, 0).
+        expect(texts(store).slice(-2)).toEqual([
+          'You have taken a step to the west.',
+          'You are next to the exit to the north. Press Enter to use it.',
+        ])
+      })
+
+      it('says nothing more on a step that stays next to the same exit', () => {
+        // A two-tile door at (0, 0) and (1, 0): the step east from (0, 1) to
+        // (1, 1) is still below it.
+        const room: Room = {
+          ...validRoom,
+          exits: [
+            {
+              tiles: [
+                { x: 0, y: 0 },
+                { x: 1, y: 0 },
+              ],
+              to: 'room-2',
+            },
+          ],
+        }
+        const store = storeNextToExit(room)
+        store.getState().movePlayer('east')
+        expect(texts(store).at(-1)).toBe('You have taken a step to the east.')
+      })
+
+      it('says nothing about the exit when the step starts a fight', () => {
+        // The skeleton at (0, 2) and the exit at (0, 0) are both next to
+        // (0, 1). In a fight the exit can't be used, so no "Press Enter".
+        const room: Room = {
+          ...validRoom,
+          enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+        }
+        const store = createGameStore(sequence(...playerWinsInitiative))
+        store.getState().loadRoom(room, validMap)
+        store.getState().movePlayer('west')
+        expect(store.getState().combat).not.toBeNull()
+        expect(texts(store).some((text) => text.includes('Press Enter'))).toBe(
+          false,
+        )
+      })
     })
 
     it('takeExit after the player has fallen only says they have fallen', () => {

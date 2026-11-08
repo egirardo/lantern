@@ -16,6 +16,10 @@ import {
   describeFullHealth,
   describeEscape,
   describeAlreadyEscaped,
+  describeExitReveal,
+  describeArrivalExit,
+  exitButtonLabel,
+  describeNextToExit,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -468,6 +472,26 @@ describe('describeReveal', () => {
   })
 })
 
+describe('describeExitReveal', () => {
+  it('uses "An" for the first time an exit is seen', () => {
+    expect(describeExitReveal('north', false)).toBe(
+      'An exit appears to the north.',
+    )
+  })
+
+  it('uses "The" when the exit has been seen before', () => {
+    expect(describeExitReveal('north', true)).toBe(
+      'The exit appears to the north.',
+    )
+  })
+
+  it('works for a diagonal direction', () => {
+    expect(describeExitReveal('south-east', false)).toBe(
+      'An exit appears to the south-east.',
+    )
+  })
+})
+
 describe('exit lines', () => {
   // The exact wording, so a changed line shows up in review.
   it('has a line for each exit event', () => {
@@ -492,6 +516,48 @@ describe('exit lines', () => {
     const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
     expect(describeFullHealth(player)).toBe(
       'You recover to full health. You have 12 out of 12 health.',
+    )
+  })
+})
+
+describe('describeArrivalExit', () => {
+  it('says the way back is to the south', () => {
+    expect(describeArrivalExit('south')).toBe('The way back is to the south.')
+  })
+
+  it('says the way back is to the north-east', () => {
+    expect(describeArrivalExit('north-east')).toBe(
+      'The way back is to the north-east.',
+    )
+  })
+})
+
+describe('exitButtonLabel', () => {
+  it('says "Go back to the previous room" when isWayBack is true', () => {
+    expect(exitButtonLabel(true, 'north')).toBe('Go back to the previous room')
+  })
+
+  it('says "Use the exit to the north" when isWayBack is false and direction is north', () => {
+    expect(exitButtonLabel(false, 'north')).toBe('Use the exit to the north')
+  })
+
+  it('says "Use the exit to the south-east" when isWayBack is false and direction is south-east', () => {
+    expect(exitButtonLabel(false, 'south-east')).toBe(
+      'Use the exit to the south-east',
+    )
+  })
+})
+
+describe('describeNextToExit', () => {
+  it('names the direction of an exit and the key to use it', () => {
+    expect(describeNextToExit(false, 'north')).toBe(
+      'You are next to the exit to the north. Press Enter to use it.',
+    )
+  })
+
+  it('calls the exit the player arrived through the way back', () => {
+    expect(describeNextToExit(true, 'south')).toBe(
+      'You are next to the way back, to the south. Press Enter to use it.',
     )
   })
 })
