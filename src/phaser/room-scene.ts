@@ -10,6 +10,7 @@ import { toTileIndices } from '../rooms/tile-indices'
 import { gameStore, type GameState } from '../state/game-store'
 import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
+import type { StoreItem } from '../game/items'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
 import { prefersReducedMotion } from './reduced-motion'
 import { hitEnemies, wasHit } from './hits'
@@ -22,12 +23,15 @@ import {
 
 // Depth decides what is drawn on top: a higher depth covers a lower one. The
 // tilemap layers keep the default depth 0. The dark goes over the tiles, and
-// enemies and the player go over the dark. Without depths, the order would
+// items, enemies and the player go over the dark. Items lie on the floor, so
+// they go below the characters: a 16×32 character on the tile below reaches
+// up over the item's tile, and should cover the item, not the other way round. Without depths, the order would
 // depend on what happened to be created last, which changes as the game runs
-// (enemy sprites come and go as the light moves).
+// (enemy and item sprites come and go as the light moves).
 const DARKNESS_DEPTH = 1
-const ENEMY_DEPTH = 2
-const PLAYER_DEPTH = 3
+const ITEM_DEPTH = 2
+const ENEMY_DEPTH = 3
+const PLAYER_DEPTH = 4
 
 // How long the player's sprite takes to slide one tile, in milliseconds.
 // Short enough that walking feels quick, long enough to see the step. The
@@ -55,14 +59,16 @@ const DARKNESS_TEXTURE = 'lantern-darkness'
 //   mostly or fully dark (the (±2, ±2) corners, about 2.83 away, are about
 //   83% dark in the middle; tiles 3 or more away are solid black).
 // - In between it fades, so the edge looks like lantern light, not squares.
-// Enemies don't use the picture at all: they are shown only when isLit says
-// their tile is lit, so a half-dark edge tile can never hide or show one wrongly.
+// Enemies and items don't use the picture at all: they are shown only when
+// isLit says their tile is lit, so a half-dark edge tile can never hide or
+// show one wrongly.
 const LIGHT_CLEAR_RADIUS = LANTERN_RADIUS - 0.5
 const LIGHT_DARK_RADIUS = LANTERN_RADIUS + 0.5
 
-// Enemy types are plain strings in the store, but SPRITES only has keys for the
-// sprites in the manifest. This type guard checks at runtime that the name
-// exists, and tells TypeScript that `name` is a SpriteName after the check.
+// Enemy and item types are plain strings in the store, but SPRITES only has
+// keys for the sprites in the manifest. This type guard checks at runtime
+// that the name exists, and tells TypeScript that `name` is a SpriteName
+// after the check.
 // Object.hasOwn instead of `name in SPRITES`, because `in` also finds names
 // every object inherits, like 'toString'.
 function isSpriteName(name: string): name is SpriteName {
@@ -82,6 +88,10 @@ export class RoomScene extends Phaser.Scene {
   // alive is always read from the store. A Map (not a list) so drawEnemies can
   // find the sprite an enemy already has and keep it, see drawEnemies.
   private enemySprites = new Map<string, Phaser.GameObjects.Sprite>()
+  // The item sprites currently on screen: only the lit items, by item id. The
+  // same idea as enemySprites: the store says which items still lie in the
+  // room, and a picked-up item's sprite is removed on the next redraw.
+  private itemSprites = new Map<string, Phaser.GameObjects.Sprite>()
   private readonly PLAYER_SPRITE = 'hero-girl'
   // Which way the player's sprite looks. Kept between steps, because a step
   // north or south keeps the facing of the last step east or west.
@@ -152,13 +162,15 @@ export class RoomScene extends Phaser.Scene {
         )
       }
 
-      // 3. The light: redraw the dark and the enemies when the room loads, the
-      // player moves (the light moves with them), or the enemies change (one
-      // was defeated and removed from the store, so its sprite must go too).
+      // 3. The light: redraw the dark, the items and the enemies when the room
+      // loads, the player moves (the light moves with them), the enemies
+      // change (one was defeated and removed from the store, so its sprite
+      // must go too), or the items change (one was picked up).
       if (
         state.tiledMap !== previousState.tiledMap ||
         state.playerPosition !== previousState.playerPosition ||
-        state.enemies !== previousState.enemies
+        state.enemies !== previousState.enemies ||
+        state.items !== previousState.items
       ) {
         this.drawLight(state)
       }
@@ -211,6 +223,11 @@ export class RoomScene extends Phaser.Scene {
       this.destroySprite(sprite)
     }
     this.enemySprites.clear()
+    // Item sprites have no hit flash, so destroy() is enough.
+    for (const sprite of this.itemSprites.values()) {
+      sprite.destroy()
+    }
+    this.itemSprites.clear()
     // The dark's texture is removed in createDarkness, which runs next.
     this.darkness?.destroy()
     this.darkness = undefined
@@ -540,7 +557,7 @@ export class RoomScene extends Phaser.Scene {
   // what is where; this method only asks getVisibleTiles which tiles are lit
   // and draws the result (rule 3: no game rules in Phaser code).
   private drawLight(state: GameState) {
-    const { grid, playerPosition, enemies } = state
+    const { grid, playerPosition, enemies, items } = state
     // No room loaded yet, so there is nothing to light.
     if (grid === null || playerPosition === null) return
 
@@ -551,7 +568,52 @@ export class RoomScene extends Phaser.Scene {
     this.darkness?.setPosition(x, y)
 
     const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
+    this.drawItems(items, visibleTiles)
     this.drawEnemies(enemies, visibleTiles)
+  }
+
+  // Draws a sprite for every item on a lit tile, and none for the others,
+  // the same way drawEnemies does (keep, remove, make). Picking up isn't
+  // decided here: the store has already taken the item out of `items`, so
+  // its sprite is simply no longer wanted and is removed in step 1.
+  // Items have no animation: they are drawn with one still frame, so there
+  // is no motion to switch off for reduced motion.
+  private drawItems(items: StoreItem[], visibleTiles: Position[]) {
+    const litItems = items.filter((item) => isLit(visibleTiles, item.position))
+    const litIds = new Set(litItems.map((item) => item.id))
+
+    // 1. Remove the sprites of items that are no longer lit, or no longer in
+    // the store at all (picked up).
+    for (const [id, sprite] of this.itemSprites) {
+      if (!litIds.has(id)) {
+        sprite.destroy()
+        this.itemSprites.delete(id)
+      }
+    }
+
+    // 2. Make a sprite for every newly lit item. Items never move, so a sprite
+    // that already exists stays where it is.
+    for (const item of litItems) {
+      if (this.itemSprites.has(item.id)) continue
+      // Rule 7: the sprite is found by its logical name (the item type, e.g.
+      // 'rusty-key'), never by a file path.
+      if (!isSpriteName(item.type)) {
+        throw new Error(`No sprite in the asset manifest for ${item.type}`)
+      }
+      const art = SPRITES[item.type]
+      // Item frames are 16×16, the size of one tile, so the default centred
+      // origin is right: the middle of the frame goes on the middle of the
+      // tile (unlike the 16×32 characters, which stand on their feet).
+      const { x, y } = this.tileCenter(item.position)
+      const sprite = this.add.sprite(
+        x,
+        y,
+        art.texture,
+        `${art.framePrefix}${art.animations.idle.frames[0]}`,
+      )
+      sprite.setDepth(ITEM_DEPTH)
+      this.itemSprites.set(item.id, sprite)
+    }
   }
 
   // Draws a sprite for every enemy on a lit tile, and none for the others.
