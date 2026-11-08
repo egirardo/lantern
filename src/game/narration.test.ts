@@ -19,6 +19,7 @@ import {
   describeExitReveal,
   describeArrivalExit,
   exitButtonLabel,
+  describeNextToExit,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -543,6 +544,20 @@ describe('exitButtonLabel', () => {
   it('says "Use the exit to the south-east" when isWayBack is false and direction is south-east', () => {
     expect(exitButtonLabel(false, 'south-east')).toBe(
       'Use the exit to the south-east',
+    )
+  })
+})
+
+describe('describeNextToExit', () => {
+  it('names the direction of an exit and the key to use it', () => {
+    expect(describeNextToExit(false, 'north')).toBe(
+      'You are next to the exit to the north. Press Enter to use it.',
+    )
+  })
+
+  it('calls the exit the player arrived through the way back', () => {
+    expect(describeNextToExit(true, 'south')).toBe(
+      'You are next to the way back, to the south. Press Enter to use it.',
     )
   })
 })

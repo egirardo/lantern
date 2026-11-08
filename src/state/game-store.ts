@@ -12,6 +12,7 @@ import {
   describeArrivalExit,
   describeExitReveal,
   describeMove,
+  describeNextToExit,
   describeReveal,
 } from '../game/narration'
 import type { TiledMap } from '../rooms/tiled-schema'
@@ -33,7 +34,12 @@ import {
   nearestTile,
 } from '../game/visibility'
 import { directionFrom } from '../game/compass'
-import { exitStep, findArrivalPosition, findExitBackIndex } from '../game/exits'
+import {
+  exitStep,
+  findArrivalPosition,
+  findExitBackIndex,
+  findNewlyAdjacentExit,
+} from '../game/exits'
 
 type LogEntry = LogLine & { id: string }
 
@@ -419,12 +425,37 @@ export function createGameStore(random: () => number = Math.random) {
         : []
 
       if (adjacent.length === 0) {
+        // The exit this step has put the player next to, if any. Only here,
+        // where no fight starts: in a fight the exit can't be used, so
+        // "Press Enter to use it" would be wrong.
+        const nextTo = findNewlyAdjacentExit(
+          playerPosition,
+          result.newPosition,
+          exits,
+        )
+        const nextToEntries = nextTo
+          ? [
+              politeEntry(
+                describeNextToExit(
+                  exits.indexOf(nextTo.exit) === arrivalExitIndex,
+                  nextTo.direction,
+                ),
+              ),
+            ]
+          : []
         set({
           playerPosition: result.newPosition,
           seenEnemyIds: reveal.seenEnemyIds,
           seenExitIndexes: exitReveal.seenExitIndexes,
-          // Step, then enemy reveals, then exit reveals (decided Nov 6).
-          log: [...log, moveEntry, ...reveal.entries, ...exitReveal.entries],
+          // Step, then enemy reveals, then exit reveals (decided Nov 6), then
+          // the exit next to the player (Nov 8).
+          log: [
+            ...log,
+            moveEntry,
+            ...reveal.entries,
+            ...exitReveal.entries,
+            ...nextToEntries,
+          ],
         })
         return
       }

@@ -58,6 +58,28 @@ export function findAdjacentExit(
   return null
 }
 
+// The exit the player has just stepped next to: next to it after the step,
+// but not before. The store logs "You are next to the exit… Press Enter to
+// use it." for it, because the exit button appears silently (it doesn't take
+// focus), so without a line a screen reader user wouldn't know they can use
+// the exit now (decided Nov 8).
+// - "Not before" means not next to *that* exit, so walking along a two-tile
+//   door doesn't repeat the line, but stepping from one exit to another does.
+//   findAdjacentExit with a list of just that one exit answers "is the player
+//   next to this exit?", so no second adjacency rule is needed.
+// - A blocked move has the same position before and after, so it gives null
+//   without a special case.
+export function findNewlyAdjacentExit(
+  before: Position,
+  after: Position,
+  exits: Exit[],
+): AdjacentExit | null {
+  const adjacent = findAdjacentExit(after, exits)
+  if (adjacent === null) return null
+  const wasAlreadyNextToIt = findAdjacentExit(before, [adjacent.exit]) !== null
+  return wasAlreadyNextToIt ? null : adjacent
+}
+
 // Which exit in this room leads back to the room the player just left: its
 // index in `exits`, or null at the start of a game (fromRoomId is null) or
 // when no exit leads back. An index, not the exit itself, because the store

@@ -272,6 +272,22 @@ export function exitButtonLabel(
   return `Use the exit to the ${direction}`
 }
 
+// The line when a step puts the player next to an exit (from
+// findNewlyAdjacentExit). The exit button appears at the same moment, but
+// silently, so this is how a screen reader user learns they can use the exit
+// now (decided Nov 8). It names the way back like the other lines
+// (decision 11), and says which key to press, like the line for walking into
+// an exit.
+export function describeNextToExit(
+  isWayBack: boolean,
+  direction: CompassDirection,
+): string {
+  const exit = isWayBack
+    ? `the way back, to the ${direction}`
+    : `the exit to the ${direction}`
+  return `You are next to ${exit}. Press Enter to use it.`
+}
+
 // spawnEnemies only adds a number when a room has two of the same type
 // ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
 // The regex: \s = a space, \d+ = one or more digits, $ = end of the string.

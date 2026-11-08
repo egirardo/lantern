@@ -637,6 +637,17 @@ describe('gameStore', () => {
           expect(store.getState().arrivalExitIndex).toBe(0)
           expect(texts(store).at(-1)).toBe('An exit appears to the east.')
         })
+
+        it('says "the way back" when the player steps next to it again', () => {
+          const store = storeInRoom2()
+          // The player arrives at (0, 1), below the way back at (0, 0). Step
+          // away and back: next to it again.
+          store.getState().movePlayer('east')
+          store.getState().movePlayer('west')
+          expect(texts(store).at(-1)).toBe(
+            'You are next to the way back, to the north. Press Enter to use it.',
+          )
+        })
       })
     })
   })
@@ -867,6 +878,56 @@ describe('gameStore', () => {
         'You have already escaped the dungeon.',
         'You have already escaped the dungeon.',
       ])
+    })
+
+    describe('stepping next to an exit (Nov 8)', () => {
+      // The exit button appears silently when the player is next to an
+      // exit, so the log says so and names the key.
+
+      it('says which exit the player is next to and how to use it', () => {
+        const store = storeNextToExit()
+        // The step west from (1, 1) to (0, 1), right below the exit at (0, 0).
+        expect(texts(store).slice(-2)).toEqual([
+          'You have taken a step to the west.',
+          'You are next to the exit to the north. Press Enter to use it.',
+        ])
+      })
+
+      it('says nothing more on a step that stays next to the same exit', () => {
+        // A two-tile door at (0, 0) and (1, 0): the step east from (0, 1) to
+        // (1, 1) is still below it.
+        const room: Room = {
+          ...validRoom,
+          exits: [
+            {
+              tiles: [
+                { x: 0, y: 0 },
+                { x: 1, y: 0 },
+              ],
+              to: 'room-2',
+            },
+          ],
+        }
+        const store = storeNextToExit(room)
+        store.getState().movePlayer('east')
+        expect(texts(store).at(-1)).toBe('You have taken a step to the east.')
+      })
+
+      it('says nothing about the exit when the step starts a fight', () => {
+        // The skeleton at (0, 2) and the exit at (0, 0) are both next to
+        // (0, 1). In a fight the exit can't be used, so no "Press Enter".
+        const room: Room = {
+          ...validRoom,
+          enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+        }
+        const store = createGameStore(sequence(...playerWinsInitiative))
+        store.getState().loadRoom(room, validMap)
+        store.getState().movePlayer('west')
+        expect(store.getState().combat).not.toBeNull()
+        expect(texts(store).some((text) => text.includes('Press Enter'))).toBe(
+          false,
+        )
+      })
     })
 
     it('takeExit after the player has fallen only says they have fallen', () => {
