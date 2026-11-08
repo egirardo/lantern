@@ -11,6 +11,7 @@ import {
   describeAlreadyEscaped,
   describeArrivalExit,
   describeExitReveal,
+  describeItemReveal,
   describeMove,
   describeNextToExit,
   describeReveal,
@@ -28,6 +29,7 @@ import { PLAYER } from '../game/player'
 import {
   getNewlyLit,
   getNewlyLitExits,
+  getNewlyLitItems,
   getVisibleTiles,
   isLit,
   LANTERN_RADIUS,
@@ -40,6 +42,7 @@ import {
   findExitBackIndex,
   findNewlyAdjacentExit,
 } from '../game/exits'
+import { itemDisplayName, pickUpItems, type StoreItem } from '../game/items'
 
 type LogEntry = LogLine & { id: string }
 
@@ -65,8 +68,9 @@ export type GameState = {
   // them at the doorway that leads back there. null at the start of a game,
   // which places the player at playerStart. loadRoom sets it back to null.
   arrivingFrom: string | null
-  // The item types the player carries, e.g. ['rusty-key']. Empty for now:
-  // picking items up comes with Agent E. A locked exit checks this list.
+  // The item types the player carries, e.g. ['rusty-key'], in the order they
+  // were picked up. Types, not ids (decided Nov 6): a locked exit checks this
+  // list for the type it needs. Kept across room changes, unlike `items`.
   inventory: string[]
   // True once the player has gone through the final exit and won. Like
   // game over (health 0), nothing can be done after that.
@@ -82,6 +86,11 @@ export type GameState = {
   // message takes over then.
   pendingExitLines: LogEntry[]
   enemies: StoreEnemy[]
+  // The items still lying in the room. Copied from room.items on loadRoom
+  // (like `enemies` from room.enemies), because room.items is the room file
+  // and never changes, while this list loses an item each time the player
+  // picks one up.
+  items: StoreItem[]
   // Ids of the enemies the player has already seen in this room, so the
   // reveal can say "a skeleton" the first time and "the skeleton" after.
   seenEnemyIds: string[]
@@ -94,6 +103,10 @@ export type GameState = {
   // as "The way back is to the …" and its button says "Go back to the
   // previous room" (decision 11), so it can't be mistaken for the way forward.
   arrivalExitIndex: number | null
+  // Ids of the items the player has already seen in this room, so the reveal
+  // can say "A rusty key" the first time and "The rusty key" after, like
+  // seenEnemyIds. A room load starts it again.
+  seenItemIds: string[]
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   // Use the exit next to the player (Enter on the map, or the exit button).
@@ -144,6 +157,33 @@ function revealEntries(
     .map((enemy) => enemy.id)
     .filter((id) => !seenEnemyIds.includes(id))
   return { entries, seenEnemyIds: [...seenEnemyIds, ...newIds] }
+}
+
+// One log entry per item that just came into the light (rule 5), the twin
+// of revealEntries for enemies: "A rusty key lies to the west." the first
+// time, "The rusty key…" after. Also returns the updated seen ids, for the
+// same set(). directionFrom can't throw here (it throws for the player's own
+// tile): the store passes only the items still lying in the room after the
+// pickup, and anything on the player's tile has just been picked up.
+function itemRevealEntries(
+  newlyLit: StoreItem[],
+  from: Position,
+  seenItemIds: string[],
+): { entries: LogEntry[]; seenItemIds: string[] } {
+  const entries = newlyLit.map((item) =>
+    politeEntry(
+      describeItemReveal(
+        itemDisplayName(item.type),
+        directionFrom(from, item.position),
+        seenItemIds.includes(item.id),
+      ),
+    ),
+  )
+  // Add only ids that aren't in the list yet, like revealEntries.
+  const newIds = newlyLit
+    .map((item) => item.id)
+    .filter((id) => !seenItemIds.includes(id))
+  return { entries, seenItemIds: [...seenItemIds, ...newIds] }
 }
 
 // What exitRevealEntries needs. An object instead of six arguments in a row,
@@ -215,15 +255,17 @@ export function createGameStore(random: () => number = Math.random) {
     hasEscaped: false,
     pendingExitLines: [],
     enemies: [],
+    items: [],
     seenEnemyIds: [],
     seenExitIndexes: [],
     arrivalExitIndex: null,
+    seenItemIds: [],
     player: PLAYER,
     combat: null,
     loadRoom: (roomData, mapData) => {
       const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
-      const { log, arrivingFrom, pendingExitLines } = get()
+      const { log, arrivingFrom, pendingExitLines, inventory } = get()
       const enemies = spawnEnemies(room.enemies)
       // At the doorway that leads back where the player came from, or at
       // playerStart in a new game (arrivingFrom is null). Enemy tiles are
@@ -258,6 +300,19 @@ export function createGameStore(random: () => number = Math.random) {
         seenExitIndexes: [],
         arrivalExitIndex,
       })
+      // The room's items, minus anything lying right where the player starts.
+      // A room file shouldn't put an item there, but if one does, the player
+      // picks it up on arrival, the same as stepping onto it. Otherwise the
+      // reveal below would ask for the direction to the player's own tile
+      // (directionFrom throws), and the item could only be picked up by
+      // stepping off and back on.
+      const pickUp = pickUpItems(room.items, start, inventory)
+      // The new room's items start unseen ([]), like its enemies and exits.
+      const itemReveal = itemRevealEntries(
+        getNewlyLitItems(litBefore, litAfter, pickUp.items),
+        start,
+        [],
+      )
       set({
         grid,
         playerPosition: start,
@@ -269,18 +324,27 @@ export function createGameStore(random: () => number = Math.random) {
         currentRoomId: room.id,
         arrivingFrom: null,
         enemies,
+        items: pickUp.items,
+        inventory: pickUp.inventory,
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
+        seenItemIds: itemReveal.seenItemIds,
         arrivalExitIndex,
         // One batch for the whole room change: the exit lines (empty at the
-        // start of a game), then the description, then the enemy reveals,
-        // then the exit reveals (decided Nov 6).
+        // start of a game), then the description, then a pickup (almost
+        // always none), then the enemy reveals, then the exit reveals
+        // (decided Nov 6), then the item reveals (Nov 8). The pickup comes
+        // right after the description for the same reason it comes right
+        // after the step in movePlayer: first what happens to the player,
+        // then what the light shows.
         log: [
           ...log,
           ...pendingExitLines,
           politeEntry(text),
+          ...withIds(pickUp.lines),
           ...reveal.entries,
           ...exitReveal.entries,
+          ...itemReveal.entries,
         ],
         pendingExitLines: [],
         combat: null, // loading a new room ends any fight in progress
@@ -342,8 +406,11 @@ export function createGameStore(random: () => number = Math.random) {
         grid,
         room,
         enemies,
+        items,
+        inventory,
         seenEnemyIds,
         seenExitIndexes,
+        seenItemIds,
         arrivalExitIndex,
         log,
         player,
@@ -397,6 +464,15 @@ export function createGameStore(random: () => number = Math.random) {
 
       const moveEntry = politeEntry(text)
 
+      // Stepping onto an item picks it up (decision 8). Items don't block
+      // movement, so computeMove doesn't need to know about them. Only a step
+      // that happened can pick something up: a blocked move stays on a tile
+      // whose items were already picked up when the player got there.
+      const pickUp = result.moved
+        ? pickUpItems(items, result.newPosition, inventory)
+        : { items, inventory, lines: [] }
+      const pickUpEntries = withIds(pickUp.lines)
+
       // What the lantern lights before and after the step. A blocked move has
       // the same position in both, so it reveals nothing without a special case.
       const litBefore = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
@@ -417,6 +493,13 @@ export function createGameStore(random: () => number = Math.random) {
         seenExitIndexes,
         arrivalExitIndex,
       })
+      // Items that came into the light. pickUp.items, not items: an item the
+      // player has just picked up isn't lying anywhere to be announced.
+      const itemReveal = itemRevealEntries(
+        getNewlyLitItems(litBefore, litAfter, pickUp.items),
+        result.newPosition,
+        seenItemIds,
+      )
 
       // Only a step that actually happened can start a fight. A blocked move
       // means you're standing where you were.
@@ -445,15 +528,24 @@ export function createGameStore(random: () => number = Math.random) {
           : []
         set({
           playerPosition: result.newPosition,
+          items: pickUp.items,
+          inventory: pickUp.inventory,
           seenEnemyIds: reveal.seenEnemyIds,
           seenExitIndexes: exitReveal.seenExitIndexes,
-          // Step, then enemy reveals, then exit reveals (decided Nov 6), then
-          // the exit next to the player (Nov 8).
+          seenItemIds: itemReveal.seenItemIds,
+          // Step, then the pickup (Nov 8), then enemy reveals, then exit
+          // reveals (decided Nov 6), then item reveals (Nov 8), then the exit
+          // next to the player (Nov 8). The pickup sits right after the step
+          // because it's part of the step: the player stepped onto the key.
+          // "You are next to the exit… Press Enter" stays last, because it's
+          // the cue to act, like "It's your turn." in a fight.
           log: [
             ...log,
             moveEntry,
+            ...pickUpEntries,
             ...reveal.entries,
             ...exitReveal.entries,
+            ...itemReveal.entries,
             ...nextToEntries,
           ],
         })
@@ -466,15 +558,24 @@ export function createGameStore(random: () => number = Math.random) {
         player: step.player,
         enemies: step.enemies,
         combat: step.combat,
+        items: pickUp.items,
+        inventory: pickUp.inventory,
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
-        // Step, then enemy reveals, then exit reveals, then the fight start
-        // (decided Nov 4 and Nov 6).
+        seenItemIds: itemReveal.seenItemIds,
+        // Step, then the pickup, then enemy reveals, then exit reveals, then
+        // item reveals, then the fight start (decided Nov 4 and Nov 6, items
+        // Nov 8). A step can pick up a key and start a fight at once: the key
+        // is picked up first, because the player is already standing on it
+        // when the enemy attacks, and the fight lines end with "It's your
+        // turn.", the cue to act, so they must come last.
         log: [
           ...log,
           moveEntry,
+          ...pickUpEntries,
           ...reveal.entries,
           ...exitReveal.entries,
+          ...itemReveal.entries,
           ...withIds(step.lines),
         ],
       })

@@ -28,6 +28,26 @@ const roomWithSkeleton: Room = {
   enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
 }
 
+// 7 tiles wide, so an enemy (or an item) can start outside the lantern
+// (radius 2.5). validMap is too small: from anywhere in it, every floor tile
+// is lit. Walls along the top row, floor below, like validMap. At file level
+// so both the reveal tests and the item tests can use it.
+const wideMap = {
+  ...validMap,
+  width: 7,
+  layers: [
+    { ...floorLayer, width: 7, data: new Array<number>(21).fill(258) },
+    {
+      ...wallsLayer,
+      width: 7,
+      data: [
+        ...new Array<number>(7).fill(66),
+        ...new Array<number>(14).fill(0),
+      ],
+    },
+  ],
+}
+
 // A fresh store with the skeleton room loaded, after the player has stepped
 // south next to the skeleton. `rolls` are all the dice the test will use.
 function storeInFight(...rolls: number[]) {
@@ -359,25 +379,6 @@ describe('gameStore', () => {
   })
 
   describe('reveal narration in loadRoom and movePlayer', () => {
-    // 7 tiles wide, so an enemy can start outside the lantern (radius 2.5).
-    // validMap is too small: from anywhere in it, every floor tile is lit.
-    // Walls along the top row, floor below, like validMap.
-    const wideMap = {
-      ...validMap,
-      width: 7,
-      layers: [
-        { ...floorLayer, width: 7, data: new Array<number>(21).fill(258) },
-        {
-          ...wallsLayer,
-          width: 7,
-          data: [
-            ...new Array<number>(7).fill(66),
-            ...new Array<number>(14).fill(0),
-          ],
-        },
-      ],
-    }
-
     // The player starts at (1, 1). The skeleton at (4, 1) is 3 tiles east:
     // dark (9 > 6.25). One step east makes it 2 tiles away: lit (4 <= 6.25),
     // but not adjacent, so no fight starts.
@@ -936,6 +937,219 @@ describe('gameStore', () => {
       store.getState().takeExit()
       expect(store.getState().currentRoomId).toBe('room-1')
       expect(texts(store).at(-1)).toBe('You have fallen in battle.')
+    })
+  })
+
+  describe('items and inventory (decision 8)', () => {
+    // On wideMap the player starts at (1, 1). A key at (2, 1) is one step
+    // east: lit from the start. A key at (4, 1) is 3 tiles east: dark from
+    // the start (9 > 6.25), lit after one step east (4 <= 6.25).
+    const nearKey = {
+      id: 'key-1',
+      type: 'rusty-key',
+      position: { x: 2, y: 1 },
+    }
+    const distantKey = {
+      id: 'key-2',
+      type: 'rusty-key',
+      position: { x: 4, y: 1 },
+    }
+    const roomWithNearKey: Room = { ...roomWithoutExits, items: [nearKey] }
+    const roomWithDistantKey: Room = {
+      ...roomWithoutExits,
+      items: [distantKey],
+    }
+
+    function texts(store: ReturnType<typeof createGameStore>): string[] {
+      return store.getState().log.map((entry) => entry.text)
+    }
+
+    it('starts with no items and none seen', () => {
+      const state: GameState = createGameStore().getState()
+      expect(state.items).toEqual([])
+      expect(state.seenItemIds).toEqual([])
+    })
+
+    it('loadRoom copies the room file items into the store', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      expect(store.getState().items).toEqual([distantKey])
+    })
+
+    it('stepping onto an item picks it up and logs it right after the step', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithNearKey, wideMap)
+      store.getState().movePlayer('east')
+      const state: GameState = store.getState()
+      // Items don't block movement: the player stands on the key's tile.
+      expect(state.playerPosition).toEqual({ x: 2, y: 1 })
+      expect(state.items).toEqual([])
+      expect(state.inventory).toEqual(['rusty-key'])
+      expect(texts(store)).toEqual([
+        validRoom.description,
+        'A rusty key lies to the east.',
+        'You have taken a step to the east.',
+        'You pick up a rusty key.',
+      ])
+    })
+
+    it('does not change the room file when an item is picked up', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithNearKey, wideMap)
+      store.getState().movePlayer('east')
+      expect(store.getState().room?.items).toEqual([nearKey])
+    })
+
+    it('keeps the inventory when the next room loads, and takes the items of that room', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithNearKey, wideMap)
+      store.getState().movePlayer('east')
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().items).toEqual([distantKey])
+    })
+
+    it('picks up an item lying where the player starts, after the description', () => {
+      const room: Room = {
+        ...roomWithoutExits,
+        items: [{ ...nearKey, position: validRoom.playerStart }],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room, wideMap)
+      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().items).toEqual([])
+      expect(texts(store)).toEqual([
+        validRoom.description,
+        'You pick up a rusty key.',
+      ])
+    })
+
+    it('announces an item that comes into the light', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      store.getState().movePlayer('east')
+      expect(texts(store)).toEqual([
+        validRoom.description,
+        'You have taken a step to the east.',
+        'A rusty key lies to the east.',
+      ])
+    })
+
+    it('does not announce an item in the dark when the room loads', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      expect(texts(store)).toEqual([validRoom.description])
+    })
+
+    it('announces the item again with "the" each time it comes back into the light', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      store.getState().movePlayer('east') // lit
+      store.getState().movePlayer('west') // dark again
+      store.getState().movePlayer('east') // lit again
+      const reveals = texts(store).filter((text) => text.includes('lies'))
+      expect(reveals).toEqual([
+        'A rusty key lies to the east.',
+        'The rusty key lies to the east.',
+      ])
+    })
+
+    it('forgets the seen items when a room loads', () => {
+      const store = createGameStore()
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      store.getState().movePlayer('east') // "A rusty key"
+      expect(store.getState().seenItemIds).toEqual(['key-2'])
+      // Same room again: the item ids repeat, but it's a new visit.
+      store.getState().loadRoom(roomWithDistantKey, wideMap)
+      expect(store.getState().seenItemIds).toEqual([])
+      store.getState().movePlayer('east')
+      expect(texts(store).at(-1)).toBe('A rusty key lies to the east.')
+    })
+
+    it('logs the step, the pickup, then enemy, exit and item reveals', () => {
+      // One step east to (2, 1) picks up the near key and lights a skeleton
+      // at (4, 2), an exit at (4, 0) and the distant key at (4, 1). All three
+      // are dark from the start and 2 east, 1 off from (2, 1): "east".
+      // The skeleton isn't next to the player, so no fight starts.
+      const room: Room = {
+        ...roomWithoutExits,
+        exits: [{ tiles: [{ x: 4, y: 0 }], to: 'room-2' }],
+        enemies: [{ id: 'e1', type: 'skeleton', position: { x: 4, y: 2 } }],
+        items: [nearKey, distantKey],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room, wideMap)
+      const logLengthBefore = store.getState().log.length
+      store.getState().movePlayer('east')
+      expect(texts(store).slice(logLengthBefore)).toEqual([
+        'You have taken a step to the east.',
+        'You pick up a rusty key.',
+        'A skeleton appears to the east.',
+        'An exit appears to the east.',
+        'A rusty key lies to the east.',
+      ])
+    })
+
+    it('logs item reveals before the line about the exit next to the player', () => {
+      // The exit at (2, 0) is right above the near key, so the step east
+      // picks up the key, lights the distant key and puts the player next to
+      // the exit. "Press Enter" is the cue to act, so it comes last.
+      const room: Room = {
+        ...roomWithoutExits,
+        exits: [{ tiles: [{ x: 2, y: 0 }], to: 'room-2' }],
+        items: [nearKey, distantKey],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room, wideMap)
+      const logLengthBefore = store.getState().log.length
+      store.getState().movePlayer('east')
+      expect(texts(store).slice(logLengthBefore)).toEqual([
+        'You have taken a step to the east.',
+        'You pick up a rusty key.',
+        'A rusty key lies to the east.',
+        'You are next to the exit to the north. Press Enter to use it.',
+      ])
+    })
+
+    it('picks the item up before the fight starts when a step does both', () => {
+      // A skeleton at (3, 1), lit from the start, guards the near key: the
+      // step onto the key puts the player next to it.
+      const room: Room = {
+        ...roomWithNearKey,
+        enemies: [{ id: 'e1', type: 'skeleton', position: { x: 3, y: 1 } }],
+      }
+      const store = createGameStore(sequence(...playerWinsInitiative))
+      store.getState().loadRoom(room, wideMap)
+      const logLengthBefore = store.getState().log.length
+      store.getState().movePlayer('east')
+      expect(store.getState().combat).not.toBeNull()
+      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().items).toEqual([])
+      expect(texts(store).slice(logLengthBefore, logLengthBefore + 3)).toEqual([
+        'You have taken a step to the east.',
+        'You pick up a rusty key.',
+        'The skeleton attacks you! A fight begins.',
+      ])
+    })
+
+    it('a picked-up key opens the locked exit', () => {
+      // validMap: the locked exit at (0, 0), the key at (0, 1) right below
+      // it. One step west from the start picks up the key next to the door.
+      const room: Room = {
+        ...validRoom,
+        exits: [
+          { tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' },
+        ],
+        items: [{ id: 'key-1', type: 'rusty-key', position: { x: 0, y: 1 } }],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room, validMap)
+      store.getState().movePlayer('west')
+      store.getState().takeExit()
+      expect(store.getState().currentRoomId).toBe('room-2')
+      expect(store.getState().pendingExitLines[0]?.text).toBe(
+        'You unlock the door with the rusty key.',
+      )
     })
   })
 })
