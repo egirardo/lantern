@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createGameStore } from './game-store'
 import { validMap, validRoom, wallsLayer } from '../rooms/testing-map'
+import type { Room } from '../rooms/room-schema'
 
 // The real tile-names.json has no names yet (they come in Phase K step 4),
 // so this file swaps it for a small test table. vi.mock replaces the module
@@ -14,6 +15,10 @@ import { validMap, validRoom, wallsLayer } from '../rooms/testing-map'
 vi.mock('../assets/tile-names.json', () => ({
   default: { dungeon: { '65': 'barrel' } },
 }))
+
+// validRoom's exits are on the top row, so walking north would say how to
+// use the exit instead. Without them, the walls are plain walls.
+const roomWithoutExits: Room = { ...validRoom, exits: [] }
 
 describe('game store features', () => {
   it('is empty before a room is loaded', () => {
@@ -42,5 +47,28 @@ describe('game store features', () => {
     }
     store.getState().loadRoom(validRoom, mapWithoutBarrel)
     expect(store.getState().features).toEqual([])
+  })
+})
+
+describe('game store blocked-move text', () => {
+  // The player starts at (1, 1). One step west, then north, walks into the
+  // barrel at (0, 0). Straight north from (1, 1) is an unnamed wall.
+  it('says what blocks the path when the player walks into a named wall', () => {
+    const store = createGameStore()
+    store.getState().loadRoom(roomWithoutExits, validMap)
+    store.getState().movePlayer('west')
+    store.getState().movePlayer('north')
+    expect(store.getState().log.at(-1)?.text).toBe(
+      'You cannot move to the north. A barrel blocks your path.',
+    )
+  })
+
+  it('still says wall for a wall with no name', () => {
+    const store = createGameStore()
+    store.getState().loadRoom(roomWithoutExits, validMap)
+    store.getState().movePlayer('north')
+    expect(store.getState().log.at(-1)?.text).toBe(
+      'You cannot move to the north. A wall blocks your path.',
+    )
   })
 })

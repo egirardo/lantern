@@ -10,9 +10,12 @@ import type { StoreEnemy } from './spawn-enemies'
 
 // Record requires an entry for every BlockedReason, so adding a new reason
 // without a corresponding message is a type error instead of a silent default.
-// 'exit' is left out with Exclude: its line needs the direction, so
-// describeMove writes it separately.
-const BLOCKED_TEXT: Record<Exclude<BlockedReason, 'exit'>, string> = {
+// 'exit' and 'feature' are left out with Exclude: their lines need the
+// direction or the name, so describeMove writes them separately.
+const BLOCKED_TEXT: Record<
+  Exclude<BlockedReason, 'exit' | 'feature'>,
+  string
+> = {
   wall: 'A wall blocks your path',
   edge: 'The edge of the world blocks your path',
   enemy: 'An enemy blocks your path',
@@ -122,9 +125,24 @@ export function describeMove(result: MoveResult, direction: Direction): string {
   if (result.reason === 'exit') {
     return `An exit leads ${direction}. Press Enter to use it.`
   }
-  // TypeScript knows result.reason isn't 'exit' here (narrowing), so it
-  // allows the lookup in BLOCKED_TEXT, which has no 'exit' entry.
+  // A named wall, e.g. a barrel (Phase K step 3). The same start as the wall
+  // line, so the player hears the direction first, then what is there.
+  // TypeScript only allows result.name inside this check: narrowing on
+  // `reason` picks the one MoveResult case that has a name.
+  if (result.reason === 'feature') {
+    const name = featureDisplayName(result.name)
+    return `You cannot move to the ${direction}. ${capitalise(`${indefiniteArticle(name)} ${name}`)} blocks your path.`
+  }
+  // TypeScript knows result.reason is neither 'exit' nor 'feature' here, so
+  // it allows the lookup in BLOCKED_TEXT, which has no entry for them.
   return `You cannot move to the ${direction}. ${BLOCKED_TEXT[result.reason]}.`
+}
+
+// A feature name as the log says it: the table uses kebab-case
+// ('wooden-table'), but a screen reader should hear "wooden table", not
+// "wooden dash table".
+function featureDisplayName(name: string): string {
+  return name.replaceAll('-', ' ')
 }
 
 // The one assertive announcement in the game (see low-health.ts for when it

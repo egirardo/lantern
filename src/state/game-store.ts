@@ -468,6 +468,7 @@ export function createGameStore(random: () => number = Math.random) {
       const {
         playerPosition,
         grid,
+        features,
         room,
         enemies,
         items,
@@ -525,6 +526,8 @@ export function createGameStore(random: () => number = Math.random) {
         grid,
         enemyPositions,
         exitTiles,
+        // So walking into a barrel says "A barrel blocks your path."
+        features,
       )
       const text = describeMove(result, direction)
 
