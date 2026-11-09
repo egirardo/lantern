@@ -211,4 +211,69 @@ describe('spawnEnemies', () => {
     spawnEnemies(frozenRoomEnemies, table)
     expect(frozenRoomEnemies).toEqual(roomEnemies)
   })
+
+  describe('disguises and carried items (the mimic, Nov 9)', () => {
+    const tableWithMimic = {
+      ...table,
+      mimic: {
+        displayName: 'mimic',
+        disguise: 'chest',
+        maxHealth: 12,
+        armorClass: 12,
+        attackBonus: 3,
+        initiativeBonus: 0,
+        damageDie: 6,
+      },
+    }
+
+    it('gives a disguised enemy its disguise, and keeps its real name on the combatant', () => {
+      const [mimic] = spawnEnemies(
+        [{ id: 'm1', type: 'mimic', position: { x: 6, y: 5 } }],
+        tableWithMimic,
+      )
+      expect(mimic?.disguise).toBe('chest')
+      expect(mimic?.combatant.name).toBe('mimic')
+    })
+
+    it('numbers the disguise the same way as the name', () => {
+      const mimics = spawnEnemies(
+        [
+          { id: 'm1', type: 'mimic', position: { x: 1, y: 1 } },
+          { id: 'm2', type: 'mimic', position: { x: 2, y: 2 } },
+        ],
+        tableWithMimic,
+      )
+      expect(mimics.map((m) => m.disguise)).toEqual(['chest 1', 'chest 2'])
+      expect(mimics.map((m) => m.combatant.name)).toEqual([
+        'mimic 1',
+        'mimic 2',
+      ])
+    })
+
+    it('copies what an enemy carries from the room file', () => {
+      const [mimic] = spawnEnemies(
+        [
+          {
+            id: 'm1',
+            type: 'mimic',
+            position: { x: 6, y: 5 },
+            carries: 'gold-key',
+          },
+        ],
+        tableWithMimic,
+      )
+      expect(mimic?.carries).toBe('gold-key')
+    })
+
+    // toEqual above treats a missing key and `undefined` as the same, so this
+    // checks that an ordinary enemy really has no such keys at all.
+    it('gives an ordinary enemy no disguise and no carries keys', () => {
+      const [skeleton] = spawnEnemies(
+        [{ id: 'e1', type: 'skeleton', position: { x: 1, y: 1 } }],
+        tableWithMimic,
+      )
+      expect(skeleton).not.toHaveProperty('disguise')
+      expect(skeleton).not.toHaveProperty('carries')
+    })
+  })
 })
