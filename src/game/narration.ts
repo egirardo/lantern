@@ -7,6 +7,7 @@ import {
 } from './combat'
 import type { CompassDirection } from './compass'
 import type { StoreEnemy } from './spawn-enemies'
+import { nameOutsideFight } from './disguise'
 
 // Record requires an entry for every BlockedReason, so adding a new reason
 // without a corresponding message is a type error instead of a silent default.
@@ -210,11 +211,36 @@ export function getAttackOptions(combat: CombatState): AttackOption[] {
 // Every enemy in a new fight is alive and next to the player, so this reads
 // all of `combat.enemies`. Names come from subject() and object(), so they
 // match the rest of the log ("The skeleton 1", "the orc").
-export function describeCombatStart(combat: CombatState): string {
+//
+// `disguised` lists the enemies in this fight that were disguised until now
+// (the mimic, decided Nov 9), with the disguise they had. Each one is
+// unmasked first: "The chest springs open. It's a mimic!". Most fights have
+// none, so it defaults to [] and the line is the same as before.
+// - Only disguised enemies (the usual mimic fight): the unmasking already
+//   says who attacks, so only "A fight begins." follows. "The mimic attacks
+//   you!" right after "It's a mimic!" would say the same thing twice.
+// - Disguised and ordinary enemies together: the unmasking comes first, then
+//   the usual sentence with every attacker by their real name, so the player
+//   hears the whole fight: "The chest springs open. It's a mimic! The mimic
+//   and the skeleton attack you! A fight begins."
+export function describeCombatStart(
+  combat: CombatState,
+  disguised: readonly { id: string; disguise: string }[] = [],
+): string {
   const ids = combat.enemies.map((entry) => entry.id)
   // A fight always has at least one enemy. If not, the caller has a bug.
   if (ids.length === 0) {
     throw new Error('A fight needs at least one enemy')
+  }
+
+  // One unmasking per disguised enemy, in the same order as the fight.
+  const unmaskings = disguised.map(
+    ({ id, disguise }) =>
+      `${describeSpringsOpen(disguise)} It's ${nameWithIndefiniteArticle(getName(combat, id))}!`,
+  )
+
+  if (unmaskings.length === ids.length) {
+    return [...unmaskings, 'A fight begins.'].join(' ')
   }
 
   // "The skeleton", "The skeleton and the orc", or "The skeleton, the orc
@@ -230,7 +256,36 @@ export function describeCombatStart(combat: CombatState): string {
 
   // English changes the verb with the number of attackers.
   const verb = names.length === 1 ? 'attacks' : 'attack'
-  return `${attackers} ${verb} you! A fight begins.`
+  return [...unmaskings, `${attackers} ${verb} you! A fight begins.`].join(' ')
+}
+
+// "The chest springs open." The disguise was announced when it came into the
+// light, so it's "the" here, the same as subject() gives an enemy in a fight
+// ("The chest 1" for a numbered one). "springs open" fits the only disguise
+// we have, a chest. A disguise that doesn't open (say, a statue) would need
+// its own verb, e.g. a field in enemies.json.
+function describeSpringsOpen(disguise: string): string {
+  return `The ${disguise} springs open.`
+}
+
+// "a mimic", "an orc", or just "mimic 2": a numbered name works like a proper
+// name and gets no article (the same rule as nameWithArticle, lower case
+// because it comes after "It's").
+function nameWithIndefiniteArticle(name: string): string {
+  return isNumbered(name) ? name : `${indefiniteArticle(name)} ${name}`
+}
+
+// The line after an enemy that carries an item is defeated (decided Nov 9):
+// the item goes straight into the inventory, so the line says both what
+// falls and that the player has it now. `enemyId` is looked up in the combat
+// state like every other combat line, so the name matches ("The mimic"), and
+// `itemName` is the display name from items.json ("gold key").
+export function describeLoot(
+  state: CombatState,
+  enemyId: string,
+  itemName: string,
+): string {
+  return `${subject(state, enemyId)} drops ${indefiniteArticle(itemName)} ${itemName}. You pick it up.`
 }
 
 // Announces an enemy that has just come into the lantern light (rule 5: the
@@ -239,6 +294,9 @@ export function describeCombatStart(combat: CombatState): string {
 // - The name comes from combatant.name, not type, so two skeletons are told
 //   apart as "skeleton 1" and "skeleton 2", the same names the combat log and
 //   the attack menu use.
+// - A disguised enemy is named by its disguise instead (nameOutsideFight in
+//   disguise.ts): "A chest appears to the south." That is what a sighted
+//   player sees on the canvas, so a screen reader user is fooled the same way.
 // - First sighting: "A skeleton appears to the west." / "An orc appears…".
 //   Coming back into the light: "The skeleton appears…", so a screen reader
 //   user doesn't think it's a second skeleton (decided Nov 4).
@@ -249,7 +307,7 @@ export function describeReveal(
   direction: CompassDirection,
   seenBefore: boolean,
 ): string {
-  return `${nameWithArticle(enemy.combatant.name, seenBefore)} appears to the ${direction}.`
+  return `${nameWithArticle(nameOutsideFight(enemy), seenBefore)} appears to the ${direction}.`
 }
 
 // Announces an exit that has just come into the lantern light, with the

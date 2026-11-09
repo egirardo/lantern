@@ -10,10 +10,13 @@ import {
   resolvePlayerAttack,
   startCombat,
 } from './combat-turns'
+import { unmaskEnemies } from './disguise'
+import { itemDisplayName } from './items'
 import { crossedLowHealth } from './low-health'
 import {
   describeCombatEvent,
   describeCombatStart,
+  describeLoot,
   describeLowHealth,
   describeRecovery,
   describeYourTurn,
@@ -38,6 +41,10 @@ export type CombatStep = {
   // read from the player's health, not from a separate field.
   combat: CombatState | null
   lines: LogLine[]
+  // The item types the enemies defeated in this step carried (e.g.
+  // ['gold-key'] when the mimic falls), in the order they fell. The store
+  // adds them to the inventory. Usually [].
+  loot: string[]
 }
 
 // A fight starts: the adjacent enemies roll initiative with the player, and
@@ -55,14 +62,31 @@ export function beginCombat(
   const entries = adjacent.map(({ id, combatant }) => ({ id, combatant }))
   const started = startCombat(player, entries, random)
 
+  // A disguised enemy in this fight (the mimic) is unmasked now: the store
+  // gets it back without its disguise, so the reveal lines and the sprite
+  // show the real enemy from here on. Read before unmasking, the disguises
+  // are what the start line needs for "The chest springs open."
+  // The filter's `is` return type (a type guard) tells TypeScript that
+  // `disguise` is a string, not undefined, in what's left.
+  const disguised = adjacent.filter(
+    (enemy): enemy is StoreEnemy & { disguise: string } =>
+      enemy.disguise !== undefined,
+  )
+  const unmasked = unmaskEnemies(
+    enemies,
+    adjacent.map((enemy) => enemy.id),
+  )
+
   // Safe to call even if the player won initiative: resolveEnemyTurns returns
   // the state unchanged, with no events and no dice, when it's already the
   // player's turn. So there's no "who goes first?" check here.
+  // Enemies only attack the player here, so no enemy can be defeated at the
+  // start of a fight, and the step's loot is always [].
   const enemyTurns = resolveEnemyTurns(started.state, random)
 
   // One update for the whole step: the newest state, and the events of both
   // calls in the order they happened.
-  const step = finishStep(player, enemies, {
+  const step = finishStep(player, unmasked, {
     state: enemyTurns.state,
     events: [...started.events, ...enemyTurns.events],
   })
@@ -72,7 +96,7 @@ export function beginCombat(
   // the start of the fight, which lists exactly the enemies who joined. Only
   // beginCombat adds it, so it's not in finishStep.
   const startLine: LogLine = {
-    text: describeCombatStart(started.state),
+    text: describeCombatStart(started.state, disguised),
     urgency: 'polite',
   }
   return { ...step, lines: [startLine, ...step.lines] }
@@ -116,12 +140,34 @@ function finishStep(
 
   // 2. One polite line per event. Narration gets the newest state, which
   //    still has defeated enemies in it, so it can find their names.
-  //    `: LogLine` on the arrow function tells TypeScript that 'polite' is
+  //    `: LogLine[]` on the arrow function tells TypeScript that 'polite' is
   //    the urgency type, not just any string.
-  const lines = update.events.map((event): LogLine => ({
-    text: describeCombatEvent(update.state, event),
-    urgency: 'polite',
-  }))
+  //    An enemy that carried an item drops it when defeated (decided Nov 9):
+  //    its loot line comes right after "The mimic is defeated.", and before
+  //    "Victory…". flatMap lets one event give two lines: each call returns
+  //    a list, and flatMap joins the lists into one.
+  //    The item is looked up in `enemies`, the list from before this step,
+  //    because the defeated enemy is gone from the synced list.
+  const loot: string[] = []
+  const lines = update.events.flatMap((event): LogLine[] => {
+    const line: LogLine = {
+      text: describeCombatEvent(update.state, event),
+      urgency: 'polite',
+    }
+    if (event.type !== 'defeated') return [line]
+    const carried = enemies.find((e) => e.id === event.combatantId)?.carries
+    if (carried === undefined) return [line]
+    loot.push(carried)
+    const lootLine: LogLine = {
+      text: describeLoot(
+        update.state,
+        event.combatantId,
+        itemDisplayName(carried),
+      ),
+      urgency: 'polite',
+    }
+    return [line, lootLine]
+  })
 
   // 3. The low-health warning comes after everything that happened in this
   //    step. `lines` is a new array made by map above, so pushing to it
@@ -158,5 +204,5 @@ function finishStep(
   // 6. A finished fight is cleared, so the store goes back to exploring.
   const combat = status === 'ongoing' ? update.state : null
 
-  return { player, enemies: synced.enemies, combat, lines }
+  return { player, enemies: synced.enemies, combat, lines, loot }
 }
