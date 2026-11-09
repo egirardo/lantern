@@ -44,6 +44,12 @@ import {
 } from '../game/exits'
 import { itemDisplayName, pickUpItems, type StoreItem } from '../game/items'
 import type { Feature } from '../game/features'
+import {
+  defaultSettings,
+  osPrefersReducedMotion,
+  settingsSchema,
+  type Settings,
+} from './settings'
 
 type LogEntry = LogLine & { id: string }
 
@@ -123,6 +129,13 @@ export type GameState = {
   // them. Agent D's saves must save them, together with `inventory`.
   takenItemIds: string[]
   defeatedEnemyIds: string[]
+  // The player's accessibility settings (Phase L). Not game state: loading a
+  // room, using an exit or a new game never changes them. Agent D saves them
+  // on their own, in the `settings` table.
+  settings: Settings
+  // Changes only the settings passed in, e.g. updateSettings({ highContrast:
+  // true }), so the settings dialog can change one control at a time.
+  updateSettings: (changes: Partial<Settings>) => void
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   // Use the exit next to the player (Enter on the map, or the exit button).
@@ -276,7 +289,13 @@ function exitRevealEntries({
 }
 
 // A factory, so every test can get its own fresh store instead of sharing one.
-export function createGameStore(random: () => number = Math.random) {
+// initialSettings is a parameter for the same reason as random: a test can
+// start with the settings it needs. The default asks the operating system
+// about reduced motion once, when the store is created.
+export function createGameStore(
+  random: () => number = Math.random,
+  initialSettings: Settings = defaultSettings(osPrefersReducedMotion()),
+) {
   return createStore<GameState>()((set, get) => ({
     // Nothing is loaded yet: null means "no room", unlike [] or { x: 0, y: 0 },
     // which would look like real data.
@@ -301,6 +320,19 @@ export function createGameStore(random: () => number = Math.random) {
     defeatedEnemyIds: [],
     player: PLAYER,
     combat: null,
+    settings: initialSettings,
+    updateSettings: (changes) => {
+      // Spread the old settings first, then the changes on top: a field in
+      // `changes` wins, and every field not in it stays as it was.
+      // Parsed with the schema because Partial<Settings> also allows
+      // `{ highContrast: undefined }` (our tsconfig doesn't turn on
+      // exactOptionalPropertyTypes), which would wipe a setting without a
+      // type error. A wrong value is a bug in the caller, so it throws here
+      // instead of reaching Phaser or the save.
+      set({
+        settings: settingsSchema.parse({ ...get().settings, ...changes }),
+      })
+    },
     loadRoom: (roomData, mapData) => {
       const { grid, features, room, tiledMap } = loadRoomFromFiles(
         roomData,
