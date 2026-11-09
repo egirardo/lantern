@@ -14,7 +14,7 @@
     {
       "id": "mimic-1",
       "type": "mimic",
-      "position": { "x": 6, "y": 5 },
+      "position": { "x": 7, "y": 6 },
       "carries": "gold-key"
     }
   ],
