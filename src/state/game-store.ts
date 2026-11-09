@@ -50,6 +50,7 @@ import {
   settingsSchema,
   type Settings,
 } from './settings'
+import type { SaveContent } from '../save/save-rules'
 
 type LogEntry = LogLine & { id: string }
 
@@ -136,6 +137,17 @@ export type GameState = {
   // Changes only the settings passed in, e.g. updateSettings({ highContrast:
   // true }), so the settings dialog can change one control at a time.
   updateSettings: (changes: Partial<Settings>) => void
+  // The room the player came from into the current room, or null in the
+  // first room of a new game. The save needs it (a save is a checkpoint at
+  // that doorway), but arrivingFrom can't do the job: loadRoom sets it back
+  // to null. loadRoom copies arrivingFrom here before that.
+  enteredFrom: string | null
+  // Puts a saved game (Agent D's saves, src/save/) into the store: the saved
+  // fields, and the room to load with arrivingFrom, so RoomLoader loads it
+  // and the player arrives at the doorway they last came through. `line` is
+  // logged with the room's description, e.g. to say a save from another
+  // device was loaded; null at start-up, where nothing needs saying.
+  restoreSave: (content: SaveContent, line: string | null) => void
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   // Use the exit next to the player (Enter on the map, or the exit button).
@@ -333,6 +345,44 @@ export function createGameStore(
         settings: settingsSchema.parse({ ...get().settings, ...changes }),
       })
     },
+    enteredFrom: null,
+    restoreSave: (content, line) => {
+      const { room, tiledMap, currentRoomId } = get()
+      // Is the saved room the one already on screen (and not in the middle
+      // of an exit)? Then currentRoomId won't change, so RoomLoader won't
+      // fetch anything, and the room is loaded again here instead, from the
+      // files already in the store. Otherwise RoomLoader does it, as for an
+      // exit.
+      const reloadHere =
+        room !== null &&
+        tiledMap !== null &&
+        room.id === currentRoomId &&
+        room.id === content.currentRoomId
+      set({
+        currentRoomId: content.currentRoomId,
+        // arrivingFrom places the player at the doorway when the room
+        // loads; enteredFrom is set too, so the store is right even before.
+        arrivingFrom: content.enteredFrom,
+        enteredFrom: content.enteredFrom,
+        // The saved health on top of the player's stats, which never change.
+        player: { ...PLAYER, currentHealth: content.health },
+        inventory: content.inventory,
+        takenItemIds: content.takenItemIds,
+        defeatedEnemyIds: content.defeatedEnemyIds,
+        // A save is never made after the game has ended or during a fight.
+        hasEscaped: false,
+        combat: null,
+        // loadRoom logs these together with the room's description, in one
+        // batch (see pendingExitLines). Any exit lines still waiting belong
+        // to the game being replaced, so they go.
+        pendingExitLines: line === null ? [] : [politeEntry(line)],
+      })
+      if (reloadHere) {
+        // room and tiledMap were checked when they were first loaded, so
+        // checking them again in loadRoom passes.
+        get().loadRoom(room, tiledMap)
+      }
+    },
     loadRoom: (roomData, mapData) => {
       const { grid, features, room, tiledMap } = loadRoomFromFiles(
         roomData,
@@ -414,6 +464,8 @@ export function createGameStore(
         // Setting currentRoomId here too keeps the two in step when loadRoom
         // is called directly (as the tests do).
         currentRoomId: room.id,
+        // Remembered for the save before arrivingFrom is cleared.
+        enteredFrom: arrivingFrom,
         arrivingFrom: null,
         enemies,
         items: pickUp.items,
