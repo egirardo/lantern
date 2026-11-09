@@ -28,10 +28,11 @@ describe('the mimic in the manifest', () => {
     expect(SPRITES.mimic.animations.idle.frames).toEqual([0])
   })
 
-  // The first frame is what reduced motion shows, so it must be an open
-  // mouth, not the closed chest: otherwise the unmasking can't be seen.
-  it('opens its mouth from the first frame of the unmasked loop', () => {
-    expect(SPRITES.mimic.animations.unmasked.frames[0]).not.toBe(0)
+  // The first frame is what reduced motion shows, so it must be the fully
+  // open mouth (2): the closed chest (0) hides the unmasking, and the half
+  // open mouth (1) is harder to read as a monster.
+  it('starts the unmasked loop on the fully open mouth', () => {
+    expect(SPRITES.mimic.animations.unmasked.frames[0]).toBe(2)
   })
 })
 
