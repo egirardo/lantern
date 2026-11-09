@@ -5,6 +5,7 @@
 // Plain data and a pure lookup, with no Phaser imports, so game code and
 // tests can use it.
 import { z } from 'zod'
+import { kebabCaseSchema } from '../game/kebab-case-schema'
 import { toLocalId } from '../rooms/tile-indices'
 import { TILESETS, type TilesetName } from './manifest'
 import tileNamesData from './tile-names.json'
@@ -17,12 +18,9 @@ const localIdKeySchema = z.string().regex(/^(0|[1-9][0-9]*)$/, {
   message: 'Tile id must be a whole number with no leading zeros, e.g. "1099"',
 })
 
-// The same kebab-case rule as item and room ids, e.g. "wooden-table". The
-// log shows the name with hyphens turned into spaces later (step 3).
-const tileNameSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-  message:
-    'Tile name must be in kebab-case (lowercase letters, numbers, and hyphens)',
-})
+// Kebab-case like item and room ids, e.g. "wooden-table". The log shows the
+// name with hyphens turned into spaces later (step 3).
+const tileNameSchema = kebabCaseSchema('Tile name')
 
 // The whole table: tileset name -> local id -> name.
 //
