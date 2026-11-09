@@ -64,6 +64,28 @@ describe('tileNamesSchema', () => {
     expect(() => tileNamesSchema.parse(table)).toThrow()
   })
 
+  // Added by Claude Code: the lookup uses String(1099), so a key like
+  // "01099" would never match, and the barrel would silently have no name.
+  it('rejects a key with a leading zero', () => {
+    const table = {
+      dungeon: {
+        '01099': 'barrel',
+      },
+    }
+    expect(() => tileNamesSchema.parse(table)).toThrow()
+  })
+
+  // Added by Claude Code: 0 is a real local id (the first tile in the
+  // tileset), so the leading-zero rule must still allow "0" on its own.
+  it('accepts the key 0', () => {
+    const table = {
+      dungeon: {
+        '0': 'barrel',
+      },
+    }
+    expect(() => tileNamesSchema.parse(table)).not.toThrow()
+  })
+
   it('rejects a name that is not kebab-case', () => {
     const table = {
       dungeon: {
