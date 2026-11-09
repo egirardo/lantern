@@ -26,6 +26,26 @@ describe('buildGrid', () => {
     ])
   })
 
+  it('lets the player walk over a tile on another layer, like decor', () => {
+    // A skull (gid 1491) on a decor layer, on the floor tile at (0, 1). Only
+    // floor and walls decide what blocks, so the cell stays floor. The decor
+    // layer depends on this (decided Nov 9).
+    const mapWithDecor = {
+      ...validMap,
+      layers: [
+        floorLayer,
+        { ...floorLayer, name: 'decor', data: [0, 0, 0, 1491, 0, 0, 0, 0, 0] },
+        wallsLayer,
+      ],
+    }
+    const result = buildGrid(tiledSchema.parse(mapWithDecor))
+    expect(result).toEqual([
+      ['wall', 'wall', 'wall'],
+      ['floor', 'floor', 'floor'],
+      ['floor', 'floor', 'floor'],
+    ])
+  })
+
   it('treats a tile with no floor and no wall as a wall', () => {
     // The centre tile (index 4) is empty in both layers, like a spot the
     // room builder forgot to paint. It blocks, so a buggy map can't let the

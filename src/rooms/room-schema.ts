@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { kebabCaseSchema } from '../game/kebab-case-schema'
 import { enemies, enemyIdSchema } from '../game/enemy-schema'
 import { PLAYER_ID } from '../game/combat'
 import { isItemType, itemIdSchema } from '../game/item-schema'
@@ -8,10 +9,7 @@ export const positionSchema = z.strictObject({
   y: z.number().int().nonnegative(),
 })
 
-export const roomIdSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-  message:
-    'Room ID must be in kebab-case (lowercase letters, numbers, and hyphens)',
-})
+export const roomIdSchema = kebabCaseSchema('Room ID')
 
 // The fields every exit has, whichever kind it is.
 const exitBase = {

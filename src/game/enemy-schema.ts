@@ -1,10 +1,8 @@
 import { z } from 'zod'
+import { kebabCaseSchema } from './kebab-case-schema'
 import enemiesData from './enemies.json'
 
-export const enemyIdSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-  message:
-    'Enemy ID must be in kebab-case (lowercase letters, numbers, and hyphens)',
-})
+export const enemyIdSchema = kebabCaseSchema('Enemy ID')
 
 export const enemySchema = z.strictObject({
   maxHealth: z.number().int().positive(),

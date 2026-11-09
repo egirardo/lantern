@@ -68,6 +68,51 @@ describe('describeMove', () => {
     )
     expect(result).toBe('An exit leads north. Press Enter to use it.')
   })
+
+  it('describes a failed move into a feature with a name', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'barrel',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. A barrel blocks your path.',
+    )
+  })
+
+  it('describes a failed move into a feature with a name starting with a vowel', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'old-statue',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. An old statue blocks your path.',
+    )
+  })
+
+  it('describes a failed move into a feature with a name starting with a vowel and hyphen', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'ancient-altar',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. An ancient altar blocks your path.',
+    )
+  })
 })
 
 describe('describeCombatEvent', () => {
