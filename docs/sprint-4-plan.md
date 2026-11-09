@@ -326,7 +326,7 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 
 As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save layer on Tue Nov 10.
 
-- [ ] Settings in the store, with the `prefers-reduced-motion` default (tests)
+- [x] Settings in the store, with the `prefers-reduced-motion` default (tests)
 - [ ] Settings dialog with focus management
 - [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin"), and draws the lantern light with a hard edge instead of a soft fade (decided Nov 4), so lit and dark tiles are easy to tell apart
 - **Idea (Nov 6), not a task yet: background music with an on/off setting.** When the settings dialog is built, Claude Code suggests a few open-license tracks (CC0 first, e.g. from OpenGameArt, so there's nothing to credit or redistribute wrongly; CC BY only with the credit in the README). Rules if it's added: **off by default** (music talks over the screen reader, and WCAG 1.4.2 requires a way to stop audio that plays by itself), it starts only after the player turns it on (browsers block autoplay anyway), the setting is saved with the others, and there's a volume or at least a clear on/off. Sound cues were moved after submission (decision 4), so this is a stretch item: decide at the Wed Nov 11 go/no-go with potions.

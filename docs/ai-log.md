@@ -1144,6 +1144,19 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** Most of the draft matched my list. The exits and stairs needed my eye: Claude Code chose tiles that existed, but not how they would look in a room. Checking real tile ids now saves the agents from guessing and me from fixing art in review.
 - **How I verified it:** I looked at the rendered test scenes for the mats, doors and stairs, and chose the stairs from two versions. I read the spec section before committing it. The real test is the agent PRs: every correction I need there is logged in the evaluation table.
 
+#### 2026-11-09 — The settings shape in the store
+
+- **Tool:** Claude Code
+- **Category:** Coding, Review
+- **What I asked:** To add the settings shape to the store before Agent D starts, since saves need it. Claude Code proposed a plan first; I approved the text size steps (100, 125, 150 and 200%), chose to write the `defaultSettings` tests myself, and asked for a new branch so the spec PR stays docs only. Afterwards I asked Claude Code to look over my tests.
+- **What I got:**
+  - **The code (Claude Code's):** `src/state/settings.ts` with `settingsSchema` (Zod, with the `Settings` type inferred from it so Agent D can validate loaded settings), `defaultSettings(osReducedMotion)` with the operating system's reduced motion passed in so it can be tested in Node, `osPrefersReducedMotion()`, and `TEXT_SCALES`, which wasn't in the plan. In the store: `settings`, `updateSettings(changes)` and a second parameter on `createGameStore` for the starting settings.
+  - **A change from the plan:** while writing it, Claude Code noticed that `Partial<Settings>` allows `{ highContrast: undefined }` without a type error in our tsconfig, which would wipe a setting. `updateSettings` now parses the merged settings with the schema, so that throws instead.
+  - **Tests:** Claude Code wrote the schema and store tests (11). I wrote the 4 `defaultSettings` tests. Its review: each test calls `defaultSettings` with both `true` and `false`, which catches a default that wrongly follows the parameter. It broke each default on purpose, and each break failed exactly one of my tests. It pointed out its own mistake: the parameter had the same name as the exported `osPrefersReducedMotion` function and hid it (shadowing), so I asked it to rename the parameter to `osReducedMotion`.
+- **Outcome:** ✏️ kept with changes
+- **Why:** The schema is the one source of the shape, so Agent D and Phase L build on the same thing. The parse in `updateSettings` guards against a mistake TypeScript can't see with our settings. The rename makes the code easier to read and explain.
+- **How I verified it:** All 582 tests pass, along with typecheck, ESLint and Prettier. Claude Code broke the schema parse in `updateSettings` on purpose and the undefined test caught it; it broke each of the four defaults and my tests caught each one. Nothing in the UI uses the settings yet, so there's nothing to check by hand until Phase L.
+
 ---
 
 ## Agent-built rooms: evaluation
