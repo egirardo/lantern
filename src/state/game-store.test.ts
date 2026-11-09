@@ -673,10 +673,10 @@ describe('gameStore', () => {
       exits: [{ tiles: [{ x: 2, y: 0 }], to: 'room-1' }],
     }
 
-    // 'room-1', but its exit to 'room-2' is locked with the rusty key.
+    // 'room-1', but its exit to 'room-2' is locked with the gold key.
     const lockedRoom: Room = {
       ...validRoom,
-      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' }],
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'gold-key' }],
     }
 
     // 'room-1', but its only exit is the final exit out of the dungeon.
@@ -848,14 +848,14 @@ describe('gameStore', () => {
     it('a locked exit opens with the key in the inventory', () => {
       const store = storeNextToExit(lockedRoom)
       // A fixture inventory: picking items up comes later (Agent E).
-      store.setState({ inventory: ['rusty-key'] })
+      store.setState({ inventory: ['gold-key'] })
       store.getState().takeExit()
       expect(store.getState().currentRoomId).toBe('room-2')
       // The unlock line is part of the room change, so it waits with the
       // others and is logged in the same batch as the next room.
       store.getState().loadRoom(room2, validMap)
       expect(texts(store).slice(-5)).toEqual([
-        'You unlock the door with the rusty key.',
+        'You unlock the door with the gold key.',
         'You go through the exit to the north.',
         'You recover to full health. You have 12 out of 12 health.',
         'The second room.',
@@ -946,12 +946,12 @@ describe('gameStore', () => {
     // the start (9 > 6.25), lit after one step east (4 <= 6.25).
     const nearKey = {
       id: 'key-1',
-      type: 'rusty-key',
+      type: 'gold-key',
       position: { x: 2, y: 1 },
     }
     const distantKey = {
       id: 'key-2',
-      type: 'rusty-key',
+      type: 'gold-key',
       position: { x: 4, y: 1 },
     }
     const roomWithNearKey: Room = { ...roomWithoutExits, items: [nearKey] }
@@ -984,12 +984,12 @@ describe('gameStore', () => {
       // Items don't block movement: the player stands on the key's tile.
       expect(state.playerPosition).toEqual({ x: 2, y: 1 })
       expect(state.items).toEqual([])
-      expect(state.inventory).toEqual(['rusty-key'])
+      expect(state.inventory).toEqual(['gold-key'])
       expect(texts(store)).toEqual([
         validRoom.description,
-        'A rusty key lies to the east.',
+        'A gold key lies to the east.',
         'You have taken a step to the east.',
-        'You pick up a rusty key.',
+        'You pick up a gold key.',
       ])
     })
 
@@ -1005,7 +1005,7 @@ describe('gameStore', () => {
       store.getState().loadRoom(roomWithNearKey, wideMap)
       store.getState().movePlayer('east')
       store.getState().loadRoom(roomWithDistantKey, wideMap)
-      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().inventory).toEqual(['gold-key'])
       expect(store.getState().items).toEqual([distantKey])
     })
 
@@ -1016,11 +1016,11 @@ describe('gameStore', () => {
       }
       const store = createGameStore()
       store.getState().loadRoom(room, wideMap)
-      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().inventory).toEqual(['gold-key'])
       expect(store.getState().items).toEqual([])
       expect(texts(store)).toEqual([
         validRoom.description,
-        'You pick up a rusty key.',
+        'You pick up a gold key.',
       ])
     })
 
@@ -1031,7 +1031,7 @@ describe('gameStore', () => {
       expect(texts(store)).toEqual([
         validRoom.description,
         'You have taken a step to the east.',
-        'A rusty key lies to the east.',
+        'A gold key lies to the east.',
       ])
     })
 
@@ -1049,21 +1049,21 @@ describe('gameStore', () => {
       store.getState().movePlayer('east') // lit again
       const reveals = texts(store).filter((text) => text.includes('lies'))
       expect(reveals).toEqual([
-        'A rusty key lies to the east.',
-        'The rusty key lies to the east.',
+        'A gold key lies to the east.',
+        'The gold key lies to the east.',
       ])
     })
 
     it('forgets the seen items when a room loads', () => {
       const store = createGameStore()
       store.getState().loadRoom(roomWithDistantKey, wideMap)
-      store.getState().movePlayer('east') // "A rusty key"
+      store.getState().movePlayer('east') // "A gold key"
       expect(store.getState().seenItemIds).toEqual(['key-2'])
       // Same room again: the item ids repeat, but it's a new visit.
       store.getState().loadRoom(roomWithDistantKey, wideMap)
       expect(store.getState().seenItemIds).toEqual([])
       store.getState().movePlayer('east')
-      expect(texts(store).at(-1)).toBe('A rusty key lies to the east.')
+      expect(texts(store).at(-1)).toBe('A gold key lies to the east.')
     })
 
     it('logs the step, the pickup, then enemy, exit and item reveals', () => {
@@ -1083,10 +1083,10 @@ describe('gameStore', () => {
       store.getState().movePlayer('east')
       expect(texts(store).slice(logLengthBefore)).toEqual([
         'You have taken a step to the east.',
-        'You pick up a rusty key.',
+        'You pick up a gold key.',
         'A skeleton appears to the east.',
         'An exit appears to the east.',
-        'A rusty key lies to the east.',
+        'A gold key lies to the east.',
       ])
     })
 
@@ -1105,8 +1105,8 @@ describe('gameStore', () => {
       store.getState().movePlayer('east')
       expect(texts(store).slice(logLengthBefore)).toEqual([
         'You have taken a step to the east.',
-        'You pick up a rusty key.',
-        'A rusty key lies to the east.',
+        'You pick up a gold key.',
+        'A gold key lies to the east.',
         'You are next to the exit to the north. Press Enter to use it.',
       ])
     })
@@ -1123,11 +1123,11 @@ describe('gameStore', () => {
       const logLengthBefore = store.getState().log.length
       store.getState().movePlayer('east')
       expect(store.getState().combat).not.toBeNull()
-      expect(store.getState().inventory).toEqual(['rusty-key'])
+      expect(store.getState().inventory).toEqual(['gold-key'])
       expect(store.getState().items).toEqual([])
       expect(texts(store).slice(logLengthBefore, logLengthBefore + 3)).toEqual([
         'You have taken a step to the east.',
-        'You pick up a rusty key.',
+        'You pick up a gold key.',
         'The skeleton attacks you! A fight begins.',
       ])
     })
@@ -1138,9 +1138,9 @@ describe('gameStore', () => {
       const room: Room = {
         ...validRoom,
         exits: [
-          { tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' },
+          { tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'gold-key' },
         ],
-        items: [{ id: 'key-1', type: 'rusty-key', position: { x: 0, y: 1 } }],
+        items: [{ id: 'key-1', type: 'gold-key', position: { x: 0, y: 1 } }],
       }
       const store = createGameStore()
       store.getState().loadRoom(room, validMap)
@@ -1148,8 +1148,124 @@ describe('gameStore', () => {
       store.getState().takeExit()
       expect(store.getState().currentRoomId).toBe('room-2')
       expect(store.getState().pendingExitLines[0]?.text).toBe(
-        'You unlock the door with the rusty key.',
+        'You unlock the door with the gold key.',
       )
+    })
+  })
+
+  describe('coming back to a room (decided Nov 9)', () => {
+    // On validMap: validRoom ('room-1') has its exit to 'room-2' at (0, 0),
+    // and the player starts at (1, 1). room2 leads back through (2, 0), so
+    // the player arrives there at (2, 1), and back in room-1 at (0, 1).
+    const room2: Room = {
+      ...validRoom,
+      id: 'room-2',
+      description: 'The second room.',
+      playerStart: { x: 0, y: 2 },
+      exits: [{ tiles: [{ x: 2, y: 0 }], to: 'room-1' }],
+    }
+
+    // From (0, 1) below the exit to room-2: go there, then come back to
+    // `room1`. The player ends at (0, 1) in room-1 again.
+    function goToRoom2AndBack(
+      store: ReturnType<typeof createGameStore>,
+      room1: Room,
+    ) {
+      store.getState().takeExit()
+      store.getState().loadRoom(room2, validMap)
+      store.getState().takeExit()
+      store.getState().loadRoom(room1, validMap)
+    }
+
+    it('a picked-up item is not there again when the player comes back', () => {
+      // The key lies at (0, 1): one step west of the start, and also the tile
+      // the player arrives on when coming back from room-2.
+      const room1WithKey: Room = {
+        ...validRoom,
+        items: [{ id: 'key-1', type: 'gold-key', position: { x: 0, y: 1 } }],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room1WithKey, validMap)
+      store.getState().movePlayer('west') // picks up the key
+      const logLengthBefore = store.getState().log.length
+
+      goToRoom2AndBack(store, room1WithKey)
+
+      const state: GameState = store.getState()
+      expect(state.room?.id).toBe('room-1')
+      expect(state.items).toEqual([])
+      // Still one key: it wasn't picked up a second time on arrival.
+      expect(state.inventory).toEqual(['gold-key'])
+      expect(state.takenItemIds).toEqual(['room-1/key-1'])
+      // Nothing about the key since leaving: no "lies", no "pick up".
+      const linesSince = state.log
+        .slice(logLengthBefore)
+        .map((entry) => entry.text)
+      expect(linesSince.some((text) => text.includes('gold key'))).toBe(false)
+    })
+
+    it('a taken item only counts in its own room', () => {
+      // The key 'key-1' is picked up in room-1. room-2 has its own 'key-1',
+      // which must still be there: ids are only unique within a room.
+      const room1WithKey: Room = {
+        ...validRoom,
+        items: [{ id: 'key-1', type: 'gold-key', position: { x: 0, y: 1 } }],
+      }
+      const room2WithKey: Room = {
+        ...room2,
+        items: [{ id: 'key-1', type: 'gold-key', position: { x: 0, y: 2 } }],
+      }
+      const store = createGameStore()
+      store.getState().loadRoom(room1WithKey, validMap)
+      store.getState().movePlayer('west') // picks up room-1's key
+      store.getState().takeExit()
+      store.getState().loadRoom(room2WithKey, validMap)
+      expect(store.getState().items.map((item) => item.id)).toEqual(['key-1'])
+    })
+
+    it('a defeated enemy does not come back when the player returns', () => {
+      // The skeleton at (0, 2) is next to (0, 1), so the step west starts a
+      // fight right below the exit.
+      const room1WithSkeleton: Room = {
+        ...validRoom,
+        enemies: [{ id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } }],
+      }
+      const store = createGameStore(
+        sequence(
+          ...playerWinsInitiative, // initiative: the player goes first
+          rollOf(10, 20), // the player's attack: 10 + 3 = 13 against AC 10 → hit
+          rollOf(4, 6), // the player's damage: 4 → the skeleton has 0 HP
+        ),
+      )
+      store.getState().loadRoom(room1WithSkeleton, validMap)
+      store.getState().movePlayer('west') // the fight starts
+      store.getState().playerAttack('e1') // the skeleton is defeated
+      expect(store.getState().combat).toBeNull()
+      expect(store.getState().defeatedEnemyIds).toEqual(['room-1/e1'])
+
+      goToRoom2AndBack(store, room1WithSkeleton)
+
+      expect(store.getState().room?.id).toBe('room-1')
+      expect(store.getState().enemies).toEqual([])
+    })
+
+    it('keeps the numbered names of the enemies that are left', () => {
+      // Two skeletons: spawnEnemies names them "skeleton" and "skeleton 2".
+      // With the first one defeated, the second must still be "skeleton 2",
+      // the name the log has used for it.
+      const roomWithTwoSkeletons: Room = {
+        ...roomWithoutExits,
+        enemies: [
+          { id: 'e1', type: 'skeleton', position: { x: 0, y: 2 } },
+          { id: 'e2', type: 'skeleton', position: { x: 2, y: 2 } },
+        ],
+      }
+      const store = createGameStore()
+      store.setState({ defeatedEnemyIds: ['room-1/e1'] })
+      store.getState().loadRoom(roomWithTwoSkeletons, validMap)
+      expect(
+        store.getState().enemies.map((enemy) => enemy.combatant.name),
+      ).toEqual(['skeleton 2'])
     })
   })
 })

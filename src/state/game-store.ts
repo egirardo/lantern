@@ -68,7 +68,7 @@ export type GameState = {
   // them at the doorway that leads back there. null at the start of a game,
   // which places the player at playerStart. loadRoom sets it back to null.
   arrivingFrom: string | null
-  // The item types the player carries, e.g. ['rusty-key'], in the order they
+  // The item types the player carries, e.g. ['gold-key'], in the order they
   // were picked up. Types, not ids (decided Nov 6): a locked exit checks this
   // list for the type it needs. Kept across room changes, unlike `items`.
   inventory: string[]
@@ -104,9 +104,18 @@ export type GameState = {
   // previous room" (decision 11), so it can't be mistaken for the way forward.
   arrivalExitIndex: number | null
   // Ids of the items the player has already seen in this room, so the reveal
-  // can say "A rusty key" the first time and "The rusty key" after, like
+  // can say "A gold key" the first time and "The gold key" after, like
   // seenEnemyIds. A room load starts it again.
   seenItemIds: string[]
+  // The items picked up and the enemies defeated, in every room so far, as
+  // 'room-id/id' (e.g. 'dingy-basement/key-1'). Ids are only unique within
+  // a room, so the room id goes in front. loadRoom leaves these out, so a key
+  // doesn't lie there again and a defeated guard doesn't come back when the
+  // player returns to a room (decided Nov 9). Unlike the seen lists, these
+  // are kept across rooms; only a new game (a page reload, for now) clears
+  // them. Agent D's saves must save them, together with `inventory`.
+  takenItemIds: string[]
+  defeatedEnemyIds: string[]
   movePlayer: (direction: Direction) => void
   loadRoom: (roomData: unknown, mapData: unknown) => void
   // Use the exit next to the player (Enter on the map, or the exit button).
@@ -122,6 +131,26 @@ export type GameState = {
 // has already left it. It's usually a few milliseconds, so a key press in
 // that gap is ignored without a log line (the "Loading the room…" status
 // in RoomLoader covers a slow connection).
+// The id of an item or enemy across the whole dungeon: 'room-id/id'. Used for
+// takenItemIds and defeatedEnemyIds, where ids from different rooms are kept
+// in one list and 'e1' in one room must not count for 'e1' in another.
+function inRoom(roomId: string, id: string): string {
+  return `${roomId}/${id}`
+}
+
+// The ids (with inRoom) of the items that were in `before` but aren't in
+// `after`, i.e. the ones just picked up. includes() can compare the objects
+// themselves, because pickUpItems keeps the same item objects in its result.
+function pickedUpIds(
+  roomId: string,
+  before: StoreItem[],
+  after: StoreItem[],
+): string[] {
+  return before
+    .filter((item) => !after.includes(item))
+    .map((item) => inRoom(roomId, item.id))
+}
+
 function isChangingRoom(state: GameState): boolean {
   return state.room !== null && state.room.id !== state.currentRoomId
 }
@@ -160,8 +189,8 @@ function revealEntries(
 }
 
 // One log entry per item that just came into the light (rule 5), the twin
-// of revealEntries for enemies: "A rusty key lies to the west." the first
-// time, "The rusty key…" after. Also returns the updated seen ids, for the
+// of revealEntries for enemies: "A gold key lies to the west." the first
+// time, "The gold key…" after. Also returns the updated seen ids, for the
 // same set(). directionFrom can't throw here (it throws for the player's own
 // tile): the store passes only the items still lying in the room after the
 // pickup, and anything on the player's tile has just been picked up.
@@ -260,13 +289,32 @@ export function createGameStore(random: () => number = Math.random) {
     seenExitIndexes: [],
     arrivalExitIndex: null,
     seenItemIds: [],
+    takenItemIds: [],
+    defeatedEnemyIds: [],
     player: PLAYER,
     combat: null,
     loadRoom: (roomData, mapData) => {
       const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
       const text = room.description
-      const { log, arrivingFrom, pendingExitLines, inventory } = get()
-      const enemies = spawnEnemies(room.enemies)
+      const {
+        log,
+        arrivingFrom,
+        pendingExitLines,
+        inventory,
+        takenItemIds,
+        defeatedEnemyIds,
+      } = get()
+      // Spawn every enemy in the room file first, then leave out the ones
+      // already defeated. In that order, the names stay the same: with two
+      // skeletons, "skeleton 2" is still "skeleton 2" after "skeleton" was
+      // defeated. Filtering before spawning would rename it "skeleton".
+      const enemies = spawnEnemies(room.enemies).filter(
+        (enemy) => !defeatedEnemyIds.includes(inRoom(room.id, enemy.id)),
+      )
+      // The room's items, minus the ones already picked up on an earlier visit.
+      const roomItems = room.items.filter(
+        (item) => !takenItemIds.includes(inRoom(room.id, item.id)),
+      )
       // At the doorway that leads back where the player came from, or at
       // playerStart in a new game (arrivingFrom is null). Enemy tiles are
       // passed so the player is never placed on top of an enemy.
@@ -306,7 +354,7 @@ export function createGameStore(random: () => number = Math.random) {
       // reveal below would ask for the direction to the player's own tile
       // (directionFrom throws), and the item could only be picked up by
       // stepping off and back on.
-      const pickUp = pickUpItems(room.items, start, inventory)
+      const pickUp = pickUpItems(roomItems, start, inventory)
       // The new room's items start unseen ([]), like its enemies and exits.
       const itemReveal = itemRevealEntries(
         getNewlyLitItems(litBefore, litAfter, pickUp.items),
@@ -326,6 +374,10 @@ export function createGameStore(random: () => number = Math.random) {
         enemies,
         items: pickUp.items,
         inventory: pickUp.inventory,
+        takenItemIds: [
+          ...takenItemIds,
+          ...pickedUpIds(room.id, roomItems, pickUp.items),
+        ],
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
         seenItemIds: itemReveal.seenItemIds,
@@ -412,13 +464,16 @@ export function createGameStore(random: () => number = Math.random) {
         seenExitIndexes,
         seenItemIds,
         arrivalExitIndex,
+        takenItemIds,
         log,
         player,
         combat,
       } = get()
       // No room loaded yet, so there's nowhere to move and nothing to narrate.
-      // After this check, TypeScript knows both values aren't null (narrowing).
-      if (playerPosition === null || grid === null) return
+      // After this check, TypeScript knows none of them is null (narrowing).
+      // loadRoom sets all three together, so checking room too costs nothing,
+      // and the code below can use room.id and room.exits directly.
+      if (playerPosition === null || grid === null || room === null) return
 
       // The player has gone through an exit and the next room is loading.
       if (isChangingRoom(get())) return
@@ -449,9 +504,8 @@ export function createGameStore(random: () => number = Math.random) {
       const enemyPositions = enemies.map((enemy) => enemy.position)
       // Every tile of every exit, so walking into one says how to use it.
       // flatMap turns the list of exits (each with a list of tiles) into one
-      // flat list of tiles. `?? []` covers the type: room can't really be
-      // null when grid isn't, but TypeScript doesn't know that.
-      const exits = room?.exits ?? []
+      // flat list of tiles.
+      const exits = room.exits
       const exitTiles = exits.flatMap((exit) => exit.tiles)
       const result = computeMove(
         playerPosition,
@@ -472,6 +526,13 @@ export function createGameStore(random: () => number = Math.random) {
         ? pickUpItems(items, result.newPosition, inventory)
         : { items, inventory, lines: [] }
       const pickUpEntries = withIds(pickUp.lines)
+      // Remember what was picked up, so it isn't there when the player comes
+      // back to this room. The same array when nothing was picked up.
+      const newlyTaken = pickedUpIds(room.id, items, pickUp.items)
+      const nextTakenItemIds =
+        newlyTaken.length === 0
+          ? takenItemIds
+          : [...takenItemIds, ...newlyTaken]
 
       // What the lantern lights before and after the step. A blocked move has
       // the same position in both, so it reveals nothing without a special case.
@@ -530,6 +591,7 @@ export function createGameStore(random: () => number = Math.random) {
           playerPosition: result.newPosition,
           items: pickUp.items,
           inventory: pickUp.inventory,
+          takenItemIds: nextTakenItemIds,
           seenEnemyIds: reveal.seenEnemyIds,
           seenExitIndexes: exitReveal.seenExitIndexes,
           seenItemIds: itemReveal.seenItemIds,
@@ -560,6 +622,7 @@ export function createGameStore(random: () => number = Math.random) {
         combat: step.combat,
         items: pickUp.items,
         inventory: pickUp.inventory,
+        takenItemIds: nextTakenItemIds,
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
         seenItemIds: itemReveal.seenItemIds,
@@ -582,15 +645,26 @@ export function createGameStore(random: () => number = Math.random) {
     },
 
     playerAttack: (targetId) => {
-      const { combat, enemies, log } = get()
+      const { combat, enemies, log, room, defeatedEnemyIds } = get()
       // No game-over check needed: when the player falls, finishStep sets combat
-      // to null, so the check below already covers it.
-      if (!combat) return
+      // to null, so the check below already covers it. room can't be null in
+      // a fight, but the check lets TypeScript use room.id below.
+      if (!combat || room === null) return
       const step = playerAttackStep(combat, enemies, targetId, random)
+      // playerAttackStep removes an enemy from the list when it dies, so the
+      // ones missing afterwards are the ones just defeated. Remember them, so
+      // they don't come back when the player returns to this room.
+      const defeated = enemies
+        .filter((enemy) => !step.enemies.some((e) => e.id === enemy.id))
+        .map((enemy) => inRoom(room.id, enemy.id))
       set({
         player: step.player,
         enemies: step.enemies,
         combat: step.combat,
+        defeatedEnemyIds:
+          defeated.length === 0
+            ? defeatedEnemyIds
+            : [...defeatedEnemyIds, ...defeated],
         log: [...log, ...withIds(step.lines)],
       })
     },
