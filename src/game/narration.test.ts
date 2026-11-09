@@ -22,6 +22,7 @@ import {
   describeNextToExit,
   describePickUp,
   describeItemReveal,
+  describeLoot,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -515,6 +516,103 @@ describe('describeReveal', () => {
   it('uses the combatant name, not the type', () => {
     expect(describeReveal(enemyNamed('demon'), 'west', false)).toBe(
       'A demon appears to the west.',
+    )
+  })
+
+  describe('a disguised enemy (the mimic)', () => {
+    function mimic(disguise: string, name = 'mimic') {
+      return makeStoreEnemy('m1', {
+        type: 'mimic',
+        combatant: makeCombatant({ name }),
+        disguise,
+      })
+    }
+
+    it('is named by its disguise the first time', () => {
+      expect(describeReveal(mimic('chest'), 'south', false)).toBe(
+        'A chest appears to the south.',
+      )
+    })
+
+    it('uses "the" with its disguise when it comes back into the light', () => {
+      expect(describeReveal(mimic('chest'), 'south', true)).toBe(
+        'The chest appears to the south.',
+      )
+    })
+
+    it('keeps the article rules for the disguise ("an" before a vowel, none for a number)', () => {
+      expect(describeReveal(mimic('urn'), 'east', false)).toBe(
+        'An urn appears to the east.',
+      )
+      expect(describeReveal(mimic('chest 2', 'mimic 2'), 'east', false)).toBe(
+        'Chest 2 appears to the east.',
+      )
+    })
+  })
+})
+
+describe('describeCombatStart with a disguised enemy (the mimic)', () => {
+  const mimicEntry = { id: 'm1', combatant: makeCombatant({ name: 'mimic' }) }
+  const skeletonEntry = {
+    id: 'e1',
+    combatant: makeCombatant({ name: 'skeleton' }),
+  }
+
+  it('unmasks a mimic that fights alone', () => {
+    const state = makeState({ enemies: [mimicEntry] })
+    expect(describeCombatStart(state, [{ id: 'm1', disguise: 'chest' }])).toBe(
+      "The chest springs open. It's a mimic! A fight begins.",
+    )
+  })
+
+  it('unmasks the mimic first, then names every attacker by their real name', () => {
+    const state = makeState({ enemies: [mimicEntry, skeletonEntry] })
+    expect(describeCombatStart(state, [{ id: 'm1', disguise: 'chest' }])).toBe(
+      "The chest springs open. It's a mimic! The mimic and the skeleton attack you! A fight begins.",
+    )
+  })
+
+  it('uses "an" for a real name with a vowel, and no article for a number', () => {
+    const orcInDisguise = makeState({
+      enemies: [{ id: 'o1', combatant: makeCombatant({ name: 'orc' }) }],
+    })
+    expect(
+      describeCombatStart(orcInDisguise, [{ id: 'o1', disguise: 'chest' }]),
+    ).toBe("The chest springs open. It's an orc! A fight begins.")
+
+    const twoMimics = makeState({
+      enemies: [
+        { id: 'm1', combatant: makeCombatant({ name: 'mimic 1' }) },
+        { id: 'm2', combatant: makeCombatant({ name: 'mimic 2' }) },
+      ],
+    })
+    expect(
+      describeCombatStart(twoMimics, [
+        { id: 'm1', disguise: 'chest 1' },
+        { id: 'm2', disguise: 'chest 2' },
+      ]),
+    ).toBe(
+      "The chest 1 springs open. It's mimic 1! The chest 2 springs open. It's mimic 2! A fight begins.",
+    )
+  })
+})
+
+describe('describeLoot', () => {
+  it('says what the enemy drops and that the player picks it up', () => {
+    const state = makeState({
+      enemies: [{ id: 'm1', combatant: makeCombatant({ name: 'mimic' }) }],
+    })
+    expect(describeLoot(state, 'm1', 'gold key')).toBe(
+      'The mimic drops a gold key. You pick it up.',
+    )
+  })
+
+  it('uses "an" before an item name with a vowel', () => {
+    const state = makeState({
+      enemies: [{ id: 'o1', combatant: makeCombatant({ name: 'orc' }) }],
+    })
+    expect(describeLoot(state, 'o1', 'amulet')).toBe(
+      'The orc drops an amulet. You pick it up.',
     )
   })
 })

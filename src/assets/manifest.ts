@@ -77,11 +77,18 @@ const ITEM_ANIMATIONS = {
 } as const
 
 // The mimic (decided Nov 9) has 3 frames on the sheet: 0 is a closed chest,
-// 1 and 2 open their mouth. Before a fight it must look like a plain, still
-// chest, so its idle animation is the closed frame alone. Agent H adds the
-// open-mouth animation that plays once the fight starts.
+// 1 has the mouth half open and 2 fully open. Before a fight it must look
+// like a plain, still chest, so its idle animation is the closed frame alone.
+// `unmasked` plays once a fight with it has started: the mouth snaps between
+// fully and half open. The scene picks it when the store says the enemy is
+// no longer disguised (see enemyAnimationName in sprite-motion.ts). With
+// reduced motion the scene shows its first frame only, so the loop starts on
+// the fully open frame (2): the clearest still picture of the unmasking.
+// 4 frames per second is 2 bites a second: a small sprite changing shape, not
+// a flash of light, so it stays far from the flashing limits in WCAG 2.3.1.
 const MIMIC_ANIMATIONS = {
   idle: { frames: [0], frameRate: 1, repeat: 0 },
+  unmasked: { frames: [2, 1], frameRate: 4, repeat: -1 },
 } as const
 
 // Characters, enemies and items, by logical name (kebab-case).

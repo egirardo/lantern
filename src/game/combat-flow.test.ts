@@ -433,3 +433,151 @@ describe('playerAttackStep', () => {
     expect(urgencies(step2)).toContain('assertive')
   })
 })
+
+describe('the mimic: unmasking and the carried key (Nov 9)', () => {
+  // A mimic disguised as a chest and carrying the gold key, as spawnEnemies
+  // makes it from the vault's room file. 5 health, armor class 12.
+  function makeMimic() {
+    return makeStoreEnemy('m1', {
+      type: 'mimic',
+      position: { x: 6, y: 5 },
+      combatant: makeCombatant({ name: 'mimic' }),
+      disguise: 'chest',
+      carries: 'gold-key',
+    })
+  }
+
+  // The same mimic once a fight has started: no disguise any more.
+  function makeUnmaskedMimic() {
+    return makeStoreEnemy('m1', {
+      type: 'mimic',
+      position: { x: 6, y: 5 },
+      combatant: makeCombatant({ name: 'mimic' }),
+      carries: 'gold-key',
+    })
+  }
+
+  // A fight against the mimic alone, on the player's turn.
+  function fightWithMimic() {
+    return makeState({
+      player: makeHero(),
+      enemies: [{ id: 'm1', combatant: makeCombatant({ name: 'mimic' }) }],
+      turnOrder: [PLAYER_ID, 'm1'],
+    })
+  }
+
+  it('unmasks the mimic in the first line, and every line after says "mimic"', () => {
+    const mimic = makeMimic()
+    const dice = sequence(
+      rollOf(2, 20), // player's initiative
+      rollOf(20, 20), // mimic's initiative: it goes first
+      rollOf(15, 20), // the mimic's attack hits
+      rollOf(4, 6), // 4 damage
+    )
+
+    const step = beginCombat(makeHero(), [mimic], [mimic], dice)
+
+    expect(texts(step)).toEqual([
+      "The chest springs open. It's a mimic! A fight begins.",
+      'The mimic rolls initiative: 20 + 0 = 20.',
+      'You roll initiative: 2 + 0 = 2.',
+      'The mimic hits you for 4 damage (15 + 3 = 18 against armor class 12).',
+      "It's your turn.",
+    ])
+  })
+
+  it('takes the disguise off the mimic in the store, so it stays unmasked', () => {
+    const mimic = makeMimic()
+    const dice = sequence(rollOf(20, 20), rollOf(2, 20))
+
+    const step = beginCombat(makeHero(), [mimic], [mimic], dice)
+
+    expect(step.enemies[0]).not.toHaveProperty('disguise')
+    // It still carries the key: only the disguise comes off.
+    expect(step.enemies[0]?.carries).toBe('gold-key')
+    expect(step.loot).toEqual([])
+  })
+
+  it('leaves a mimic that is not in the fight disguised', () => {
+    const skeleton = makeSkeleton()
+    const farMimic = { ...makeMimic(), position: { x: 10, y: 8 } }
+    const dice = sequence(rollOf(20, 20), rollOf(2, 20))
+
+    const step = beginCombat(makeHero(), [skeleton, farMimic], [skeleton], dice)
+
+    expect(texts(step)[0]).toBe('The skeleton attacks you! A fight begins.')
+    expect(step.enemies[1]?.disguise).toBe('chest')
+  })
+
+  it('reads well when a mimic and another enemy start a fight together', () => {
+    const mimic = makeMimic()
+    const skeleton = makeSkeleton()
+    const dice = sequence(rollOf(20, 20), rollOf(2, 20), rollOf(3, 20))
+
+    const step = beginCombat(
+      makeHero(),
+      [mimic, skeleton],
+      [mimic, skeleton],
+      dice,
+    )
+
+    expect(texts(step)[0]).toBe(
+      "The chest springs open. It's a mimic! The mimic and the skeleton attack you! A fight begins.",
+    )
+  })
+
+  it('puts the carried key in the loot when the mimic is defeated, with a line after the defeat', () => {
+    const dice = sequence(
+      rollOf(15, 20), // your attack hits
+      rollOf(6, 6), // 6 damage: mimic 5 → 0, defeated
+    )
+
+    const step = playerAttackStep(
+      fightWithMimic(),
+      [makeUnmaskedMimic()],
+      'm1',
+      dice,
+    )
+
+    expect(step.loot).toEqual(['gold-key'])
+    expect(step.enemies).toEqual([])
+    expect(texts(step)).toEqual([
+      'You hit the mimic for 6 damage (15 + 3 = 18 against armor class 12).',
+      'The mimic is defeated.',
+      'The mimic drops a gold key. You pick it up.',
+      'Victory. No enemies are left standing.',
+      'You recover 0 health. You have 12 out of 12 health.',
+    ])
+  })
+
+  it('drops nothing while the mimic is still alive', () => {
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(2, 20), // the mimic's attack misses
+    )
+
+    const step = playerAttackStep(
+      fightWithMimic(),
+      [makeUnmaskedMimic()],
+      'm1',
+      dice,
+    )
+
+    expect(step.loot).toEqual([])
+    expect(texts(step).join(' ')).not.toContain('drops')
+  })
+
+  it('drops nothing when an enemy that carries nothing is defeated', () => {
+    const skeleton = makeSkeleton()
+    const combat = makeState({
+      player: makeHero(),
+      enemies: [{ id: 'e1', combatant: skeleton.combatant }],
+      turnOrder: [PLAYER_ID, 'e1'],
+    })
+    const dice = sequence(rollOf(15, 20), rollOf(6, 6))
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(step.loot).toEqual([])
+  })
+})

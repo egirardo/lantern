@@ -16,6 +16,7 @@ import { prefersReducedMotion } from './reduced-motion'
 import { hitEnemies, wasHit } from './hits'
 import {
   animationKey,
+  enemyAnimationName,
   facingAfterStep,
   isSingleStep,
   type Facing,
@@ -267,23 +268,37 @@ export class RoomScene extends Phaser.Scene {
   // Starts a sprite's idle loop, or shows a still frame if the player prefers
   // reduced motion. Called whenever a sprite should stand still: when it is
   // made, after the player's walk, and on every redraw of the enemies.
-  private playIdle(sprite: Phaser.GameObjects.Sprite, spriteName: SpriteName) {
+  // `animationName` is 'idle' for everyone except an unmasked mimic, which
+  // stands with its 'unmasked' loop instead (see enemyAnimationName).
+  private playIdle(
+    sprite: Phaser.GameObjects.Sprite,
+    spriteName: SpriteName,
+    animationName: 'idle' | 'unmasked' = 'idle',
+  ) {
     if (prefersReducedMotion()) {
       // stop() halts any animation but leaves whatever frame it was on, so
-      // set the first idle frame by hand: the same still picture as before
-      // there were animations.
+      // set the first frame of the animation by hand: the same still picture
+      // as before there were animations. For the unmasked mimic, that's an
+      // open mouth, so the change is still visible without motion.
       sprite.stop()
       const art = SPRITES[spriteName]
-      sprite.setFrame(`${art.framePrefix}${art.animations.idle.frames[0]}`)
+      // Not every sprite has an 'unmasked' animation, so TypeScript won't let
+      // us index art.animations with it directly. Seen as a plain Record, the
+      // lookup is allowed and may give undefined, which falls back to idle.
+      const animations: Record<string, { frames: readonly number[] }> =
+        art.animations
+      const animation = animations[animationName] ?? art.animations.idle
+      sprite.setFrame(`${art.framePrefix}${animation.frames[0]}`)
       return
     }
     // The second argument, ignoreIfPlaying, is what keeps the loop smooth:
-    // if the sprite is already playing its idle animation, play() does
-    // nothing, instead of starting again from the first frame.
+    // if the sprite is already playing this animation, play() does nothing,
+    // instead of starting again from the first frame. A different animation
+    // (the mimic going from idle to unmasked) does start.
     // randomFrame starts a new idle loop on a random frame, so enemies that
     // appear together don't bob in step like a choir.
     sprite.play(
-      { key: animationKey(spriteName, 'idle'), randomFrame: true },
+      { key: animationKey(spriteName, animationName), randomFrame: true },
       true,
     )
   }
@@ -671,7 +686,17 @@ export class RoomScene extends Phaser.Scene {
       // Starts the loop on a new sprite. On a kept sprite it changes nothing
       // (see playIdle), unless reduced motion was turned on since the last
       // step: then it stops the loop.
-      this.playIdle(sprite, enemy.type)
+      // A disguised mimic stands still as a closed chest ('idle'). When a
+      // fight starts, the store removes its disguise, `enemies` changes, this
+      // redraw runs, and the sprite switches to its 'unmasked' loop.
+      this.playIdle(
+        sprite,
+        enemy.type,
+        enemyAnimationName(
+          enemy.disguise !== undefined,
+          SPRITES[enemy.type].animations,
+        ),
+      )
     }
   }
 
