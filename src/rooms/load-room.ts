@@ -24,6 +24,8 @@ export function loadRoom(
 
   // Check that the player start and exit positions are valid
   checkPositions(grid, room)
+  // Check that every named tile blocks (decided Nov 9)
+  checkFeatures(grid, features)
   return { grid, features, room, tiledMap }
 }
 
@@ -89,6 +91,23 @@ export function checkPositions(grid: Grid, room: Room) {
       if (!hasWalkableNeighbor(grid, tile)) {
         throw new Error('Exit tile has no walkable neighbor')
       }
+    }
+  }
+}
+
+// Named decor (a crate, a pillar) must be on a blocked cell. buildFeatures
+// reads every layer, but only the walls layer blocks, so a crate painted on
+// the decor layer would be announced ("A crate appears…") while the player
+// walks straight through it. Failing here, with the position and the fix,
+// catches that in the room file instead of in a playtest. Walk-over decor
+// (skulls, rugs) has no name, so it never reaches this check.
+export function checkFeatures(grid: Grid, features: Feature[]) {
+  for (const feature of features) {
+    if (!isWall(grid, feature.position)) {
+      const { x, y } = feature.position
+      throw new Error(
+        `Named decor "${feature.name}" at (${x}, ${y}) is on a walkable tile. Named decor blocks the path, so it must be on the walls layer.`,
+      )
     }
   }
 }
