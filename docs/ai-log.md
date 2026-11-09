@@ -1129,6 +1129,21 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The mimic makes the key quest memorable without much engine work, and gives the report a concrete example of equal information for sighted and screen reader players. Adding the data fields and the sprite before the spec means the room agents and Agent H can work in parallel.
 - **How I verified it:** All 567 tests pass, along with typecheck and ESLint. Claude Code broke the new parts on purpose 4 times (an empty disguise allowed, `carries` not checked against `items.json`, the mimic without a disguise, and no mimic sprite), and each was caught, then restored. The mimic's stats are a guess; my balance check on Thursday decides.
 
+#### 2026-11-09 — Drafting the agent spec, and exits without side doors
+
+- **Tool:** Claude Code
+- **Category:** Planning, Documentation
+- **What I asked:** To draft the whole "Building rooms (for agents)" section in `CLAUDE.md` from my list (format, decor, exits, items, the three room designs, the mimic, narration tone and the checklist), and to check that the tileset has a doormat before writing it. Then I asked to see the test scenes Claude Code had rendered.
+- **What I got:**
+  - **The spec (Claude Code's draft):** what agents may and may not touch, a table of the three rooms pointing to the approved designs, the room and map format (start from a copy of `entrance-hall.tmj`, 12×10, `floor` → `decor` → `walls`, no flipped tiles), a tile table with checked tile ids, the named decor rules, the exit rules, the mimic, narration rules and a 7-step checklist. It decided on its own that agents don't edit `docs/`, and that the exit back across rooms is checked by hand, since no test checks it.
+  - **Checking the tiles:** Claude Code drew a grid over parts of the tile sheet and rendered small test scenes with a script, to find exact tile ids for the stairs, ladders, a ladder hatch in the floor, mats and doors, instead of guessing them. It found a gotcha for agents: `tile-names.json` uses local ids but maps use gids (local + 1), so gid 388 is the hatch while `"388"` in the names file is a fountain tile.
+  - **An arrival problem it found:** the player arrives on the first free tile north, south, east or west of the exit back. A door in an east or west wall with floor above it would put the player beside the door, not in front of it. The fix in the spec: block the tile above (easiest: right under the north wall).
+  - **Where it was wrong:** its first draft put side-facing doors on the east and west edges, with a 2×2 doormat in front. I had been unclear on Nov 8: I meant the mats to be *instead of* side doors, because the sheet has no side-view doors and a door standing on the floor looks wrong. Claude Code changed the spec: doors only in the north wall, and an east or west exit is a 1-wide rug piece on the edge column, on the walls layer so the player walks into it like a door (`loadRoom` requires blocked exit tiles). Its first stairs were the two-way stairs from the sheet, which floated in the wall. I asked for one direction, with the back against the wall and the bottom on the floor, and chose tile 393 in the top-left corner from its two renders.
+  - **The wording:** Claude Code pointed out that the approved descriptions still said "wooden door" for the east and west exits. It changed them to "doorway" in the sprint plan, with my OK, and updated the plan's exit markers to match.
+- **Outcome:** ✏️ kept with changes
+- **Why:** Most of the draft matched my list. The exits and stairs needed my eye: Claude Code chose tiles that existed, but not how they would look in a room. Checking real tile ids now saves the agents from guessing and me from fixing art in review.
+- **How I verified it:** I looked at the rendered test scenes for the mats, doors and stairs, and chose the stairs from two versions. I read the spec section before committing it. The real test is the agent PRs: every correction I need there is logged in the evaluation table.
+
 ---
 
 ## Agent-built rooms: evaluation
