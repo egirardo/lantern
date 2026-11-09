@@ -15,16 +15,16 @@ import { describePickUp } from './narration'
 // shouldn't depend on src/rooms/.
 export type StoreItem = {
   id: string // unique in the room, e.g. 'key-1'
-  type: string // a key in items.json, e.g. 'rusty-key'
+  type: string // a key in items.json, e.g. 'gold-key'
   position: Position
 }
 
-// The display name of an item type, e.g. 'rusty-key' -> 'rusty key'. Used by
+// The display name of an item type, e.g. 'gold-key' -> 'gold key'. Used by
 // the log lines and the inventory list, so both always say the same name.
 // The room schema only accepts types that are in items.json, so a missing
 // one means a bug, not bad room data, and a throw makes it show up.
 // The `table` parameter has a default, so normal code calls
-// itemDisplayName('rusty-key'), and a test can pass its own table (the same
+// itemDisplayName('gold-key'), and a test can pass its own table (the same
 // idea as spawnEnemies).
 export function itemDisplayName(type: string, table = itemTable): string {
   const item = table[type]
@@ -40,7 +40,7 @@ export type PickUpResult = {
   items: StoreItem[]
   // The inventory with the picked-up types added at the end.
   inventory: string[]
-  // One "You pick up a rusty key." line per item, in room-file order.
+  // One "You pick up a gold key." line per item, in room-file order.
   lines: LogLine[]
 }
 
@@ -49,7 +49,7 @@ export type PickUpResult = {
 //   from sharing a tile, so all of them are picked up, each with its own line,
 //   instead of one being left behind under the player's feet.
 // - The inventory holds item *types*, not ids (decided Nov 6): a locked exit
-//   asks "does the player carry a rusty-key?", not "this particular key".
+//   asks "does the player carry a gold-key?", not "this particular key".
 // - Nothing is changed in place: filter() and the spreads build new arrays.
 //   Zustand only notices a change when it gets a new array, and the Phaser
 //   scene compares old and new `items` to know when to redraw.

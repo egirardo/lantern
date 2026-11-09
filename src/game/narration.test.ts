@@ -500,8 +500,8 @@ describe('exit lines', () => {
     expect(describeExitInFight()).toBe("You can't leave during a fight.")
     expect(describeNoExitNearby()).toBe('There is no exit next to you.')
     expect(describeLocked()).toBe('The door is locked. You need a key.')
-    expect(describeUnlock('rusty key')).toBe(
-      'You unlock the door with the rusty key.',
+    expect(describeUnlock('gold key')).toBe(
+      'You unlock the door with the gold key.',
     )
     expect(describeGoThrough('north')).toBe(
       'You go through the exit to the north.',
@@ -566,7 +566,7 @@ describe('describeNextToExit', () => {
 
 describe('describePickUp', () => {
   it('says what the player picks up, with "a"', () => {
-    expect(describePickUp('rusty key')).toBe('You pick up a rusty key.')
+    expect(describePickUp('gold key')).toBe('You pick up a gold key.')
   })
 
   it('uses "an" before a name that starts with a vowel', () => {
@@ -576,8 +576,8 @@ describe('describePickUp', () => {
 
 describe('describeItemReveal', () => {
   it('uses "A" the first time an item is seen', () => {
-    expect(describeItemReveal('rusty key', 'west', false)).toBe(
-      'A rusty key lies to the west.',
+    expect(describeItemReveal('gold key', 'west', false)).toBe(
+      'A gold key lies to the west.',
     )
   })
 
@@ -588,8 +588,8 @@ describe('describeItemReveal', () => {
   })
 
   it('uses "The" when the item has been seen before', () => {
-    expect(describeItemReveal('rusty key', 'south', true)).toBe(
-      'The rusty key lies to the south.',
+    expect(describeItemReveal('gold key', 'south', true)).toBe(
+      'The gold key lies to the south.',
     )
   })
 })

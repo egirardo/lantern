@@ -25,9 +25,10 @@ import {
 // tilemap layers keep the default depth 0. The dark goes over the tiles, and
 // items, enemies and the player go over the dark. Items lie on the floor, so
 // they go below the characters: a 16×32 character on the tile below reaches
-// up over the item's tile, and should cover the item, not the other way round. Without depths, the order would
-// depend on what happened to be created last, which changes as the game runs
-// (enemy and item sprites come and go as the light moves).
+// up over the item's tile, and should cover the item, not the other way
+// round. Without depths, the order would depend on what happened to be
+// created last, which changes as the game runs (enemy and item sprites come
+// and go as the light moves).
 const DARKNESS_DEPTH = 1
 const ITEM_DEPTH = 2
 const ENEMY_DEPTH = 3
@@ -596,7 +597,7 @@ export class RoomScene extends Phaser.Scene {
     for (const item of litItems) {
       if (this.itemSprites.has(item.id)) continue
       // Rule 7: the sprite is found by its logical name (the item type, e.g.
-      // 'rusty-key'), never by a file path.
+      // 'gold-key'), never by a file path.
       if (!isSpriteName(item.type)) {
         throw new Error(`No sprite in the asset manifest for ${item.type}`)
       }

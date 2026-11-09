@@ -3,13 +3,13 @@ import { itemDisplayName, pickUpItems, type StoreItem } from './items'
 
 const key: StoreItem = {
   id: 'key-1',
-  type: 'rusty-key',
+  type: 'gold-key',
   position: { x: 2, y: 1 },
 }
 
 describe('itemDisplayName', () => {
   it('gives the display name from items.json', () => {
-    expect(itemDisplayName('rusty-key')).toBe('rusty key')
+    expect(itemDisplayName('gold-key')).toBe('gold key')
   })
 
   it('reads the table it is given', () => {
@@ -28,9 +28,9 @@ describe('pickUpItems', () => {
   it('picks up the item on the tile: removes it, adds its type and says so', () => {
     const result = pickUpItems([key], { x: 2, y: 1 }, [])
     expect(result.items).toEqual([])
-    expect(result.inventory).toEqual(['rusty-key'])
+    expect(result.inventory).toEqual(['gold-key'])
     expect(result.lines).toEqual([
-      { text: 'You pick up a rusty key.', urgency: 'polite' },
+      { text: 'You pick up a gold key.', urgency: 'polite' },
     ])
   })
 
@@ -53,26 +53,26 @@ describe('pickUpItems', () => {
   })
 
   it('adds to what the player already carries, at the end', () => {
-    const result = pickUpItems([key], { x: 2, y: 1 }, ['rusty-key'])
-    expect(result.inventory).toEqual(['rusty-key', 'rusty-key'])
+    const result = pickUpItems([key], { x: 2, y: 1 }, ['gold-key'])
+    expect(result.inventory).toEqual(['gold-key', 'gold-key'])
   })
 
   it('picks up every item on the tile, with one line each', () => {
     const other: StoreItem = { ...key, id: 'key-2' }
     const result = pickUpItems([key, other], { x: 2, y: 1 }, [])
     expect(result.items).toEqual([])
-    expect(result.inventory).toEqual(['rusty-key', 'rusty-key'])
+    expect(result.inventory).toEqual(['gold-key', 'gold-key'])
     expect(result.lines.map((line) => line.text)).toEqual([
-      'You pick up a rusty key.',
-      'You pick up a rusty key.',
+      'You pick up a gold key.',
+      'You pick up a gold key.',
     ])
   })
 
   it('does not change the lists it is given', () => {
     const items = [key]
-    const inventory = ['rusty-key']
+    const inventory = ['gold-key']
     pickUpItems(items, { x: 2, y: 1 }, inventory)
     expect(items).toEqual([key])
-    expect(inventory).toEqual(['rusty-key'])
+    expect(inventory).toEqual(['gold-key'])
   })
 })

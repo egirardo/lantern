@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { items, itemSchema, itemTableSchema, isItemType } from './item-schema'
 
 describe('items table', () => {
-  it('contains the rusty key with its display name', () => {
-    expect(items['rusty-key']?.displayName).toBe('rusty key')
+  it('contains the gold key with its display name', () => {
+    expect(items['gold-key']?.displayName).toBe('gold key')
   })
 })
 
 describe('itemSchema', () => {
   it('accepts a valid item', () => {
-    const result = itemSchema.safeParse({ displayName: 'rusty key' })
+    const result = itemSchema.safeParse({ displayName: 'gold key' })
     expect(result.success).toBe(true)
   })
 
@@ -21,7 +21,7 @@ describe('itemSchema', () => {
 
   it('rejects an unknown extra field', () => {
     const result = itemSchema.safeParse({
-      displayName: 'rusty key',
+      displayName: 'gold key',
       weight: 1,
     })
     expect(result.success).toBe(false)
@@ -32,16 +32,16 @@ describe('itemSchema', () => {
 describe('itemTableSchema', () => {
   it('rejects a key that is not kebab-case', () => {
     const result = itemTableSchema.safeParse({
-      'Rusty Key': { displayName: 'rusty key' },
+      'Gold Key': { displayName: 'gold key' },
     })
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.path).toEqual(['Rusty Key'])
+    expect(result.error?.issues[0]?.path).toEqual(['Gold Key'])
   })
 })
 
 describe('isItemType', () => {
   it('is true for a type in items.json', () => {
-    expect(isItemType('rusty-key')).toBe(true)
+    expect(isItemType('gold-key')).toBe(true)
   })
 
   it('is false for an unknown type', () => {

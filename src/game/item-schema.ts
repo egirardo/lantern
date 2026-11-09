@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import itemsData from './items.json'
 
-// The same rule as enemy and room ids: kebab-case, e.g. 'rusty-key'.
+// The same rule as enemy and room ids: kebab-case, e.g. 'gold-key'.
 // Used both for the keys of items.json (the item types) and for the ids of
 // the items placed in a room (e.g. 'key-1').
 export const itemIdSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
@@ -10,7 +10,7 @@ export const itemIdSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
 })
 
 // One item type. Only a name for now: the log needs it ("You unlock the door
-// with the rusty key."). New fields (e.g. how much a potion heals) go here
+// with the gold key."). New fields (e.g. how much a potion heals) go here
 // when an item needs them. strictObject rejects unknown fields, so a typo
 // like "displayname" is an error instead of a silently missing name.
 export const itemSchema = z.strictObject({

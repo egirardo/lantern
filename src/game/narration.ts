@@ -291,7 +291,7 @@ export function describeNextToExit(
 // --- Items (Nov 8, Agent E) ---
 
 // The line when the player steps onto an item and picks it up (decision 8).
-// `itemName` is the display name from items.json, e.g. "rusty key". "a" or
+// `itemName` is the display name from items.json, e.g. "gold key". "a" or
 // "an" by the same spelling rule as the enemies ("an amulet" would work too).
 export function describePickUp(itemName: string): string {
   return `You pick up ${indefiniteArticle(itemName)} ${itemName}.`
@@ -299,8 +299,8 @@ export function describePickUp(itemName: string): string {
 
 // Announces an item that has just come into the lantern light, like
 // describeReveal for enemies and describeExitReveal for exits (rule 5: an item
-// drawn on the canvas must also be in the log). "A rusty key" the first time,
-// "The rusty key" when it comes back into the light, so a screen reader user
+// drawn on the canvas must also be in the log). "A gold key" the first time,
+// "The gold key" when it comes back into the light, so a screen reader user
 // knows it's the same key. "lies", not "appears": an item doesn't move, so it
 // was there all along and the light only shows it.
 // Items have no numbered names (only enemies get "skeleton 2"), so this uses
@@ -363,7 +363,7 @@ export function describeLocked(): string {
 }
 
 // The player carries the item, so the locked exit opens. `itemName` is the
-// display name from items.json, e.g. "rusty key".
+// display name from items.json, e.g. "gold key".
 export function describeUnlock(itemName: string): string {
   return `You unlock the door with the ${itemName}.`
 }

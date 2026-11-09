@@ -123,7 +123,7 @@ export function getNewlyLitExits(
 }
 
 // The items that have just come into the light, so the reveal narration can
-// announce them too (rule 5: "A rusty key lies to the west."). The same rule
+// announce them too (rule 5: "A gold key lies to the west."). The same rule
 // as getNewlyLit for enemies: lit after the step, but not before. An item
 // lies on one tile, so there's no "any of its tiles" like for exits.
 // A function of its own instead of reusing getNewlyLit, which only takes

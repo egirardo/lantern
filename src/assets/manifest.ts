@@ -103,11 +103,11 @@ export const SPRITES = {
     framePrefix: 'orc-',
     animations: ENEMY_ANIMATIONS,
   },
-  // The key from the sheet's item area (16×16, at x 352, y 320). The art is
-  // a gold key, not a rusty one; the log's "rusty key" comes from items.json.
-  'rusty-key': {
+  // The gold key from the sheet's item area (16×16, at x 352, y 320). Its
+  // name in the log ("gold key") comes from items.json.
+  'gold-key': {
     texture: 'dungeon',
-    framePrefix: 'rusty-key-',
+    framePrefix: 'gold-key-',
     animations: ITEM_ANIMATIONS,
   },
 } as const satisfies Record<string, SpriteDefinition>

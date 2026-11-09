@@ -6,7 +6,7 @@ import { itemDisplayName } from '../game/items'
 // only, with nothing to press:
 // - No focus moves and nothing focusable, so it doesn't change the Tab order.
 // - No live region: the log already announces every pickup ("You pick up a
-//   rusty key."), so announcing the list too would say it twice.
+//   gold key."), so announcing the list too would say it twice.
 // - aria-labelledby names the section with its heading, which makes it a
 //   landmark ("Inventory, region"), so a screen reader user can jump to it
 //   and check what they carry, like the combat menu and the log.

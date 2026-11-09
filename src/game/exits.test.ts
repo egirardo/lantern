@@ -28,12 +28,12 @@ const northDoor: Exit = { tiles: [{ x: 1, y: 0 }], to: 'north-room' }
 const lockedEastDoor: Exit = {
   tiles: [{ x: 4, y: 1 }],
   to: 'east-room',
-  requires: 'rusty-key',
+  requires: 'gold-key',
 }
 const finalExit: Exit = {
   tiles: [{ x: 2, y: 3 }],
   final: true,
-  requires: 'rusty-key',
+  requires: 'gold-key',
 }
 const exits: Exit[] = [northDoor, lockedEastDoor, finalExit]
 
@@ -209,13 +209,13 @@ describe('exitStep', () => {
     const step = exitStep({
       ...input,
       position: { x: 3, y: 1 },
-      inventory: ['rusty-key'],
+      inventory: ['gold-key'],
     })
     expect(step.kind).toBe('leave')
     if (step.kind !== 'leave') return
     expect(step.to).toBe('east-room')
     expect(texts(step)).toEqual([
-      'You unlock the door with the rusty key.',
+      'You unlock the door with the gold key.',
       'You go through the exit to the east.',
       'You recover to full health. You have 12 out of 12 health.',
     ])
@@ -231,11 +231,11 @@ describe('exitStep', () => {
     const step = exitStep({
       ...input,
       position: { x: 2, y: 2 },
-      inventory: ['rusty-key'],
+      inventory: ['gold-key'],
     })
     expect(step.kind).toBe('escape')
     expect(texts(step)).toEqual([
-      'You unlock the door with the rusty key.',
+      'You unlock the door with the gold key.',
       'Victory! You climb out of the dungeon. Reload the page to play again.',
     ])
   })

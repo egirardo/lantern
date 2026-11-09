@@ -18,7 +18,7 @@ const exitBase = {
   // The blocked tiles (a door or ladder) the player uses the exit from.
   tiles: z.array(positionSchema).min(1),
   // Optional: the exit is locked, and opens only if the player carries an
-  // item of this type (a key in items.json, e.g. 'rusty-key'). It names the
+  // item of this type (a key in items.json, e.g. 'gold-key'). It names the
   // item type, not the id of one item in a room, because the key lies in a
   // different room from the door. That also lets Zod check it here: a typo
   // would otherwise make the door impossible to open.
@@ -91,7 +91,7 @@ export const roomSchema = z.strictObject({
     .array(
       z.strictObject({
         id: itemIdSchema,
-        // The item type, a key in items.json (e.g. 'rusty-key'). It decides
+        // The item type, a key in items.json (e.g. 'gold-key'). It decides
         // the name the log uses.
         type: z.string().refine(isItemType, { message: 'Unknown item type' }),
         position: positionSchema,

@@ -416,7 +416,7 @@ describe('nearestTile', () => {
 describe('getNewlyLitItems', () => {
   const key: StoreItem = {
     id: 'key-1',
-    type: 'rusty-key',
+    type: 'gold-key',
     position: { x: 3, y: 1 },
   }
 

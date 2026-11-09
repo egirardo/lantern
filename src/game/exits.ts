@@ -147,7 +147,7 @@ export type ExitStepInput = {
   position: Position
   exits: Exit[]
   inCombat: boolean
-  // The item types the player carries, e.g. ['rusty-key'].
+  // The item types the player carries, e.g. ['gold-key'].
   inventory: string[]
   player: Combatant
 }
@@ -213,7 +213,7 @@ export function exitStep(input: ExitStepInput): ExitStep {
   }
 }
 
-// The display name of an item type, e.g. 'rusty-key' -> 'rusty key'. The
+// The display name of an item type, e.g. 'gold-key' -> 'gold key'. The
 // room schema only accepts types that are in items.json, so a missing one
 // means a bug, not bad room data.
 function itemName(type: string): string {
