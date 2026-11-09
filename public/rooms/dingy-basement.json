@@ -1,0 +1,29 @@
+{
+  "id": "dingy-basement",
+  "name": "The Dingy Basement",
+  "map": "dingy-basement",
+  "playerStart": { "x": 5, "y": 5 },
+  "description": "Stone steps lead back up to the entrance hall. The basement is low and damp, and water drips somewhere in the dark. Crates are stacked against the walls, and an old chest lies open, long since emptied. A narrow ladder in the south-west corner leads further down, and a doorway in the east wall leads on.",
+  "exits": [
+    {
+      "tiles": [{ "x": 0, "y": 2 }],
+      "to": "entrance-hall"
+    },
+    {
+      "tiles": [{ "x": 0, "y": 9 }],
+      "to": "forgotten-vault"
+    },
+    {
+      "tiles": [
+        { "x": 11, "y": 2 },
+        { "x": 11, "y": 3 }
+      ],
+      "to": "old-crypt"
+    }
+  ],
+  "enemies": [
+    { "id": "demon-1", "type": "demon", "position": { "x": 1, "y": 8 } },
+    { "id": "skeleton-1", "type": "skeleton", "position": { "x": 9, "y": 8 } }
+  ],
+  "items": []
+}
