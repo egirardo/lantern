@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { movePlayer, samePosition } from './movement'
 import type { Grid } from './movement'
+import type { Feature } from './features'
 
 const grid: Grid = [
   ['floor', 'wall', 'floor'],
@@ -203,6 +204,53 @@ describe('movePlayer', () => {
       newPosition: { x: 1, y: 1 },
       moved: false,
       reason: 'wall',
+    })
+  })
+
+  it('says what blocks the path when the wall has a name', () => {
+    const features: Feature[] = [{ position: { x: 1, y: 0 }, name: 'barrel' }]
+    const result = movePlayer({ x: 1, y: 1 }, 'north', grid, [], [], features)
+    expect(result).toEqual({
+      moved: false,
+      newPosition: { x: 1, y: 1 },
+      reason: 'feature',
+      name: 'barrel',
+    })
+  })
+
+  it('says what blocks the path when the wall has no name', () => {
+    const features: Feature[] = [{ position: { x: 1, y: 2 }, name: 'barrel' }]
+    const result = movePlayer({ x: 1, y: 1 }, 'north', grid, [], [], features)
+    expect(result).toEqual({
+      moved: false,
+      newPosition: { x: 1, y: 1 },
+      reason: 'wall',
+    })
+  })
+
+  it('allows the player to move onto a feature on a floor tile', () => {
+    const features: Feature[] = [{ position: { x: 1, y: 2 }, name: 'barrel' }]
+    const result = movePlayer({ x: 1, y: 1 }, 'south', grid, [], [], features)
+    expect(result).toEqual({
+      moved: true,
+      newPosition: { x: 1, y: 2 },
+    })
+  })
+
+  it('reports an exit when the player walks into an exit tile, even if a feature is there too', () => {
+    const features: Feature[] = [{ position: { x: 1, y: 0 }, name: 'barrel' }]
+    const result = movePlayer(
+      { x: 1, y: 1 },
+      'north',
+      grid,
+      [],
+      [{ x: 1, y: 0 }],
+      features,
+    )
+    expect(result).toEqual({
+      newPosition: { x: 1, y: 1 },
+      moved: false,
+      reason: 'exit',
     })
   })
 })
