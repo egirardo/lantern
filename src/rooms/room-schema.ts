@@ -55,6 +55,15 @@ export const roomSchema = z.strictObject({
           message: 'Unknown enemy type',
         }),
         position: positionSchema,
+        // Optional: an item type this enemy carries, e.g. 'gold-key' on the
+        // mimic. When the enemy is defeated, the item goes straight into the
+        // player's inventory (decided Nov 9). Straight in, not onto the floor,
+        // so `inventory` and `defeatedEnemyIds` already cover saving it, and
+        // it can't be taken twice. Checked against items.json like `requires`.
+        carries: z
+          .string()
+          .refine(isItemType, { message: 'Unknown item type' })
+          .optional(),
       }),
     )
     // superRefine (unlike refine) can report an issue at a specific path,

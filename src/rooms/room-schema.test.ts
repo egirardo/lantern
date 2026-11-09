@@ -123,6 +123,40 @@ describe('roomSchema', () => {
     expect(result.error?.issues[0]?.path).toEqual(['enemies', 0, 'type'])
   })
 
+  it('accepts an enemy that carries a known item type', () => {
+    const room: Room = {
+      ...validRoom,
+      enemies: [
+        {
+          id: 'mimic-1',
+          type: 'mimic',
+          position: { x: 1, y: 1 },
+          carries: 'gold-key',
+        },
+      ],
+    }
+    const result = roomSchema.safeParse(room)
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects an enemy that carries an unknown item type', () => {
+    // A typo here would make the key impossible to get, so it must fail.
+    const room: Room = {
+      ...validRoom,
+      enemies: [
+        {
+          id: 'mimic-1',
+          type: 'mimic',
+          position: { x: 1, y: 1 },
+          carries: 'golden-key',
+        },
+      ],
+    }
+    const result = roomSchema.safeParse(room)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['enemies', 0, 'carries'])
+  })
+
   it('rejects a room with a missing enemies field', () => {
     // Arrange: copy the valid room and delete the enemies field
     const invalidRoom: Partial<Room> = { ...validRoom }

@@ -8,6 +8,11 @@ describe('enemies table', () => {
     )
   })
 
+  it('has a mimic disguised as a chest', () => {
+    expect(enemies.mimic?.displayName).toBe('mimic')
+    expect(enemies.mimic?.disguise).toBe('chest')
+  })
+
   it('gives every enemy a numeric damage die', () => {
     for (const enemy of Object.values(enemies)) {
       expect(typeof enemy.damageDie).toBe('number')
@@ -50,6 +55,17 @@ describe('enemySchema', () => {
     const result = enemySchema.safeParse(enemyWithZeroHealth)
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]?.path).toEqual(['maxHealth'])
+  })
+
+  it('accepts an enemy with a disguise', () => {
+    const result = enemySchema.safeParse({ ...validEnemy, disguise: 'chest' })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects an empty disguise', () => {
+    const result = enemySchema.safeParse({ ...validEnemy, disguise: '   ' })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(['disguise'])
   })
 
   it('rejects an empty display name', () => {

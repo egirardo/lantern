@@ -76,6 +76,14 @@ const ITEM_ANIMATIONS = {
   idle: { frames: [0], frameRate: 1, repeat: 0 },
 } as const
 
+// The mimic (decided Nov 9) has 3 frames on the sheet: 0 is a closed chest,
+// 1 and 2 open their mouth. Before a fight it must look like a plain, still
+// chest, so its idle animation is the closed frame alone. Agent H adds the
+// open-mouth animation that plays once the fight starts.
+const MIMIC_ANIMATIONS = {
+  idle: { frames: [0], frameRate: 1, repeat: 0 },
+} as const
+
 // Characters, enemies and items, by logical name (kebab-case).
 export const SPRITES = {
   'hero-girl': {
@@ -102,6 +110,12 @@ export const SPRITES = {
     texture: 'dungeon',
     framePrefix: 'orc-',
     animations: ENEMY_ANIMATIONS,
+  },
+  // Local ids 1491–1493 on the sheet (row 23, x 304–336, y 368, 16×16).
+  mimic: {
+    texture: 'dungeon',
+    framePrefix: 'mimic-',
+    animations: MIMIC_ANIMATIONS,
   },
   // The gold key from the sheet's item area (16×16, at x 352, y 320). Its
   // name in the log ("gold key") comes from items.json.
