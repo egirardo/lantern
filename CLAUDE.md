@@ -140,4 +140,104 @@ Work split (decision 7 in `docs/sprint-4-plan.md`, Nov 4): for pure helpers in `
 
 ## Building rooms (for agents)
 
-*To be written in Sprint 3, once the reference room is finished.* This section will describe the room data format, narration tone, and the checklist every agent-built room must pass. Until then, do not create new rooms.
+You build rooms as **data only**: a room file and a map file per room. The room engine already handles everything else (architecture rule 6). The reference room is the entrance hall (`public/rooms/entrance-hall.json` and `public/maps/entrance-hall.tmj`): when this section doesn't answer something, do what the entrance hall does. If a room can't be built without changing code, stop and say so in the PR instead of changing it.
+
+### What you may change
+
+- **Add:** `public/rooms/<room-id>.json` and `public/maps/<room-id>.tmj` for the rooms in your prompt. Nothing else.
+- **Don't touch:** anything in `src/` (engine, schemas, tests), `enemies.json`, `items.json`, `tile-names.json`, the asset manifest and `sprites.json`, the entrance hall files, `docs/` (the AI log and sprint plans are mine; I log your work during review), and any other room.
+- Don't add enemy types, item types or decor names. Use only the ones that exist. If a room design needs a new one, stop and ask.
+
+### The rooms
+
+The designs are approved and are in `docs/sprint-4-plan.md`, "Agent spec and agent rooms", point 5. Follow them exactly, including the descriptions word for word. Ask if a design conflicts with this spec.
+
+| Room id | Name | Exits (where, leads to) |
+| --- | --- | --- |
+| `dingy-basement` | The Dingy Basement | stairs up in the top-left corner at (0, 2) → `entrance-hall`; ladder down in the south-west corner → `forgotten-vault`; doorway (mat) in the east wall → `old-crypt` |
+| `forgotten-vault` | The Forgotten Vault | ladder up in the north wall at (5, 2) → `dingy-basement` (the only exit) |
+| `old-crypt` | The Old Crypt | doorway (mat) in the west wall → `dingy-basement`; great door in the north wall, `"final": true`, `"requires": "gold-key"` |
+
+### The room file (`public/rooms/<room-id>.json`)
+
+Validated by `src/rooms/room-schema.ts` (Zod, strict: unknown fields fail). Copy the entrance hall's shape.
+
+- `id`: kebab-case, the same as the file name. `name`: "The …". `map`: the map's file name without `.tmj` (use the room id).
+- Coordinates are tiles, `x` 0–11 from the left, `y` 0–9 from the top.
+- `playerStart`: a free floor tile. It's only used at the start of a new game or as a fallback, but it must be valid.
+- `exits`: see "Exits" below.
+- `enemies`: `{ "id", "type", "position" }`. `type` is a key in `src/game/enemies.json` (`skeleton`, `demon`, `orc`, `mimic`). `id` is the type plus a number (`skeleton-1`, `skeleton-2`), unique in the room. Enemies stand on free floor tiles, never on `playerStart`, on another enemy or on the tile where the player arrives from another room.
+- `items`: always present. Write `"items": []` when the room has none (all three rooms have none; the key is carried by the mimic).
+
+### The map file (`public/maps/<room-id>.tmj`)
+
+- **Start from a copy of `entrance-hall.tmj`** and change only the three `data` arrays. Keep everything else as it is, above all the `tilesets` block: one embedded tileset named `dungeon`, `firstgid` 1, image `../assets/dungeon/dungeontileset-extended.png`. (In Tiled itself: Preferences → General → Export Options → Embed tilesets, then export as `.tmj` to `public/maps/`.)
+- **12×10 tiles**, 16×16 pixels. The canvas has a fixed size, so no other size works. A smaller room is a 12×10 map with empty cells (see the vault).
+- **Three tile layers, in this order:** `floor` → `decor` → `walls`. Each `data` array has 120 numbers, row by row from the top-left; `0` means no tile. No object layers.
+- **What blocks:** a cell with a tile on `walls` is blocked. A cell with only `floor` and/or `decor` is walkable. A cell with no tile on any layer is blocked and drawn black (useful for the vault).
+- **No flipped or rotated tiles.** Every number is a plain tile id.
+- **Tile ids:** the `.tmj` uses gids, which are the tileset's local id + 1 (because `firstgid` is 1). `tile-names.json` uses **local** ids. So the crate is `1426` in `tile-names.json` and `1427` in the map.
+
+### Tiles
+
+Use only tiles that appear in `entrance-hall.tmj` or in this table (all numbers are gids, for the map):
+
+| What | Gids | Layer | Notes |
+| --- | --- | --- | --- |
+| Plain floor, cracked floor | 258; 259, 260, 322, 323, 324, 386, 387 | floor | as in the entrance hall |
+| North wall | 66, 67, 68 (and the wall details 132, 195, 196, 450 from the hall) | walls, with a wall tile on floor under transparent pieces | the top two rows, like the hall |
+| Door, north wall only | 912 913 over 976 977 | walls | the hall's door; the exit tiles are the bottom row (976, 977) |
+| Doorway mat, east or west wall | red 1284 over 1348, or beige 1287 over 1351 | walls | one wide, two tall, on the edge column (x 0 or 11); both tiles are exit tiles |
+| Stairs up | 393 | walls, floor (258) under it | one tile, on the floor row right under the north wall, so the back is against the wall and the bottom rests on the floor. Steps go down to the east, so it belongs in the top-left corner. It's the exit tile. Not the two-way stairs 264 265 / 328 329 |
+| Ladder (up, against a wall) | 392 | walls, a wall tile on floor under it | |
+| Ladder down (hatch in the floor) | 388 | walls | stands alone on the floor. Not the fountain: `"388"` in `tile-names.json` is a local id (gid 389) |
+| Rug, red or beige (optional) | 1282 1283 over 1410 1411, or 1285 1286 over 1413 1414 | decor | 2×2, walk-over, unnamed; not an exit |
+| Named decor | `tile-names.json` ids + 1 | walls | see below |
+
+**Named decor** (the five names in `tile-names.json`: pillar, crate, empty-chest, candlestick, fountain):
+
+- Only tiles listed in `tile-names.json` get a name, and the game announces them when the lantern reveals them ("A crate appears to the east"). Never add names.
+- A named tile always goes on the **walls** layer, so it blocks. On another layer, `loadRoom` fails the room ("Named decor … is on a walkable tile").
+- Anything that is drawn in front of or behind a named piece (a pillar base, the crate lid 1363, ooze under a wall) goes on **decor**.
+- **Pillars** always stand against a wall. Multi-tile pieces (pillar, fountain, candlestick) use all their tiles, as in the sheet.
+- Never draw a **closed** chest in a map: in this dungeon a closed chest is the mimic (an enemy sprite, not a tile).
+
+### Exits
+
+- Each exit is `{ "tiles": [...], "to": "<room-id>" }`, or `{ "tiles": [...], "final": true }` for the way out of the dungeon. `"requires": "<item type>"` locks it.
+- **Exit tiles are blocked tiles** (on `walls`): the door, stairs, ladder or doorway mat tiles the player walks into. Each must have a walkable tile next to it.
+- **Every exit has an exit back** in the room it leads to (`to` the first room). Not checked by the tests, so check it yourself across rooms.
+- **Where the player arrives:** coming from another room, the player stands on the first free floor tile next to the exit back, trying the exit's tiles in the order listed and, for each, **north, south, east, west**. Make sure that tile is the one in front of the door:
+  - North-wall door, or stairs under the north wall: works by itself (north of it is wall, south is floor).
+  - **East or west doorway mat:** list the top mat tile first, and make the tile directly **above** the mat blocked. Otherwise the player arrives beside the mat, not in front of it. Easiest: put the mat right under the north wall (exit tiles at y 2 and 3, with the wall at y 1 above).
+  - Ladder down in the floor: the first free tile north of it, then south, east, west.
+  - No enemy on the arrival tile (a guard stands on another tile next to the exit).
+- **What an exit looks like:** the sheet has no side-view doors, so **doors only go in the north wall**, where they can be seen. An exit in the east or west wall is a **doorway mat** on the edge column (from the table), which looks like a runner leading out through a gap in the wall. Stairs and ladders show what they are. The mat has no name on purpose: the exit reveal line already says where the exit is.
+
+### The mimic (vault only)
+
+- `mimic-1`, type `mimic`, at (6, 5), with `"carries": "gold-key"`. The disguise ("chest") is already in `enemies.json`; the room file adds nothing else.
+- Don't put the key in `items`, and don't draw a chest tile under or next to the mimic.
+
+### Narration
+
+- The description is read aloud when the player enters, so it carries the room for a player who can't see the canvas.
+- The rooms in this spec use the approved descriptions word for word. For any future room: second person and present tense, 2–4 short sentences, sound, smell and light more than looks, the same plain tone as the entrance hall.
+- It names **every exit and the wall it's in** (the player has no other overview), and how they arrived when that helps ("Stone steps lead back up to the entrance hall.").
+- It does **not** mention enemies, items or the mimic's chest: the lantern reveals those one by one. Decor can be mentioned in general ("crates are stacked against the walls").
+- Don't say anything the game doesn't do (lit candles, smells that are "dangerous", doors that can be opened when they can't).
+
+### Checklist (every room PR)
+
+Run and pass, with the output in the PR:
+
+1. `npm test`: `src/rooms/room-files.test.ts` finds every room in `public/rooms/` and loads it with its map (schema, 12×10 grid, positions, exits, named decor).
+2. `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`.
+
+Then check by reading the files, and say in the PR that you did:
+
+3. The diff only adds room and map files (no `src/` changes).
+4. Every exit has an exit back, the arrival tile is in front of each door, and no enemy stands on it.
+5. Doors only in the north wall, doorway mats for east and west exits; named decor only on `walls`; no closed chest tiles; no flipped tiles.
+6. The description matches the design word for word.
+7. Open the PR against `dev` with a short description (no attribution line). I check it in the browser and with VoiceOver: keyboard only, every reveal line, every exit both ways.
