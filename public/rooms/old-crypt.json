@@ -1,0 +1,29 @@
+{
+  "id": "old-crypt",
+  "name": "The Old Crypt",
+  "map": "old-crypt",
+  "playerStart": { "x": 5, "y": 8 },
+  "description": "You step into a long, cold crypt that smells of dust and old stone. Water trickles somewhere ahead. The doorway you came through is to the south.",
+  "exits": [
+    {
+      "tiles": [
+        { "x": 5, "y": 9 },
+        { "x": 6, "y": 9 }
+      ],
+      "to": "dingy-basement"
+    },
+    {
+      "tiles": [
+        { "x": 5, "y": 1 },
+        { "x": 6, "y": 1 }
+      ],
+      "final": true,
+      "requires": "gold-key"
+    }
+  ],
+  "enemies": [
+    { "id": "orc-1", "type": "orc", "position": { "x": 6, "y": 2 } },
+    { "id": "skeleton-1", "type": "skeleton", "position": { "x": 6, "y": 5 } }
+  ],
+  "items": []
+}
