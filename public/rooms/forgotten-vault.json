@@ -1,0 +1,22 @@
+{
+  "id": "forgotten-vault",
+  "name": "The Forgotten Vault",
+  "map": "forgotten-vault",
+  "playerStart": { "x": 5, "y": 3 },
+  "description": "You climb down the ladder into a small, silent vault. The walls are bare and the air is cold and still. The only way out is the ladder you came down.",
+  "exits": [
+    {
+      "tiles": [{ "x": 5, "y": 2 }],
+      "to": "dingy-basement"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "mimic-1",
+      "type": "mimic",
+      "position": { "x": 6, "y": 5 },
+      "carries": "gold-key"
+    }
+  ],
+  "items": []
+}
