@@ -1,5 +1,39 @@
 import { describe, it, expect } from 'vitest'
-import { animationKey, facingAfterStep, isSingleStep } from './sprite-motion'
+import {
+  animationKey,
+  enemyAnimationName,
+  facingAfterStep,
+  isSingleStep,
+} from './sprite-motion'
+import { SPRITES } from '../assets/manifest'
+
+describe('enemyAnimationName', () => {
+  it('keeps a disguised mimic on its still idle frame', () => {
+    expect(enemyAnimationName(true, SPRITES.mimic.animations)).toBe('idle')
+  })
+
+  it('plays the unmasked loop once the mimic is no longer disguised', () => {
+    expect(enemyAnimationName(false, SPRITES.mimic.animations)).toBe('unmasked')
+  })
+
+  it('gives an enemy without an unmasked animation its idle loop', () => {
+    expect(enemyAnimationName(false, SPRITES.skeleton.animations)).toBe('idle')
+  })
+})
+
+describe('the mimic in the manifest', () => {
+  // Before a fight it must look like a plain chest: one closed frame, so
+  // there is no movement to give it away.
+  it('stands still as a closed chest while disguised', () => {
+    expect(SPRITES.mimic.animations.idle.frames).toEqual([0])
+  })
+
+  // The first frame is what reduced motion shows, so it must be an open
+  // mouth, not the closed chest: otherwise the unmasking can't be seen.
+  it('opens its mouth from the first frame of the unmasked loop', () => {
+    expect(SPRITES.mimic.animations.unmasked.frames[0]).not.toBe(0)
+  })
+})
 
 describe('animationKey', () => {
   it('joins the sprite name and the animation name', () => {
