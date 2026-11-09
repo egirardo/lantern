@@ -3,12 +3,12 @@
   "name": "The Old Crypt",
   "map": "old-crypt",
   "playerStart": { "x": 5, "y": 8 },
-  "description": "Rows of pillars line this long, cold crypt, and cold candlesticks stand where no one has lit them in years. A fountain trickles in the north wall. Beside it, a great iron-bound door leads out of the dungeon, but it is locked. The doorway you came through is in the west wall.",
+  "description": "Pillars line the north wall of this long, cold crypt, on either side of a great iron-bound door that leads out of the dungeon. The door is locked. Fountains trickle in both corners of the north wall. Old crates are stacked in long rows across the floor, and the way between them winds from side to side. The doorway you came through is to the south.",
   "exits": [
     {
       "tiles": [
-        { "x": 0, "y": 2 },
-        { "x": 0, "y": 3 }
+        { "x": 5, "y": 9 },
+        { "x": 6, "y": 9 }
       ],
       "to": "dingy-basement"
     },
@@ -23,7 +23,7 @@
   ],
   "enemies": [
     { "id": "orc-1", "type": "orc", "position": { "x": 6, "y": 2 } },
-    { "id": "skeleton-1", "type": "skeleton", "position": { "x": 9, "y": 6 } }
+    { "id": "skeleton-1", "type": "skeleton", "position": { "x": 6, "y": 5 } }
   ],
   "items": []
 }
