@@ -3,7 +3,7 @@
   "name": "The Dingy Basement",
   "map": "dingy-basement",
   "playerStart": { "x": 5, "y": 5 },
-  "description": "Stone steps lead back up to the entrance hall. The basement is low and damp, and water drips somewhere in the dark. Crates are stacked against the walls, and an old chest lies open, long since emptied. A narrow ladder in the south-west corner leads further down, and a doorway in the east wall leads on.",
+  "description": "Stone steps lead back up to the entrance hall. The basement is low and damp, and water drips somewhere in the dark.",
   "exits": [
     {
       "tiles": [{ "x": 0, "y": 2 }],
