@@ -355,6 +355,18 @@ describe('sync when signed in', () => {
     expect(fetchRemote).toHaveBeenCalledTimes(2)
   })
 
+  it('drops the fetched save if the player signed out while it was on the way', async () => {
+    const { store, session, setUser } = setup({
+      user: 'player-1',
+      remoteSave: { data: saveAt(LATE), updatedAt: LATE },
+    })
+    // The fetch has started but not come back yet (it resolves after this
+    // synchronous code), and the player signs out.
+    setUser(null)
+    await session.idle()
+    expect(store.getState().currentRoomId).toBe(FIRST_ROOM_ID)
+  })
+
   it('keeps playing locally when the network fails, and tries again later', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { store, session, fetchRemote, pushRemote, localSave } = setup({
