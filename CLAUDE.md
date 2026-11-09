@@ -156,7 +156,7 @@ The designs are approved and are in `docs/sprint-4-plan.md`, "Agent spec and age
 | --- | --- | --- |
 | `dingy-basement` | The Dingy Basement | stairs up in the top-left corner at (0, 2) → `entrance-hall`; ladder down in the south-west corner → `forgotten-vault`; doorway (mat) in the east wall → `old-crypt` |
 | `forgotten-vault` | The Forgotten Vault | ladder up in the north wall at (5, 2) → `dingy-basement` (the only exit) |
-| `old-crypt` | The Old Crypt | doorway (mat) in the west wall → `dingy-basement`; great door in the north wall, `"final": true`, `"requires": "gold-key"` |
+| `old-crypt` | The Old Crypt | way back: a carpet leading out of the south edge at (5–6, 9) → `dingy-basement`; great door in the north wall, `"final": true`, `"requires": "gold-key"` |
 
 ### The room file (`public/rooms/<room-id>.json`)
 
@@ -188,6 +188,7 @@ Use only tiles that appear in `entrance-hall.tmj` or in this table (all numbers 
 | North wall | 66, 67, 68 (and the wall details 132, 195, 196, 450 from the hall) | walls, with a wall tile on floor under transparent pieces | the top two rows, like the hall |
 | Door, north wall only | 912 913 over 976 977 | walls | the hall's door; the exit tiles are the bottom row (976, 977) |
 | Doorway mat, east or west wall | red 1284 over 1348, or beige 1287 over 1351 | walls | one wide, two tall, on the edge column (x 0 or 11); both tiles are exit tiles |
+| Carpet way out, south edge | 1154 1155 at y 9 (exit tiles), with the carpet top 1090 1091 on floor at y 8 in front | walls (y 9), floor (y 8) | the carpet seems to go on out of the room; list the left tile first, so the player arrives on the carpet top |
 | Stairs up | 393 | walls, floor (258) under it | one tile, on the floor row right under the north wall, so the back is against the wall and the bottom rests on the floor. Steps go down to the east, so it belongs in the top-left corner. It's the exit tile. Not the two-way stairs 264 265 / 328 329 |
 | Ladder (up, against a wall) | 392 | walls, a wall tile on floor under it | |
 | Ladder down (hatch in the floor) | 388 | walls | stands alone on the floor. Not the fountain: `"388"` in `tile-names.json` is a local id (gid 389) |
@@ -199,6 +200,7 @@ Use only tiles that appear in `entrance-hall.tmj` or in this table (all numbers 
 - Only tiles listed in `tile-names.json` get a name, and the game announces them when the lantern reveals them ("A crate appears to the east"). Never add names.
 - A named tile always goes on the **walls** layer, so it blocks. On another layer, `loadRoom` fails the room ("Named decor … is on a walkable tile").
 - Anything that is drawn in front of or behind a named piece (a pillar base, the crate lid 1363, ooze under a wall) goes on **decor**.
+- **Never stack crates vertically** (found in the Nov 9 playtest). The crate tile has no top edge of its own: its lid on the cell above draws it. In a stack, that cell is the upper crate on `walls`, which hides the lid, so the lower crate looks cut off. Every crate has its lid on the cell above, except a crate right under the stairs, which get the edge from the stairs. Crates side by side in a row are fine.
 - **Pillars** always stand against a wall. Multi-tile pieces (pillar, fountain, candlestick) use all their tiles, as in the sheet.
 - Never draw a **closed** chest in a map: in this dungeon a closed chest is the mimic (an enemy sprite, not a tile).
 
@@ -222,9 +224,9 @@ Use only tiles that appear in `entrance-hall.tmj` or in this table (all numbers 
 ### Narration
 
 - The description is read aloud when the player enters, so it carries the room for a player who can't see the canvas.
-- The rooms in this spec use the approved descriptions word for word. For any future room: second person and present tense, 2–4 short sentences, sound, smell and light more than looks, the same plain tone as the entrance hall.
-- It names **every exit and the wall it's in** (the player has no other overview), and how they arrived when that helps ("Stone steps lead back up to the entrance hall.").
-- It does **not** mention enemies, items or the mimic's chest: the lantern reveals those one by one. Decor can be mentioned in general ("crates are stacked against the walls").
+- The rooms in this spec use the approved descriptions word for word. For any future room: second person and present tense, 1–3 short sentences, sound, smell and air more than looks, the same plain tone as the entrance hall.
+- **It says only what the player notices on arrival without seeing far** (decided Nov 9 after playtesting): where they are, sound, smell and air, and the way they came in ("Stone steps lead back up to the entrance hall."). A sighted player only sees the lantern's circle, so a description of the whole room would tell a screen reader user more than the canvas shows.
+- It does **not** mention the exits ahead, enemies, items, decor or the mimic's chest: the lantern reveals those one by one. A sound can hint at something out of sight ("Water trickles somewhere ahead.").
 - Don't say anything the game doesn't do (lit candles, smells that are "dangerous", doors that can be opened when they can't).
 
 ### Checklist (every room PR)
