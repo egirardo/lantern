@@ -692,7 +692,7 @@ export function createGameStore(
     },
 
     playerAttack: (targetId) => {
-      const { combat, enemies, log, room, defeatedEnemyIds } = get()
+      const { combat, enemies, log, room, defeatedEnemyIds, inventory } = get()
       // No game-over check needed: when the player falls, finishStep sets combat
       // to null, so the check below already covers it. room can't be null in
       // a fight, but the check lets TypeScript use room.id below.
@@ -712,6 +712,11 @@ export function createGameStore(
           defeated.length === 0
             ? defeatedEnemyIds
             : [...defeatedEnemyIds, ...defeated],
+        // What the defeated enemies carried (the mimic's gold key) goes
+        // straight into the inventory, like a key picked up from the floor
+        // (decided Nov 9). The same array when nothing was dropped.
+        inventory:
+          step.loot.length === 0 ? inventory : [...inventory, ...step.loot],
         log: [...log, ...withIds(step.lines)],
       })
     },
