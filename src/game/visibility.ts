@@ -1,5 +1,6 @@
 import { samePosition, type Grid, type Position } from './movement'
 import type { StoreEnemy } from './spawn-enemies'
+import type { StoreItem } from './items'
 // `import type` is erased when the code is built, so src/game/ doesn't load
 // anything from src/rooms/ at runtime (the same as in exits.ts).
 import type { Exit } from '../rooms/room-schema'
@@ -118,5 +119,27 @@ export function getNewlyLitExits(
       // some() is true if at least one tile passes the check
       exit.tiles.some((tile) => isLit(visibleAfter, tile)) &&
       !exit.tiles.some((tile) => isLit(visibleBefore, tile)),
+  )
+}
+
+// The items that have just come into the light, so the reveal narration can
+// announce them too (rule 5: "A gold key lies to the west."). The same rule
+// as getNewlyLit for enemies: lit after the step, but not before. An item
+// lies on one tile, so there's no "any of its tiles" like for exits.
+// A function of its own instead of reusing getNewlyLit, which only takes
+// enemies: the two could share one generic function, but two short ones with
+// clear names are easier to read. The same rules apply: every time it comes
+// back into the light, an empty `visibleBefore` on room load announces every
+// lit item, the result keeps the room file's order, and filter() never
+// changes the inputs.
+export function getNewlyLitItems(
+  visibleBefore: Position[],
+  visibleAfter: Position[],
+  items: StoreItem[],
+): StoreItem[] {
+  return items.filter(
+    (item) =>
+      isLit(visibleAfter, item.position) &&
+      !isLit(visibleBefore, item.position),
   )
 }

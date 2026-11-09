@@ -158,7 +158,7 @@ describe('checkPositions', () => {
   it('accepts an item on a floor tile', () => {
     const room: Room = {
       ...validRoom,
-      items: [{ id: 'key-1', type: 'rusty-key', position: { x: 2, y: 2 } }],
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 2, y: 2 } }],
     }
     expect(() => checkPositions(grid, room)).not.toThrow()
   })
@@ -166,7 +166,7 @@ describe('checkPositions', () => {
   it('fails when an item is inside a wall', () => {
     const room: Room = {
       ...validRoom,
-      items: [{ id: 'key-1', type: 'rusty-key', position: { x: 2, y: 0 } }],
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 2, y: 0 } }],
     }
     expect(() => checkPositions(grid, room)).toThrow(
       'Item key-1 is inside a wall',
@@ -176,7 +176,7 @@ describe('checkPositions', () => {
   it('fails when an item is outside the grid', () => {
     const room: Room = {
       ...validRoom,
-      items: [{ id: 'key-1', type: 'rusty-key', position: { x: 1, y: 3 } }],
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 1, y: 3 } }],
     }
     expect(() => checkPositions(grid, room)).toThrow(
       'Item key-1 is outside the grid',

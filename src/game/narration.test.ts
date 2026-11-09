@@ -20,6 +20,8 @@ import {
   describeArrivalExit,
   exitButtonLabel,
   describeNextToExit,
+  describePickUp,
+  describeItemReveal,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -498,8 +500,8 @@ describe('exit lines', () => {
     expect(describeExitInFight()).toBe("You can't leave during a fight.")
     expect(describeNoExitNearby()).toBe('There is no exit next to you.')
     expect(describeLocked()).toBe('The door is locked. You need a key.')
-    expect(describeUnlock('rusty key')).toBe(
-      'You unlock the door with the rusty key.',
+    expect(describeUnlock('gold key')).toBe(
+      'You unlock the door with the gold key.',
     )
     expect(describeGoThrough('north')).toBe(
       'You go through the exit to the north.',
@@ -558,6 +560,36 @@ describe('describeNextToExit', () => {
   it('calls the exit the player arrived through the way back', () => {
     expect(describeNextToExit(true, 'south')).toBe(
       'You are next to the way back, to the south. Press Enter to use it.',
+    )
+  })
+})
+
+describe('describePickUp', () => {
+  it('says what the player picks up, with "a"', () => {
+    expect(describePickUp('gold key')).toBe('You pick up a gold key.')
+  })
+
+  it('uses "an" before a name that starts with a vowel', () => {
+    expect(describePickUp('old amulet')).toBe('You pick up an old amulet.')
+  })
+})
+
+describe('describeItemReveal', () => {
+  it('uses "A" the first time an item is seen', () => {
+    expect(describeItemReveal('gold key', 'west', false)).toBe(
+      'A gold key lies to the west.',
+    )
+  })
+
+  it('uses "An" before a name that starts with a vowel', () => {
+    expect(describeItemReveal('old amulet', 'north-east', false)).toBe(
+      'An old amulet lies to the north-east.',
+    )
+  })
+
+  it('uses "The" when the item has been seen before', () => {
+    expect(describeItemReveal('gold key', 'south', true)).toBe(
+      'The gold key lies to the south.',
     )
   })
 })

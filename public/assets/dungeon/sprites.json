@@ -839,6 +839,26 @@
         "w": 16,
         "h": 20
       }
+    },
+    "gold-key-0": {
+      "frame": {
+        "x": 352,
+        "y": 320,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
     }
   },
   "meta": {

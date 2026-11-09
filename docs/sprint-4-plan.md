@@ -39,7 +39,7 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
    **Rules for the agents:** they follow the architecture rules in `CLAUDE.md`, write unit tests for new helpers in `src/game/`, and the PR must pass test, lint and typecheck. Agents don't write focus code, and don't change log wording without asking. Agents don't install anything: if a dependency is needed, they stop, and I run the install. Each PR description has a "How it works" walkthrough, so I can explain and defend the code. Agents that touch the same files (`game-store.ts`, `room-scene.ts`) run one after the other, not at the same time.
 
 8. **The goal is a key, and the UI skin is cut (added Nov 4).** The player is locked in the dungeon and must find the way out. The final exit is **locked**, and the key for it lies in **a different room** from the exit. Because agents now take more of the work, I'm bringing back part of the inventory Should, in place of the UI skin. It's more useful for the thesis, because an inventory you can use with the keyboard is accessibility work, and the skin is cosmetic.
-   - **In:** items in the room file (schema and tests), an exit that needs a key (`requires: "<item id>"`), picking up an item by stepping on it, the inventory in the store, and a simple inventory list in React (a heading and a `<ul>`, with no focus moves). Every step has a log line: "You pick up a rusty key." "The door is locked. You need a key." "You unlock the door with the rusty key."
+   - **In:** items in the room file (schema and tests), an exit that needs a key (`requires: "<item id>"`), picking up an item by stepping on it, the inventory in the store, and a simple inventory list in React (a heading and a `<ul>`, with no focus moves). Every step has a log line: "You pick up a gold key." "The door is locked. You need a key." "You unlock the door with the gold key."
    - **The key is used automatically** at the locked exit, so there's no new menu action and the combat menu doesn't change.
    - **First stretch item (decided Nov 4): health potions looted from barrels and crates.** Only built if the reviews are on schedule on Wed Nov 11, by a new Agent F. Otherwise it goes in the report as future work. Design in "Stretch: potions in containers" below. Until then, healing stays as decided (+4 after a won fight, full health per room).
    - **Cut:** the UI skin agent (decision 6). The game works without it, and it was already first in line to cut. The Pixel Operator font stays.
@@ -246,11 +246,15 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 Decision 8. Starts after Agent C is merged, because it builds on the item format and changes the store.
 
-1. **Picking up:** stepping onto an item's tile picks it up, with a log line ("You pick up a rusty key."). The item is no longer drawn. Pure helper with tests.
+1. **Picking up:** stepping onto an item's tile picks it up, with a log line ("You pick up a gold key."). The item is no longer drawn. Pure helper with tests.
 2. **The inventory in the store:** a list of item ids, read by the locked-exit check from Agent C. A room change keeps it, and loading a room doesn't reset it.
-3. **Reveal narration:** an item in the light is announced like a feature ("A rusty key lies to the west."), using the Phase K reveal helper.
+3. **Reveal narration:** an item in the light is announced like a feature ("A gold key lies to the west."), using the Phase K reveal helper.
 4. **Drawing items** in Phaser, only inside the light, looked up through the asset manifest (rule 7).
 5. **`Inventory.tsx`:** a section with an "Inventory" heading and a `<ul>`, "Empty" when there's nothing. Plain HTML, no focus moves. I check it with VoiceOver.
+
+**Decided Nov 9 (Agent E review):**
+- **The key is a gold key** (`gold-key`, "gold key"), because the sprite is gold. Renamed everywhere except past AI log entries.
+- **Taken items and defeated enemies stay gone** when the player comes back to a room. Before, `loadRoom` made them again from the room file, so the key lay there again (and could be picked up twice) and a defeated guard came back. The store keeps `takenItemIds` and `defeatedEnemyIds` as `'room-id/id'` across rooms, and only a new game clears them. **Agent D must save both, together with `inventory`.**
 
 - [ ] Agent E PR reviewed and merged, corrections logged
 

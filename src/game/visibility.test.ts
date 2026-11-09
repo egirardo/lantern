@@ -5,7 +5,9 @@ import {
   getNewlyLit,
   getNewlyLitExits,
   nearestTile,
+  getNewlyLitItems,
 } from './visibility'
+import type { StoreItem } from './items'
 import type { Position, Grid } from './movement'
 import { makeStoreEnemy } from './test-helpers'
 import type { Exit } from '../rooms/room-schema'
@@ -408,5 +410,46 @@ describe('nearestTile', () => {
     expect(() => nearestTile(tiles, from)).toThrowError(
       'nearestTile: empty tiles list',
     )
+  })
+})
+
+describe('getNewlyLitItems', () => {
+  const key: StoreItem = {
+    id: 'key-1',
+    type: 'gold-key',
+    position: { x: 3, y: 1 },
+  }
+
+  it('returns an item that comes into the light', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    expect(getNewlyLitItems(visibleBefore, visibleAfter, [key])).toEqual([key])
+  })
+
+  it('does not return an item that was already lit', () => {
+    const visibleBefore: Position[] = [{ x: 3, y: 1 }]
+    const visibleAfter: Position[] = [{ x: 3, y: 1 }]
+    expect(getNewlyLitItems(visibleBefore, visibleAfter, [key])).toEqual([])
+  })
+
+  it('does not return an item that is still in the dark', () => {
+    const visibleBefore: Position[] = [{ x: 1, y: 1 }]
+    const visibleAfter: Position[] = [{ x: 4, y: 1 }]
+    expect(getNewlyLitItems(visibleBefore, visibleAfter, [key])).toEqual([])
+  })
+
+  it('returns every lit item when nothing was lit before (a room load)', () => {
+    const other: StoreItem = { ...key, id: 'key-2', position: { x: 4, y: 1 } }
+    const visibleAfter: Position[] = [
+      { x: 3, y: 1 },
+      { x: 4, y: 1 },
+    ]
+    expect(getNewlyLitItems([], visibleAfter, [other, key])).toEqual([
+      other,
+      key,
+    ])
   })
 })

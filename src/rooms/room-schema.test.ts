@@ -158,7 +158,7 @@ describe('roomSchema exits', () => {
   it('accepts a locked exit that requires a known item type', () => {
     const room: Room = {
       ...validRoom,
-      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'rusty-key' }],
+      exits: [{ tiles: [{ x: 0, y: 0 }], to: 'room-2', requires: 'gold-key' }],
     }
     expect(roomSchema.safeParse(room).success).toBe(true)
   })
@@ -186,7 +186,7 @@ describe('roomSchema exits', () => {
   it('accepts a locked final exit', () => {
     const room: Room = {
       ...validRoom,
-      exits: [{ tiles: [{ x: 0, y: 0 }], final: true, requires: 'rusty-key' }],
+      exits: [{ tiles: [{ x: 0, y: 0 }], final: true, requires: 'gold-key' }],
     }
     expect(roomSchema.safeParse(room).success).toBe(true)
   })
@@ -225,7 +225,7 @@ describe('roomSchema items', () => {
   it('accepts a room with an item of a known type', () => {
     const room: Room = {
       ...validRoom,
-      items: [{ id: 'key-1', type: 'rusty-key', position: { x: 2, y: 2 } }],
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 2, y: 2 } }],
     }
     expect(roomSchema.safeParse(room).success).toBe(true)
   })
@@ -251,7 +251,7 @@ describe('roomSchema items', () => {
   it('rejects an item with an id that is not kebab-case', () => {
     const invalidRoom: Room = {
       ...validRoom,
-      items: [{ id: 'Key 1', type: 'rusty-key', position: { x: 2, y: 2 } }],
+      items: [{ id: 'Key 1', type: 'gold-key', position: { x: 2, y: 2 } }],
     }
     const result = roomSchema.safeParse(invalidRoom)
     expect(result.success).toBe(false)
@@ -262,8 +262,8 @@ describe('roomSchema items', () => {
     const invalidRoom: Room = {
       ...validRoom,
       items: [
-        { id: 'key-1', type: 'rusty-key', position: { x: 2, y: 2 } },
-        { id: 'key-1', type: 'rusty-key', position: { x: 0, y: 2 } },
+        { id: 'key-1', type: 'gold-key', position: { x: 2, y: 2 } },
+        { id: 'key-1', type: 'gold-key', position: { x: 0, y: 2 } },
       ],
     }
     const result = roomSchema.safeParse(invalidRoom)

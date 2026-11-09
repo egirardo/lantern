@@ -67,6 +67,15 @@ const ENEMY_ANIMATIONS = {
   run: { frames: [4, 5, 6, 7], frameRate: 10, repeat: -1 },
 } as const
 
+// Items lie still, so they have one frame and no movement: the "idle"
+// animation is that single frame, played once. It's only there because
+// every sprite in SPRITES has an idle animation (the scene and the manifest
+// test read frames from the animations); the scene draws items with this
+// frame and never plays it.
+const ITEM_ANIMATIONS = {
+  idle: { frames: [0], frameRate: 1, repeat: 0 },
+} as const
+
 // Characters, enemies and items, by logical name (kebab-case).
 export const SPRITES = {
   'hero-girl': {
@@ -93,6 +102,13 @@ export const SPRITES = {
     texture: 'dungeon',
     framePrefix: 'orc-',
     animations: ENEMY_ANIMATIONS,
+  },
+  // The gold key from the sheet's item area (16×16, at x 352, y 320). Its
+  // name in the log ("gold key") comes from items.json.
+  'gold-key': {
+    texture: 'dungeon',
+    framePrefix: 'gold-key-',
+    animations: ITEM_ANIMATIONS,
   },
 } as const satisfies Record<string, SpriteDefinition>
 

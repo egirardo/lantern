@@ -288,6 +288,32 @@ export function describeNextToExit(
   return `You are next to ${exit}. Press Enter to use it.`
 }
 
+// --- Items (Nov 8, Agent E) ---
+
+// The line when the player steps onto an item and picks it up (decision 8).
+// `itemName` is the display name from items.json, e.g. "gold key". "a" or
+// "an" by the same spelling rule as the enemies ("an amulet" would work too).
+export function describePickUp(itemName: string): string {
+  return `You pick up ${indefiniteArticle(itemName)} ${itemName}.`
+}
+
+// Announces an item that has just come into the lantern light, like
+// describeReveal for enemies and describeExitReveal for exits (rule 5: an item
+// drawn on the canvas must also be in the log). "A gold key" the first time,
+// "The gold key" when it comes back into the light, so a screen reader user
+// knows it's the same key. "lies", not "appears": an item doesn't move, so it
+// was there all along and the light only shows it.
+// Items have no numbered names (only enemies get "skeleton 2"), so this uses
+// the article rule directly instead of nameWithArticle.
+export function describeItemReveal(
+  itemName: string,
+  direction: CompassDirection,
+  seenBefore: boolean,
+): string {
+  const article = seenBefore ? 'the' : indefiniteArticle(itemName)
+  return `${capitalise(`${article} ${itemName}`)} lies to the ${direction}.`
+}
+
 // spawnEnemies only adds a number when a room has two of the same type
 // ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
 // The regex: \s = a space, \d+ = one or more digits, $ = end of the string.
@@ -337,7 +363,7 @@ export function describeLocked(): string {
 }
 
 // The player carries the item, so the locked exit opens. `itemName` is the
-// display name from items.json, e.g. "rusty key".
+// display name from items.json, e.g. "gold key".
 export function describeUnlock(itemName: string): string {
   return `You unlock the door with the ${itemName}.`
 }

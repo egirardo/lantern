@@ -70,11 +70,9 @@ describe('asset manifest', () => {
     expect(typesWithoutSprite(enemyTypes)).toEqual([])
   })
 
-  // Skipped for now: no item has a sprite yet (rusty-key has none), because
-  // items aren't drawn on the canvas yet. Agent E (items and inventory) must
-  // add the item sprites to SPRITES when it draws items, and then turn this
-  // test on by changing `it.skip` to `it`.
-  it.skip('has a sprite for every item type', () => {
+  // Catches an item added to items.json without art: it could be picked up
+  // and named in the log, but nobody could see it lying on the floor.
+  it('has a sprite for every item type', () => {
     const itemTypes = Object.keys(itemsData)
 
     expect(typesWithoutSprite(itemTypes)).toEqual([])
