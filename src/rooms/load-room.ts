@@ -7,19 +7,24 @@ import {
 } from '../game/movement'
 import { tiledSchema, type TiledMap } from './tiled-schema'
 import { buildGrid } from './build-grid'
+import { buildFeatures } from './build-features'
+import type { Feature } from '../game/features'
 
 export function loadRoom(
   roomData: unknown,
   mapData: unknown,
-): { grid: Grid; room: Room; tiledMap: TiledMap } {
+): { grid: Grid; features: Feature[]; room: Room; tiledMap: TiledMap } {
   // Parse the JSON data
   const room: Room = roomSchema.parse(roomData)
   const tiledMap: TiledMap = tiledSchema.parse(mapData)
   const grid: Grid = buildGrid(tiledMap)
+  // The named tiles (barrels and so on), next to the grid, not in it
+  // (Phase K, decision 3).
+  const features: Feature[] = buildFeatures(tiledMap)
 
   // Check that the player start and exit positions are valid
   checkPositions(grid, room)
-  return { grid, room, tiledMap }
+  return { grid, features, room, tiledMap }
 }
 
 export function checkPositions(grid: Grid, room: Room) {

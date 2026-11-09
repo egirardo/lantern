@@ -43,6 +43,7 @@ import {
   findNewlyAdjacentExit,
 } from '../game/exits'
 import { itemDisplayName, pickUpItems, type StoreItem } from '../game/items'
+import type { Feature } from '../game/features'
 
 type LogEntry = LogLine & { id: string }
 
@@ -57,6 +58,12 @@ const FALLEN_TEXT = 'You have fallen in battle.'
 export type GameState = {
   playerPosition: Position | null
   grid: Grid | null
+  // The named tiles in the room (e.g. barrels), from the tile names table,
+  // at most one per cell. Next to the grid, which only says 'floor' or
+  // 'wall'. Nothing reads it yet: the blocked-move text (Phase K step 3) and
+  // the reveal narration (step 7) will. [] until a room is loaded, like
+  // enemies: unlike grid, an empty list is also a real answer (no decor).
+  features: Feature[]
   room: Room | null
   tiledMap: TiledMap | null
   // The id of the room the player is in, or is on the way to. RoomLoader
@@ -276,6 +283,7 @@ export function createGameStore(random: () => number = Math.random) {
     log: [],
     playerPosition: null,
     grid: null,
+    features: [],
     room: null,
     tiledMap: null,
     currentRoomId: FIRST_ROOM_ID,
@@ -294,7 +302,10 @@ export function createGameStore(random: () => number = Math.random) {
     player: PLAYER,
     combat: null,
     loadRoom: (roomData, mapData) => {
-      const { grid, room, tiledMap } = loadRoomFromFiles(roomData, mapData)
+      const { grid, features, room, tiledMap } = loadRoomFromFiles(
+        roomData,
+        mapData,
+      )
       const text = room.description
       const {
         log,
@@ -363,6 +374,7 @@ export function createGameStore(random: () => number = Math.random) {
       )
       set({
         grid,
+        features,
         playerPosition: start,
         room,
         tiledMap,
