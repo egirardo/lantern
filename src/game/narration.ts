@@ -390,6 +390,31 @@ export function describeItemReveal(
   return `${capitalise(`${article} ${itemName}`)} lies to the ${direction}.`
 }
 
+// --- Decor (Phase K step 7, Nov 10) ---
+
+// Announces named decor that has just come into the lantern light (rule 5),
+// one line per name and direction (groupFeatureReveals in feature-reveal.ts).
+// `name` is the kebab-case name from tile-names.json, `count` how many
+// pieces of it were lit in this step.
+// - One: "A pillar appears to the north." / "An empty chest appears…".
+// - More: "Crates appear to the east." All five names in the table (pillar,
+//   crate, empty chest, candlestick, fountain) take a plain "s" in the
+//   plural (decided Nov 9). A name with another plural ("bench" → "benches")
+//   would need a plural field in the table.
+// - No "The …" wording: decor is announced only once per room visit, so it
+//   is never announced a second time (decided Nov 10).
+export function describeFeatureReveal(
+  name: string,
+  count: number,
+  direction: CompassDirection,
+): string {
+  const displayName = featureDisplayName(name)
+  if (count === 1) {
+    return `${capitalise(`${indefiniteArticle(displayName)} ${displayName}`)} appears to the ${direction}.`
+  }
+  return `${capitalise(`${displayName}s`)} appear to the ${direction}.`
+}
+
 // spawnEnemies only adds a number when a room has two of the same type
 // ("skeleton 2"), so a name ending in " <digits>" is a numbered name.
 // The regex: \s = a space, \d+ = one or more digits, $ = end of the string.
