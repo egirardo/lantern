@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { createGameStore } from './game-store'
 import type { Direction } from '../game/movement'
+import { floorLayer, newMap, validRoom, wallsLayer } from '../rooms/testing-map'
+import type { Room } from '../rooms/room-schema'
 
 // Decor reveals in the store (Phase K step 7), with the real room files and
 // the real tile-names.json, so these tests hear what a player hears. In its
@@ -110,6 +112,16 @@ describe('decor reveals in the store', () => {
     ])
   })
 
+  it('does not announce decor again that a step revealed', () => {
+    const store = arrive('entrance-hall', 'dingy-basement')
+    // West to (4, 2) reveals the crate at (2, 3). East back to (5, 2) puts it
+    // in the dark (3 west, 1 south), and west again lights it again.
+    walk(store, ['west', 'east'])
+    const again = linesOf(store, () => store.getState().movePlayer('west'))
+    expect(decorLines(again, /crate/i)).toEqual([])
+    expect(store.getState().seenPieceKeys).toContain('crate@2,3')
+  })
+
   it('announces the decor again after leaving the room and coming back', () => {
     const store = arrive('entrance-hall', 'dingy-basement')
     // Up the stairs at (5, 1) to the basement, and straight back down.
@@ -163,6 +175,53 @@ describe('decor reveals in the store', () => {
     expect(texts(store)).toEqual([
       'You climb down the ladder into a small, silent vault. The air is cold and still.',
       'The way back is to the north.',
+    ])
+  })
+})
+
+describe('decor reveals in a step that starts a fight', () => {
+  // No real room has a step that both starts a fight and lights new decor,
+  // so this one uses a small test map with the real crate tile (gid 1427 =
+  // local id 1426 in tile-names.json):
+  //   (0,0) (1,0)   floor
+  //   (0,1) (1,1)   floor
+  //   (0,2) (1,2)   C = crate on walls, floor
+  //   (0,3) (1,3)   floor
+  //   (0,4) (1,4)   floor, S = skeleton
+  //   (0,5) (1,5)   P = the player's start, floor
+  // From (0, 5) the crate is 3 tiles away, in the dark. One step north to
+  // (0, 4) lights it and puts the player next to the skeleton.
+  const map = {
+    ...newMap(),
+    width: 2,
+    height: 6,
+    layers: [
+      { ...floorLayer, width: 2, height: 6, data: Array(12).fill(258) },
+      {
+        ...wallsLayer,
+        width: 2,
+        height: 6,
+        data: [0, 0, 0, 0, 1427, 0, 0, 0, 0, 0, 0, 0],
+      },
+    ],
+  }
+  const room: Room = {
+    ...validRoom,
+    playerStart: { x: 0, y: 5 },
+    exits: [],
+    enemies: [{ id: 'skeleton-1', type: 'skeleton', position: { x: 1, y: 4 } }],
+  }
+
+  it('remembers the decor and announces it before the fight lines', () => {
+    const store = createGameStore()
+    store.getState().loadRoom(room, map)
+    const lines = linesOf(store, () => store.getState().movePlayer('north'))
+    expect(store.getState().combat).not.toBeNull()
+    expect(store.getState().seenPieceKeys).toEqual(['crate@0,2'])
+    expect(lines.slice(0, 3)).toEqual([
+      'You have taken a step to the north.',
+      'A crate appears to the north.',
+      'The skeleton attacks you! A fight begins.',
     ])
   })
 })
