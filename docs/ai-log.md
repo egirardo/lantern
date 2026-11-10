@@ -1187,6 +1187,34 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The spec is also the record of how the rooms were built, and a future agent should get the rules we learned in the playtest, not the old ones. The reference room has to follow its own rules.
 - **How I verified it:** I read the diff. All tests pass, along with typecheck, ESLint and Prettier (format:check skips `.tmj` files, so the map change was checked by the room file tests and in the browser).
 
+#### 2026-11-09 — Agent H: the mimic (PR #46)
+
+- **Tool:** Claude Code (an agent in its own git worktree, branch `feature/mimic`, started by Claude Code from a brief I approved)
+- **Category:** Coding
+- **What I asked:** To build the mimic in the vault: an enemy that is named and drawn as a chest until its fight starts, that unmasks when the fight begins, and that drops the gold key straight into the inventory when it is defeated, with an animation that respects reduced motion.
+- **What I got:**
+  - **The code (all the agent's, in 4 commits):** `src/game/disguise.ts` with `nameOutsideFight` and `unmaskEnemies`; `disguise` and `carries` on `StoreEnemy` in `spawn-enemies`; `describeReveal` using the disguise, so the lantern reveals "a chest"; `describeCombatStart` unmasking it ("The chest springs open. It's a mimic! A fight begins."); `describeLoot` ("The mimic drops a gold key. You pick it up."); the loot in `combat-flow`'s `finishStep`; 5 lines in `playerAttack`; and `enemyAnimationName` and `playIdle` taking an animation name, so the open mouth plays once it is unmasked.
+  - **Tests:** 36 new tests, written by the agent. It broke the code on purpose in 6 places, and the tests caught every one.
+  - **My correction:** with reduced motion on, the still frame was the half-open mouth (frame 1). I decided it should be fully open, so Claude Code changed the loop to `frames: [2, 1]` and tightened the test from `not.toBe(0)` to `toBe(2)`. The test fails with the old frame order.
+- **Outcome:** ✏️ kept with changes
+- **Why:** The agent followed the brief and every game event has a log line (rule 5): the reveal, the unmasking and the loot. The still frame was my call on clarity: a fully open mouth shows that the chest is a monster without the animation, which matters for players with reduced motion on. Since the mimic is done, the Wed Nov 11 fallback for it isn't needed.
+- **How I verified it:** All checks passed on the first try (typecheck, lint, Prettier, 600 tests, build), and 603 tests after dev was merged in. In the browser: the chest reveal, the unmasking, the animation speed, reduced motion, the key in the inventory, and the final door opening. VoiceOver reads the loot lines together in one batch. Noted, not fixed: walking into the disguised mimic outside a fight would say "An enemy blocks your path" (it can't happen in the vault), and the chest may look like it floats half a tile up because of the sprite's art.
+
+#### 2026-11-10 — Connecting Graphify and tracing the game's entry point
+
+- **Tool:** Claude Code, with the Graphify MCP server (a code graph of the repository)
+- **Category:** Learning
+- **What I asked:** To connect Claude Code to Graphify's MCP server (`https://api.graphify.com/mcp`, signed in with OAuth), select my workspace `elsa-s-workspace`, list my repositories and how far they had indexed, and then explain the project, pick one entry point and trace what it depends on, saying what the graph showed and what was inferred.
+- **What I got:**
+  - **Setup:** my untracked `.mcp.json` already had a `graphify` entry for that URL, so Claude Code reused it instead of adding another. It started the OAuth sign-in and I approved it in my browser. No code or config was changed.
+  - **Index:** `egirardo/lantern` was ready, with 551 nodes, built from commit `38dc8ad` (the current `dev`). On the Free plan, `README.md` is the only document that gets indexed.
+  - **The trace:** the entry point is `createGame()` in `src/phaser/create-game.ts`, called by `PhaserGame()` in `src/ui/PhaserGame.tsx`. Its only dependency is `RoomScene`, which imports the store, visibility, movement, items, enemies, the Tiled schema, tile indices, the asset manifest, sprite motion, hits and reduced motion.
+  - **`AGENTS.md`:** I asked for Graphify's "use Graphify before grep" rule to go in a new `AGENTS.md`. Claude Code created it and pointed out that Claude Code only reads `CLAUDE.md` by itself, so at my OK it added an `@AGENTS.md` import to `CLAUDE.md` and committed `.mcp.json`, since a worktree only has committed files (branch `docs/agents-graphify`).
+  - **A gap in the graph:** Claude Code checked the graph against the import lines and found that `LANTERN_RADIUS` (imported from `visibility.ts`) was missing from the graph's edges. It marked its claim that `RoomScene` subscribes to the store as an inference it hadn't traced.
+- **Outcome:** ✅ kept
+- **Why:** The trace matches how I built the project: Phaser only renders and takes types and read-only helpers from `src/game/`, which is architecture rules 1 and 3. Graphify is useful for a quick map of dependencies, but it can miss constants, so I'll still read the files when it matters (for example before the defence).
+- **How I verified it:** Claude Code compared the graph's edges with the real `import` lines in `create-game.ts` and `room-scene.ts`, and they matched apart from `LANTERN_RADIUS`. I know these files because I wrote the reference room code myself.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -1201,6 +1229,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 | Engine: sprite animations (Agent G) | Claude Code (Opus 5.5) | #36 | Yes: typecheck, lint, Prettier, tests, build | None. One addition at my request after the playtest (the hit reaction, one commit) | None found. Reduced motion respected (tested with my own setting on). Known limit: no flash on the killing blow | About 25 min (code check and playtest, plus the hit reaction) | About a day (learning Phaser animations, tweens and timers) |
 | `dingy-basement` and `forgotten-vault` | Claude Code (Opus 5.5) | #43 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | Four, all design (by the agent, one commit each): candlesticks removed, the mimic moved out of the arrival light, the stairs arrival moved to their foot, no stacked crates. Descriptions shortened to the new rule. One deviation accepted (the demon guarding the hatch diagonally) | None in the rooms. The descriptions told a screen reader user more than the canvas shows, which led to the new description rule | About 30 min for both PRs together (map renders, then a playtest through the whole dungeon) | About 1–2 hours per room (painting in Tiled, the room file, checking exits and arrivals) |
 | `old-crypt` | Claude Code (Opus 5.5) | #44 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | A redesign by me (carpet way back out of the south edge, symmetric pillars, fountains, a crate maze), built by the agent. Candlesticks removed, shorter description | None in the room. Same description finding as #43 | Included in the 30 min above | About 2 hours (the crate maze takes longer) |
+| Engine: the mimic (Agent H) | Claude Code (Opus 5.5) | #46 | Yes: typecheck, lint, Prettier, 600 tests, build | One, mine: the reduced-motion still frame changed to the fully open mouth (`frames: [2, 1]`, a stricter test), done by Claude Code | None found. The still frame was a clarity fix for reduced motion. Noted: "An enemy blocks your path" if the player walks into the disguised mimic outside a fight (can't happen in the vault) | About 30 min (code review, playtest, browser checks) | About a day (the disguise, the unmasking, the loot and the animation, with tests) |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
