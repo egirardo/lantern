@@ -7,6 +7,7 @@ import {
 import { describe, expect, it } from 'vitest'
 import {
   ACCOUNTS_UNAVAILABLE_MESSAGE,
+  PASSWORD_REQUIREMENTS,
   describeAuthError,
 } from './auth-messages'
 
@@ -41,12 +42,15 @@ describe('describeAuthError', () => {
 
   it('asks for a stronger password and points at the password field', () => {
     const error = new AuthWeakPasswordError(
-      'Password should be at least 6 characters.',
+      'Password should contain at least one character of each: abc…, ABC…, 123…, !@#…',
       422,
-      ['length'],
+      ['characters'],
     )
     const info = describeAuthError(error)
     expect(info.message).toContain('Choose a stronger password')
+    // The same rule as the hint under the field, so the player reads one
+    // rule in both places.
+    expect(info.message).toContain(PASSWORD_REQUIREMENTS)
     expect(info.field).toBe('password')
   })
 

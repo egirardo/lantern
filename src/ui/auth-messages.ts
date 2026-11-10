@@ -30,6 +30,15 @@ export type AuthErrorInfo = {
 export const ACCOUNTS_UNAVAILABLE_MESSAGE =
   'Accounts are unavailable right now. You can keep playing as a guest: your progress is saved in this browser.'
 
+// The password rule set in the Supabase dashboard (Authentication → Sign In /
+// Providers → Email): at least 8 characters, with a lowercase letter, an
+// uppercase letter, a number and a symbol. Shown under the password field
+// when creating an account, so the player knows it before they choose one
+// (WCAG 3.3.2), and repeated in the weak password message. If the setting in
+// the dashboard changes, change this text too: the app can't read it.
+export const PASSWORD_REQUIREMENTS =
+  'At least 8 characters, with a lowercase letter, an uppercase letter, a number and a symbol.'
+
 const NETWORK_MESSAGE =
   "We can't reach the account server. Check your internet connection and try again. You can keep playing as a guest in the meantime."
 
@@ -75,10 +84,9 @@ const MESSAGES_BY_CODE = new Map<string, AuthErrorInfo>(
         'There is already an account with this email. Sign in instead, using "I already have an account".',
       field: 'email',
     },
-    // The password is too short or too common for the project's settings.
+    // The password doesn't meet the project's rule (see PASSWORD_REQUIREMENTS).
     weak_password: {
-      message:
-        'Choose a stronger password: a longer one, or one that mixes letters, numbers and symbols.',
+      message: `Choose a stronger password. ${PASSWORD_REQUIREMENTS}`,
       field: 'password',
     },
     email_address_invalid: {

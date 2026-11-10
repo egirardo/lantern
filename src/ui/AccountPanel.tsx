@@ -5,6 +5,7 @@ import { onAuthChange, signIn, signOut, signUp } from '../save/auth'
 import { getSupabaseClient } from '../save/supabase-client'
 import {
   ACCOUNTS_UNAVAILABLE_MESSAGE,
+  PASSWORD_REQUIREMENTS,
   describeAuthError,
 } from './auth-messages'
 
@@ -115,6 +116,7 @@ export function AccountPanel({
   const passwordId = `${id}-password`
   const emailErrorId = `${id}-email-error`
   const passwordErrorId = `${id}-password-error`
+  const passwordHintId = `${id}-password-hint`
   const formErrorId = `${id}-form-error`
 
   // Listen to the login state. onAuthChange calls setUser right away with
@@ -251,12 +253,20 @@ export function AccountPanel({
     formHeadingRef.current?.focus()
   }
 
-  // Lists the ids of the messages that describe a field: its own error and
-  // the form error. undefined (no attribute) when there are none.
-  function describedBy(fieldErrorId: string, fieldError?: string) {
+  // Lists the ids of the messages that describe a field: its own error, the
+  // form error, and a hint (the password rule when creating an account).
+  // undefined (no attribute) when there are none. The hint is left out while
+  // the field has its own error, because the weak password error already
+  // repeats the rule, and a screen reader would read it twice.
+  function describedBy(
+    fieldErrorId: string,
+    fieldError?: string,
+    hintId?: string,
+  ) {
     const ids = [
       fieldError ? fieldErrorId : null,
       errors.form ? formErrorId : null,
+      hintId && !fieldError ? hintId : null,
     ].filter(Boolean)
     return ids.length > 0 ? ids.join(' ') : undefined
   }
@@ -368,7 +378,11 @@ export function AccountPanel({
                   setErrors((current) => ({ ...current, password: undefined }))
                 }}
                 aria-invalid={errors.password ? true : undefined}
-                aria-describedby={describedBy(passwordErrorId, errors.password)}
+                aria-describedby={describedBy(
+                  passwordErrorId,
+                  errors.password,
+                  isSignIn ? undefined : passwordHintId,
+                )}
               />
               {/* A toggle button: aria-pressed says whether it's on, so the
                   label stays the same ("Show password, toggle button,
@@ -381,6 +395,14 @@ export function AccountPanel({
                 Show password
               </button>
             </div>
+            {/* The rule only matters when choosing a password, so it's only
+                shown when creating an account (WCAG 3.3.2: say what's
+                needed before the player has to guess). */}
+            {!isSignIn && (
+              <p id={passwordHintId} className="account-hint">
+                {PASSWORD_REQUIREMENTS}
+              </p>
+            )}
             {errors.password && (
               <p id={passwordErrorId} className="account-error">
                 <span className="account-error-prefix">Error: </span>
