@@ -755,8 +755,9 @@ export function createGameStore(
           seenPieceKeys: featureReveal.seenPieceKeys,
           // Step, then the pickup (Nov 8), then enemy reveals, then exit
           // reveals (decided Nov 6), then item reveals (Nov 8), then decor
-          // reveals (Nov 10), then the exit next to the player (Nov 8). The pickup sits right after the step
-          // because it's part of the step: the player stepped onto the key.
+          // reveals (Nov 10), then the exit next to the player (Nov 8). The
+          // pickup sits right after the step because it's part of the step:
+          // the player stepped onto the key.
           // "You are next to the exit… Press Enter" stays last, because it's
           // the cue to act, like "It's your turn." in a fight.
           log: [
@@ -787,8 +788,8 @@ export function createGameStore(
         seenItemIds: itemReveal.seenItemIds,
         seenPieceKeys: featureReveal.seenPieceKeys,
         // Step, then the pickup, then enemy reveals, then exit reveals, then
-        // item reveals, then decor reveals (Nov 10), then the fight start (decided Nov 4 and Nov 6, items
-        // Nov 8). A step can pick up a key and start a fight at once: the key
+        // item reveals, then decor reveals, then the fight start (decided
+        // Nov 4 and Nov 6, items Nov 8, decor Nov 10). A step can pick up a key and start a fight at once: the key
         // is picked up first, because the player is already standing on it
         // when the enemy attacks, and the fight lines end with "It's your
         // turn.", the cue to act, so they must come last.
