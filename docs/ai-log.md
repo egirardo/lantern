@@ -1157,6 +1157,36 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The schema is the one source of the shape, so Agent D and Phase L build on the same thing. The parse in `updateSettings` guards against a mistake TypeScript can't see with our settings. The rename makes the code easier to read and explain.
 - **How I verified it:** All 582 tests pass, along with typecheck, ESLint and Prettier. Claude Code broke the schema parse in `updateSettings` on purpose and the undefined test caught it; it broke each of the four defaults and my tests caught each one. Nothing in the UI uses the settings yet, so there's nothing to check by hand until Phase L.
 
+#### 2026-11-09 — Room agents: the basement, the vault and the crypt (PRs #43 and #44)
+
+- **Tool:** Claude Code (two agents, each in its own git worktree, started by Claude Code from briefs I approved)
+- **Category:** Agent rooms
+- **What I asked:** One agent to build `dingy-basement` and `forgotten-vault` (branch `rooms/basement-vault`, PR #43) and one to build `old-crypt` (branch `rooms/old-crypt`, PR #44), as data only, following the "Building rooms (for agents)" spec in `CLAUDE.md` and the approved designs in the sprint plan, and to run the whole checklist. Claude Code rendered every map to a PNG so I could review the layouts without opening Tiled.
+- **What I got:**
+  - **The rooms (all room and map files written by the agents):** both PRs passed every check on the first try (tests, typecheck, lint, format, build), and neither touched `src/`.
+  - **Corrections after my review and playtest**, each done by the agent as its own commit: candlesticks removed in every room, because every candlestick tile has a flame and the game has no candle light; in the vault the mimic moved to (7, 6), so it's outside the light when the player arrives; in the basement the stairs arrival moved to their foot at (1, 2), with a crate at (0, 3); no crates stacked on top of each other, because the lower crate's lid gets hidden; and shorter descriptions (see the new rule below).
+  - **The crypt, redesigned by me:** the way back is a carpet leading out of the south edge at (5–6, 9) instead of a doorway in the west wall, the great door is in the north wall, pillars stand symmetrically at x 2, 4, 7 and 9, fountains are in both north corners, and a crate maze has rows at y 6 (gap at x 0–1) and y 4 (gap at x 10–11), with no dead ends. The agent built it from my description.
+  - **A deviation I accepted:** the basement agent put the demon diagonally next to the hatch at (1, 8), with a crate at (1, 9), so the player can't use the hatch without a fight. It explained why in the PR, and that's how a guard should work.
+  - **A new description rule (decided in the playtest):** the approved descriptions told a screen reader user more than a sighted player sees, since the canvas only shows the lantern's circle. Now a description says only what the player notices on arrival (where they are, sound, smell, air, the way in). Exits, enemies and decor come from the reveals.
+  - **Dropped:** a keyhole on the locked door, because the door handle sits across two tiles.
+- **Outcome:** ✏️ kept with changes
+- **Why:** The agents followed the spec well enough that everything I changed was about design and feel, not broken rules: no failed checks, no code changes, and the arrival and exit back rules worked. The crypt needed my own design because the approved layout was too plain for the last room. The description rule came from playing it myself, and it's an accessibility finding for the report: equal information means not giving the screen reader user *more* than the canvas either.
+- **How I verified it:** I read both PRs and looked at Claude Code's renders of each map, then played the whole dungeon in the browser (hall → basement → vault → basement → crypt → escape), about 30 minutes. It ran long because I died many times on the happy path: 8 fights in a row, with health only coming back on a room change (noted for Thursday's balance pass). The VoiceOver pass of the new rooms is on Thursday.
+
+#### 2026-11-09 — Updating the spec and the reference room after the room review
+
+- **Tool:** Claude Code
+- **Category:** Documentation
+- **What I asked:** To bring the spec, the sprint plan and the entrance hall in line with what we decided in the room review, on a docs branch.
+- **What I got:** All changes written by Claude Code from my decisions:
+  - **`entrance-hall.json`:** the description shortened to the new rule, without the door ("You stand on a red carpet in an ancient, dust-covered hall that no one has touched in decades. The air is thick with the smell of mildew and decay.").
+  - **`entrance-hall.tmj`:** the stacked crate at (11, 9) moved to (9, 8), with its lid at (9, 7), so three crates stand in a row and every crate has its lid.
+  - **`CLAUDE.md` spec:** the crypt's carpet way back in the room table, a new tile row for "carpet way out, south edge", the "never stack crates vertically" rule with the reason, and the narration rules rewritten to the new description rule.
+  - **`sprint-4-plan.md` point 5:** rewritten as the rooms were built (no candlesticks, exact positions, the crypt redesign).
+- **Outcome:** ✅ kept
+- **Why:** The spec is also the record of how the rooms were built, and a future agent should get the rules we learned in the playtest, not the old ones. The reference room has to follow its own rules.
+- **How I verified it:** I read the diff. All tests pass, along with typecheck, ESLint and Prettier (format:check skips `.tmj` files, so the map change was checked by the room file tests and in the browser).
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -1169,11 +1199,16 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 | Engine: Supabase foundation (Agent B) | Claude Code (Opus 5.5) | #34 | Yes: typecheck, lint, Prettier, tests, build. All 18 RLS tests passed against the real project on the first run (Nov 6) | None. Went beyond the brief with two type-only files (kept) and a temporary `node_modules` link (removed by the agent) | None found (no UI). Security: none found; RLS tested for read, update, delete, insert, upsert, handing a row over and signed-out access | About 25 mins | Several Hours |
 | Engine: exits and locked exit (Agent C) | Claude Code (Opus 5.5) | #35 | Yes: typecheck, lint, Prettier, 399 tests, build | One, found in my VoiceOver playtest: the exit lines were skipped because a room change made two log batches (fix A, done by the agent in one commit). One brief deviation accepted (item types instead of ids) | VoiceOver skipped the exit lines (fixed). Exits are only announced when bumped into, not when lit (planned in Phase K step 7, next PR) | About 45 min (code review, playtest with a test room, VoiceOver, and checking fix A) | One to two days (room changes, the lock, Phaser cleanup and the tests) |
 | Engine: sprite animations (Agent G) | Claude Code (Opus 5.5) | #36 | Yes: typecheck, lint, Prettier, tests, build | None. One addition at my request after the playtest (the hit reaction, one commit) | None found. Reduced motion respected (tested with my own setting on). Known limit: no flash on the killing blow | About 25 min (code check and playtest, plus the hit reaction) | About a day (learning Phaser animations, tweens and timers) |
+| `dingy-basement` and `forgotten-vault` | Claude Code (Opus 5.5) | #43 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | Four, all design (by the agent, one commit each): candlesticks removed, the mimic moved out of the arrival light, the stairs arrival moved to their foot, no stacked crates. Descriptions shortened to the new rule. One deviation accepted (the demon guarding the hatch diagonally) | None in the rooms. The descriptions told a screen reader user more than the canvas shows, which led to the new description rule | About 30 min for both PRs together (map renders, then a playtest through the whole dungeon) | About 1–2 hours per room (painting in Tiled, the room file, checking exits and arrivals) |
+| `old-crypt` | Claude Code (Opus 5.5) | #44 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | A redesign by me (carpet way back out of the south edge, symmetric pillars, fountains, a crate maze), built by the agent. Candlesticks removed, shorter description | None in the room. Same description finding as #43 | Included in the 30 min above | About 2 hours (the crate maze takes longer) |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
 
 <!-- What went wrong, what the agent misunderstood in the spec, what I changed in CLAUDE.md as a result. -->
+
+- **`dingy-basement` and `forgotten-vault` (#43):** nothing in the spec was misunderstood. The corrections came from things the spec didn't say: candlestick tiles have flames, crates can't be stacked (the lid disappears), and an arrival can put the mimic in the light straight away. In `CLAUDE.md` I added "never stack crates vertically", and replaced the narration rules with the new description rule.
+- **`old-crypt` (#44):** the agent followed the approved design exactly; the design itself was what I changed. The south-edge carpet exit wasn't in the tile table, so I added it as a row for future rooms.
 
 ---
 

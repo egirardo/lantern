@@ -2,13 +2,26 @@ import type { Combatant } from './combat'
 import { enemies } from './enemy-schema'
 import type { Position } from './movement'
 
-type RoomEnemy = { id: string; type: string; position: Position }
+// `carries` is optional, like in the room file: most enemies carry nothing.
+type RoomEnemy = {
+  id: string
+  type: string
+  position: Position
+  carries?: string
+}
 
 export type StoreEnemy = {
   id: string
   type: string
   combatant: Combatant
   position: Position
+  // Only on a disguised enemy that hasn't been unmasked yet: the name the log
+  // uses for it outside a fight, e.g. 'chest' for the mimic (see disguise.ts).
+  // beginCombat removes it when a fight with the enemy starts.
+  disguise?: string
+  // Only on an enemy that carries an item: the item type (e.g. 'gold-key')
+  // that goes into the player's inventory when it is defeated.
+  carries?: string
 }
 
 export function spawnEnemies(
@@ -42,9 +55,10 @@ export function spawnEnemies(
     // `?? 0` because noUncheckedIndexedAccess types a Record lookup as
     // `number | undefined`
     const needsNumber = (typeCounts[roomEnemy.type] ?? 0) > 1
-    const name = needsNumber
-      ? `${enemyType.displayName} ${seen}`
-      : enemyType.displayName
+    // The same number goes on the disguise, so two mimics are "chest 1" and
+    // "chest 2" before the fight and "mimic 1" and "mimic 2" after it.
+    const number = needsNumber ? ` ${seen}` : ''
+    const name = `${enemyType.displayName}${number}`
 
     return {
       id: roomEnemy.id,
@@ -59,6 +73,13 @@ export function spawnEnemies(
         damageDie: enemyType.damageDie,
       },
       position: roomEnemy.position,
+      // The two optional fields are only added when they have a value, so an
+      // ordinary enemy has no `disguise: undefined` key at all. When the
+      // check is false, `&&` gives `false`, and spreading `false` adds nothing.
+      ...(enemyType.disguise !== undefined && {
+        disguise: `${enemyType.disguise}${number}`,
+      }),
+      ...(roomEnemy.carries !== undefined && { carries: roomEnemy.carries }),
     }
   })
 }

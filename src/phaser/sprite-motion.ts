@@ -43,3 +43,19 @@ export function isSingleStep(from: Position, to: Position): boolean {
   const distance = Math.abs(to.x - from.x) + Math.abs(to.y - from.y)
   return distance === 1
 }
+
+// Which animation from the manifest an enemy's sprite should play: 'unmasked'
+// for an enemy that has dropped its disguise (the mimic, once a fight with it
+// has started), otherwise 'idle'. Only sprites that have an 'unmasked'
+// animation can use it, so a skeleton (never disguised) always gets 'idle'.
+// The scene doesn't decide when the mimic is unmasked: the store does, by
+// removing `disguise` from the enemy (rule 3), and this only reads that.
+// Object.hasOwn instead of `in`, so names every object inherits don't count.
+export function enemyAnimationName(
+  isDisguised: boolean,
+  animations: object,
+): 'idle' | 'unmasked' {
+  return !isDisguised && Object.hasOwn(animations, 'unmasked')
+    ? 'unmasked'
+    : 'idle'
+}
