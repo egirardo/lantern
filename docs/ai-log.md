@@ -1215,6 +1215,33 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The trace matches how I built the project: Phaser only renders and takes types and read-only helpers from `src/game/`, which is architecture rules 1 and 3. Graphify is useful for a quick map of dependencies, but it can miss constants, so I'll still read the files when it matters (for example before the defence).
 - **How I verified it:** Claude Code compared the graph's edges with the real `import` lines in `create-game.ts` and `room-scene.ts`, and they matched apart from `LANTERN_RADIUS`. I know these files because I wrote the reference room code myself.
 
+#### 2026-11-10 — Checking Agent D's saves and sync
+
+- **Tool:** Claude Code
+- **Category:** Review, Learning, Documentation
+- **What I asked:** To get Agent D's `feature/saves` branch ready for a PR: merge `dev` in, run the checks, give me a checklist for my DevTools checks, help me when Safari got in the way, and write the PR description.
+- **What I got:**
+  - Claude Code merged `dev` into the branch (no conflicts) and ran the tests, typecheck, lint, Prettier and the build. It also checked that the save stores `inventory` and `defeatedEnemyIds`, so the gold key and the defeated mimic should survive a reload.
+  - A checklist with the storage keys, the save shape and the console messages, taken from the code.
+  - Two points in the checklist were wrong. It said the save would update when I took damage, but `saveAction` doesn't save during a fight, so health is only written when the fight ends. It also said the game would switch to high contrast, but nothing in the game reads the settings yet (that's Phase L). When I asked, it found both in the code and corrected the checklist.
+  - Help with Safari's Web Inspector. Its Console doesn't allow `await` on its own line, and it reads a line starting with `{` as an object, so Claude Code rewrote the snippets with `.then()` and an IIFE. It explained both, and also why `import('/src/state/game-store.ts')` in the Console gives the same store the game uses. It also explained why the store still showed the old value: I hadn't reloaded, and settings are only read when the page loads.
+  - The PR description. It pushed the branch and added this entry to the same PR, so there's no docs-only PR.
+- **Outcome:** ✏️ kept with changes
+- **Why:** The code and the checks were fine, and Agent D wrote all of it. The changes were to Claude Code's checklist, which described what it expected instead of what the code does. Testing in Safari was the right choice, because it's the browser I use for VoiceOver.
+- **How I verified it:** I did every check myself in Safari's Web Inspector, as a guest: the save after a fight, the doorway after a reload, the key and the mimic after a reload, the ended record after both dying and escaping (then a new game), a broken save, and writing, reading and rejecting settings. Sync with an account and the two sync log lines wait for my login form.
+
+#### 2026-11-10 — Graphify in practice
+
+- **Tool:** Claude Code with Graphify (MCP)
+- **Category:** Learning
+- **What I asked:** Nothing directly. I wanted to see in a normal session whether Claude Code uses Graphify before grep (the AGENTS.md rule), and where the graph falls short.
+- **What I got:**
+  - `claude mcp list` showed Graphify connected. Claude Code knew the rule because `CLAUDE.md` imports `AGENTS.md`, so it was in its context from the start. That doesn't show whether it would find the rule by itself.
+  - Claude Code tried Graphify first to find the save schema, and got nothing. The graph is built from `dev` at one commit, so code that only exists on an agent's branch isn't in it. It fell back to `git diff` and grep. The result said how old the snapshot was ("16m ago"), which made the miss easy to understand.
+- **Outcome:** ✅ kept
+- **Why:** Graphify is only useful for code that's already merged. For reviewing agent branches, which is most of what I do now, it can't help. That's the same kind of limit as the missing `LANTERN_RADIUS`: it's a snapshot, so I can't rely on it alone.
+- **How I verified it:** The Graphify result named the indexed commit (`d4de013`), and the save files are only on `feature/saves`.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -1230,6 +1257,7 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 | `dingy-basement` and `forgotten-vault` | Claude Code (Opus 5.5) | #43 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | Four, all design (by the agent, one commit each): candlesticks removed, the mimic moved out of the arrival light, the stairs arrival moved to their foot, no stacked crates. Descriptions shortened to the new rule. One deviation accepted (the demon guarding the hatch diagonally) | None in the rooms. The descriptions told a screen reader user more than the canvas shows, which led to the new description rule | About 30 min for both PRs together (map renders, then a playtest through the whole dungeon) | About 1–2 hours per room (painting in Tiled, the room file, checking exits and arrivals) |
 | `old-crypt` | Claude Code (Opus 5.5) | #44 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | A redesign by me (carpet way back out of the south edge, symmetric pillars, fountains, a crate maze), built by the agent. Candlesticks removed, shorter description | None in the room. Same description finding as #43 | Included in the 30 min above | About 2 hours (the crate maze takes longer) |
 | Engine: the mimic (Agent H) | Claude Code (Opus 5.5) | #46 | Yes: typecheck, lint, Prettier, 600 tests, build | One, mine: the reduced-motion still frame changed to the fully open mouth (`frames: [2, 1]`, a stricter test), done by Claude Code | None found. The still frame was a clarity fix for reduced motion. Noted: "An enemy blocks your path" if the player walks into the disguised mimic outside a fight (can't happen in the vault) | About 30 min (code review, playtest, browser checks) | About a day (the disguise, the unmasking, the loot and the animation, with tests) |
+| Engine: saves and sync (Agent D) | Claude Code (Opus 5.5) | (this PR) | Yes: typecheck, lint, Prettier, 680 tests, build (after merging `dev`). The 18 RLS tests are skipped without a Supabase project | None. Every DevTools check passed as a guest. Sync with an account isn't tested yet (waits for the login form) | None found. Rule 5 is covered: when a sync replaces the game, a log line says why. Settings are saved but not used by the game yet (Phase L) | About 45 min (merge and checks, the DevTools checks in Safari) | Two to three days (the schemas, newest-wins, the ended record, sync timing and the tests) |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
@@ -1252,6 +1280,7 @@ Filled in during Sprint 5.
   - Oct 13: Copilot's false claim that an empty grid throws
   - Oct 13: Claude Code's contradictory explanation of auto-deleting branches, and outdated Vercel instructions
   - Oct 16: Claude Code's `.refine` sketch wasn't valid code (a comment as the function body)
+  - Nov 10: Claude Code's DevTools checklist for the saves expected the save to update on damage, and high contrast to show, before checking the code
 - **How I verified AI output:**
 - **Agent workflow results:** reference room vs agent-built rooms
 - **What I would do differently:**
