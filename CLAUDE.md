@@ -2,6 +2,10 @@
 
 This file gives Claude context for working on **Lantern**. Read it at the start of every session.
 
+The rules for all coding agents (use Graphify before grep) are in `AGENTS.md`, imported here so Claude Code reads them too:
+
+@AGENTS.md
+
 ## About the project
 
 Lantern is a turn-based pixel-art dungeon crawler for the browser, inspired by tabletop RPGs like Dungeons & Dragons. The player explores a dark dungeon where only the area lit by their lantern is visible, fights monsters with dice-based combat, and follows the adventure through a narrated log.
