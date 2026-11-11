@@ -46,17 +46,17 @@ export function PhaserGame() {
     }
   }, [])
 
+  // The label is only the name (decision 9, option B): the controls are
+  // explained in How to play, so they aren't repeated every time the map
+  // gets focus.
   return (
-    <>
-      <p>Use the arrow keys to move.</p>
-      <div
-        id="phaser-game"
-        ref={containerRef}
-        role="application"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        aria-label="Dungeon map. Use the arrow keys to move."
-      />
-    </>
+    <div
+      id="phaser-game"
+      ref={containerRef}
+      role="application"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-label="Dungeon map"
+    />
   )
 }

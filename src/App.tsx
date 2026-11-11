@@ -1,42 +1,98 @@
-import { AccountPanel } from './ui/AccountPanel'
-import { AdventureLog } from './ui/AdventureLog'
-import { CombatMenu } from './ui/CombatMenu'
-import { ExitButton } from './ui/ExitButton'
-import { GameOver } from './ui/GameOver'
-import { Inventory } from './ui/Inventory'
-import { PhaserGame } from './ui/PhaserGame'
-import { RoomLoader } from './ui/RoomLoader'
-import { Victory } from './ui/Victory'
+import { useState } from 'react'
+import { flushSync } from 'react-dom'
+import { BookMenu } from './ui/BookMenu'
+import type { BookTab } from './ui/book-tabs'
+import { GameScreen } from './ui/GameScreen'
+import { StartScreen } from './ui/StartScreen'
+import { uiAsset } from './ui/ui-asset'
+import { useSettingsOnRoot } from './ui/use-settings-on-root'
+
+type Screen = 'start' | 'game'
 
 function App() {
+  // High contrast and text size on <html>, for every screen.
+  useSettingsOnRoot()
+
+  // Which screen shows. Every page load begins on the start screen.
+  const [screen, setScreen] = useState<Screen>('start')
+  // The book menu's open tab, or null while it's closed. One piece of state
+  // for both "is it open" and "on which page", set by the buttons below and
+  // on the start screen, and by the tabs inside the book.
+  const [bookTab, setBookTab] = useState<BookTab | null>(null)
+
+  // Start or Continue: show the game and put focus on the map, so the arrow
+  // keys work at once. flushSync makes React render the game screen right
+  // now, inside this click handler, so the map exists when we focus it.
+  // The saved game is already in the store (startSaving runs before React,
+  // in main.tsx), so Continue needs nothing else: the room loads from it.
+  function start() {
+    flushSync(() => setScreen('game'))
+    document.getElementById('phaser-game')?.focus()
+  }
+
   return (
-    <main>
-      <h1>Lantern</h1>
-      {/* No room id here: RoomLoader reads it from the store, so an exit can
-          change the room. */}
-      <RoomLoader />
-      {/* Two columns: the map and the combat menu on the left, the log on the
-          right, so the log is visible without scrolling. The DOM order stays
-          map → menu → inventory → log, so the Tab order and screen reader
-          order match what you see. The inventory goes after the actions and
-          end messages: it has nothing to press, so the buttons stay right
-          after the map, and it sits under the map, out of the way. */}
-      <div className="game-layout">
-        <div className="game-column">
-          <PhaserGame />
-          <ExitButton />
-          <CombatMenu />
-          <GameOver />
-          <Victory />
-          <Inventory />
-        </div>
-        <AdventureLog />
-      </div>
-      {/* Below the game, so the Tab order is the game first and the account
-          last: playing never needs it (guest play is the default). It's
-          self-contained, so it can move into a menu later. */}
-      <AccountPanel />
-    </main>
+    <>
+      {screen === 'start' ? (
+        <main className="screen">
+          <StartScreen onStart={start} onOpenBook={setBookTab} />
+        </main>
+      ) : (
+        // The game is only rendered after Start, not hidden behind the start
+        // screen: then nothing in it can be reached by Tab or a screen
+        // reader too early, and the room's first lines are announced when
+        // the player is actually there.
+        <>
+          <header className="screen game-header">
+            <h1>Lantern</h1>
+            {/* Each button opens the book on its own page. The icons are
+                decoration; the button's text is its name. */}
+            <div className="header-buttons">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setBookTab('help')}
+              >
+                <img className="icon" src={uiAsset('icon-help.png')} alt="" />
+                How to play
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setBookTab('settings')}
+              >
+                <img
+                  className="icon"
+                  src={uiAsset('icon-settings.png')}
+                  alt=""
+                />
+                Settings
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setBookTab('account')}
+              >
+                <img
+                  className="icon"
+                  src={uiAsset('icon-account.png')}
+                  alt=""
+                />
+                Account
+              </button>
+            </div>
+          </header>
+          <main className="screen">
+            <GameScreen />
+          </main>
+        </>
+      )}
+      {/* Outside both screens, so it opens the same way from either. */}
+      <BookMenu
+        openTab={bookTab}
+        onSelectTab={setBookTab}
+        onClose={() => setBookTab(null)}
+      />
+    </>
   )
 }
 

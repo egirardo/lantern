@@ -1,0 +1,80 @@
+/* The start screen (mockup sections 2 and 2b): two halves with a divider,
+   stacked (with a horizontal divider) when the window is narrow. */
+
+.start-screen {
+  display: grid;
+  /* Two equal halves and a 4px divider between them. minmax(0, 1fr)
+     instead of 1fr, so a long word can't force a half wider than its share. */
+  grid-template-columns: minmax(0, 1fr) 4px minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+  min-height: 32rem;
+  /* clamp(): at least 1rem, at most 2rem, and 4% of the window in between,
+     so the frame doesn't eat a small window. */
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 4px solid var(--plum);
+  outline: 2px solid var(--ink);
+  background: radial-gradient(
+    ellipse at 30% 40%,
+    var(--slate),
+    var(--deep) 70%
+  );
+}
+
+/* The divider: plum with a dark edge, like the panel borders. Decoration
+   only (aria-hidden in the markup). */
+.start-divider {
+  align-self: stretch;
+  margin: 1.5rem 0;
+  background: var(--plum);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+/* An em media query follows the browser's font size, and at 400% zoom the
+   window is about 320 CSS px wide, far below this, so the halves stack. */
+@media (max-width: 50em) {
+  .start-screen {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .start-divider {
+    height: 4px;
+    margin: 0;
+  }
+}
+
+.start-intro {
+  text-align: center;
+}
+
+/* clamp() again: the title shrinks in a small window, but never below
+   2.5rem, and it still follows the text size setting (rem). */
+.start-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  text-shadow: 3px 3px 0 var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.start-intro p {
+  max-width: 32ch;
+  margin: 0.5rem auto 1.5rem;
+}
+
+.start-actions {
+  display: grid;
+  gap: 0.625rem;
+  justify-items: center;
+}
+
+/* The buttons the same width, so they read as one column. */
+.start-actions .btn {
+  justify-content: center;
+  width: min(100%, 14rem);
+}
+
+.start-account {
+  justify-self: center;
+  width: min(100%, 26rem);
+}

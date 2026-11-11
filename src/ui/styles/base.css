@@ -1,0 +1,240 @@
+/* Base: fonts, colours, text size, focus, and the pieces every screen uses
+   (panels, banners, buttons). */
+
+@font-face {
+  font-family: 'Pixel Operator';
+  src: url('/assets/fonts/PixelOperator.ttf') format('truetype');
+  font-weight: normal;
+  /* swap: show the text in the fallback font at once, then switch, instead
+     of hiding it while the font loads. */
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Pixel Operator';
+  src: url('/assets/fonts/PixelOperator-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-display: swap;
+}
+
+/* The pack's own colours (read from its pieces), as custom properties, so
+   one change here changes them everywhere, and high contrast can swap them
+   (high-contrast.css). */
+:root {
+  --parchment: #d8d3af;
+  --parchment-shade: #bbad85;
+  --parchment-light: #ebe6c6;
+  --ink: #2e222f;
+  --plum: #6d4e54;
+  --plum-hover: #7a5960;
+  --plum-dark: #57404f;
+  --night: #342730;
+  --slate: #3e3546;
+  --deep: #201727;
+  --focus: #f4d35e;
+  --health: #a33b4a;
+  --health-light: #c75a66;
+
+  /* The focus ring's colour on the current background. Yellow on the dark
+     backgrounds; panels with a light background set it to ink (below),
+     because yellow on parchment would be almost invisible. */
+  --focus-ring: var(--focus);
+  /* Error text: light red on dark, dark red on light (set per surface). */
+  --error: #ffb3ab;
+
+  /* The text size setting (use-settings-on-root.ts sets --text-scale on
+     this element). The root font size is the browser's own size (100%,
+     usually 16px) times the scale. Everything sized in rem is a multiple of
+     the root font size, so this one line makes all text and spacing grow
+     together. A percentage, not 16px, so the player's browser font size and
+     zoom still work on top of it (WCAG 1.4.4). */
+  --text-scale: 1;
+  font-size: calc(100% * var(--text-scale));
+
+  /* Native controls (scrollbars, select menus) in their dark style. */
+  color-scheme: dark;
+}
+
+/* Sizes include padding and border, so width: 100% never overflows. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  background: var(--deep);
+  color: var(--parchment);
+  font-family: 'Pixel Operator', ui-monospace, monospace;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* The focus ring, drawn by CSS on top of everything: an outline sits
+   outside the element's border, so a border-image frame can't hide it.
+   :focus-visible shows it for keyboard focus (and for focus moved by code
+   after a key press), but not after a mouse click on a button. */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Elements that get focus only from code (tabIndex -1: the headings in the
+   account panel, the room error) show it too, so a keyboard user sees where
+   focus went. */
+[tabindex='-1']:focus {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+}
+
+/* Hidden on screen but still read by screen readers. display: none or
+   visibility: hidden would hide it from screen readers too. This is the
+   standard pattern: a 1px box, clipped, taken out of the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One column for each screen, centred. min() picks the smaller value: the
+   full width on a small window, at most 64rem on a big one. In rem, so it
+   grows with the text size. */
+.screen {
+  width: min(100%, 64rem);
+  margin-inline: auto;
+}
+
+/* ---------- Pixel art ---------- */
+
+/* Pixel art is drawn at whole-number scales (2×, 3×) and without smoothing,
+   so every art pixel stays a sharp square. */
+.icon,
+.item-sprite {
+  image-rendering: pixelated;
+}
+
+/* The pack's icons, at their own size (1×). Decoration: always alt="". */
+.icon {
+  width: 20px;
+  height: 24px;
+  flex: none;
+}
+
+/* A sprite from the game's sheet (ItemSprite.tsx). The size is set here
+   too, so the box is the right size before the sheet has loaded. */
+.item-sprite {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  background-repeat: no-repeat;
+}
+
+/* ---------- Panels: border-image 9-slices ---------- */
+
+/* A 9-slice: border-image cuts the picture into 9 parts with the "slice"
+   numbers (in the picture's own pixels): 4 corners, 4 edges and the middle.
+   The corners are drawn as they are, the edges stretch along their side,
+   and `fill` stretches the middle under the content. The "/ 20px" is the
+   width the border is drawn at: a 10px slice at 20px is exactly 2×, so the
+   corners stay sharp. The frame grows with whatever is inside it.
+   The border must be transparent and as wide as the border-image width, so
+   the content starts inside the frame. */
+
+/* Parchment: the log and the end card. */
+.panel-light {
+  border: 20px solid transparent;
+  border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch;
+  padding: 0.25rem 0.5rem;
+  color: var(--ink);
+  /* Ink focus ring and dark red errors on the light background. */
+  --focus-ring: var(--ink);
+  --error: #8b1e2d;
+}
+
+/* Plum: Your turn, Inventory, Goal, Account on the start screen. */
+.panel-dark {
+  border: 24px solid transparent;
+  border-image: url('/assets/ui/panel-plum.png') 12 fill / 24px stretch;
+  padding: 0 0.25rem 0.25rem;
+  color: var(--parchment);
+}
+
+/* A heading on a ribbon. The banner piece is 60×17: 18px at each end are
+   the tails (kept as they are, at 2×), the middle stretches to fit the
+   text. width: max-content makes the ribbon only as wide as its words. */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 2.125rem;
+  margin: 0 auto 0.625rem;
+  padding: 0 0.75rem 0.625rem;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 2px 36px;
+  border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch;
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: bold;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* ---------- Buttons ---------- */
+
+/* The keycap style from the pack, drawn in CSS with its colours: a plum
+   face with a darker lip at the bottom (an inset shadow). Targets are well
+   above the 24×24 px minimum (WCAG 2.5.8). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.875rem 0.5625rem;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--plum);
+  box-shadow: inset 0 -4px 0 var(--plum-dark);
+  color: var(--parchment);
+  font: inherit;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--plum-hover);
+}
+
+/* Pressed: the lip moves to the top, so the key looks pushed in. */
+.btn:active {
+  box-shadow: inset 0 2px 0 var(--plum-dark);
+  padding-top: 0.5rem;
+  padding-bottom: 0.4375rem;
+}
+
+/* Lists styled as plain stacks of items (no bullets). Safari drops the list
+   semantics of a list with list-style: none, so these lists also have
+   role="list" in the markup, which keeps "list, 3 items" for VoiceOver. */
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

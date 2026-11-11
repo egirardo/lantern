@@ -2,6 +2,7 @@ import { useStore } from 'zustand'
 import { gameStore } from '../state/game-store'
 import { findAdjacentExit } from '../game/exits'
 import { exitButtonLabel } from '../game/narration'
+import { uiAsset } from './ui-asset'
 
 // A button that does the same as Enter on the map: use the exit next to the
 // player. It's there for players who look for actions as buttons (like the
@@ -35,9 +36,11 @@ export function ExitButton() {
   return (
     <button
       type="button"
-      className="exit-button"
+      className="btn exit-button"
       onClick={() => gameStore.getState().takeExit()}
     >
+      {/* The icon is decoration (alt=""): the label says what it does. */}
+      <img className="icon" src={uiAsset('icon-exit.png')} alt="" />
       {label}
     </button>
   )

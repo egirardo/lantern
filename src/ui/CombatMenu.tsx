@@ -108,15 +108,22 @@ export function CombatMenu() {
     <section
       ref={menuRef}
       aria-labelledby="combat-menu-heading"
-      className="combat-menu"
+      className="panel-dark combat-menu"
     >
-      <h2 id="combat-menu-heading">Your turn</h2>
-      <ul>
+      <h2 id="combat-menu-heading" className="banner">
+        Your turn
+      </h2>
+      {/* role="list" looks redundant, but Safari drops the list
+          semantics of a list styled with list-style: none (.plain-list),
+          and VoiceOver then doesn't say "list, n items". */}
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <ul className="plain-list combat-options" role="list">
         {options.map((option) => (
           <li key={option.id}>
             {/* data-enemy-id lets attack() find this button by enemy id. */}
             <button
               type="button"
+              className="btn"
               data-enemy-id={option.id}
               onClick={() => attack(option.id)}
             >

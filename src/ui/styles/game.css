@@ -1,0 +1,301 @@
+/* The game screen (mockup section 1). Flexbox rows that wrap: side by side
+   when there's room, stacked in one column when there isn't (a narrow
+   window, large text, or 400% zoom), with no fixed page widths. */
+
+/* ---------- Header ---------- */
+
+.game-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* margin-right: auto pushes the buttons to the right edge. */
+.game-header h1 {
+  margin: 0 auto 0 0;
+  font-size: 2rem;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.header-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* ---------- Row 1: the map and the log ---------- */
+
+/* align-items: stretch gives both the height of the taller one, so the log
+   is as tall as the map. When the log wraps under the map, it gets its own
+   line and its own height (see .adventure-log-entries). */
+.play {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* The map in a plain frame drawn in CSS with the pack's colours.
+   align-self: flex-start, so the frame hugs the canvas instead of
+   stretching when the log is taller. min-width: 0 lets it shrink below the
+   canvas's width in a narrow window (a flex item won't by default). */
+.map-frame {
+  align-self: flex-start;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px;
+  border: 4px solid var(--plum);
+  outline: 2px solid var(--ink);
+  background: var(--ink);
+}
+
+/* The focus ring of the map is drawn outside the frame (the frame's own
+   outline is part of the art). */
+#phaser-game {
+  width: fit-content;
+  max-width: 100%;
+}
+
+#phaser-game:focus-visible {
+  outline-offset: 10px;
+}
+
+/* Phaser draws the canvas at 3× (576×480, in create-game.ts) and sets that
+   size as an inline style. In a window narrower than that, max-width scales
+   it down instead of making the page scroll sideways, and height: auto
+   keeps its shape (!important, because the inline style would win
+   otherwise). The map is two-dimensional content, so WCAG 1.4.10 lets it be
+   small; the log carries everything it shows anyway (rule 5). */
+#phaser-game canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  image-rendering: pixelated;
+}
+
+/* The log: the banner on top, the entries fill the rest of the parchment.
+   flex: 1 1 18rem: it takes the space next to the map, and wraps under it
+   when less than 18rem is left. */
+.adventure-log {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 18rem;
+  min-width: min(18rem, 100%);
+}
+
+/* Only this box scrolls. height: 0 with flex: 1 means "no height of your
+   own, take what's left": its height comes from the row (the map's height),
+   never from the number of lines, so a long log scrolls instead of making
+   the row taller. min-height keeps it readable when it's under the map. */
+.adventure-log-entries {
+  flex: 1;
+  height: 0;
+  min-height: 15rem;
+  overflow-y: auto;
+  /* Room for the scrollbar on both sides, so the text doesn't shift when it
+     appears. */
+  scrollbar-gutter: stable both-edges;
+}
+
+.adventure-log-entries ol {
+  margin: 0;
+  padding: 0 0.375rem;
+}
+
+.adventure-log-entries li {
+  padding: 0.1875rem 0;
+  border-bottom: 1px dashed var(--parchment-shade);
+}
+
+/* The newest line in bold, so the eye finds it. Its place (last) and the
+   live announcer say the same without the bold. */
+.adventure-log-entries li:last-child {
+  border-bottom: 0;
+  font-weight: bold;
+}
+
+/* ---------- Row 2: health and the exit button ---------- */
+
+/* min-height is about a button's height, so the row doesn't grow (and push
+   the panels below down) when the exit button appears. */
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  min-height: 3rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.health {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.health-text {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+
+/* The bar is decoration (aria-hidden): the text says the numbers. */
+.health-bar {
+  width: 10rem;
+  max-width: 100%;
+  height: 1.125rem;
+  border: 2px solid var(--ink);
+  background: var(--night);
+  box-shadow: 0 0 0 2px var(--plum);
+}
+
+.health-bar span {
+  display: block;
+  height: 100%;
+  background: var(--health);
+  box-shadow: inset 0 3px 0 var(--health-light);
+}
+
+/* ---------- Row 3: Your turn, Inventory, Goal ---------- */
+
+/* stretch: the three panels get the height of the tallest. */
+.below {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.below > * {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The place for the combat menu and the end card. It's always there, with
+   the same width, even when it's empty, so Inventory and Goal stay exactly
+   where they are when a fight starts or ends (the player's eyes and mouse
+   don't have to find them again). Its own width, not the buttons' width,
+   for the same reason: the buttons stack in a column inside it. */
+.turn-slot {
+  flex: 0 1 18rem;
+  min-width: min(14rem, 100%);
+}
+
+/* The panel inside fills the slot's height, like the others in the row. */
+.turn-slot > * {
+  flex: 1;
+}
+
+/* Empty (no fight, game not over): a faint dashed outline marks the place.
+   It has no text, so a screen reader finds nothing there. */
+.turn-slot:empty {
+  min-height: 6rem;
+  border: 2px dashed var(--plum);
+  opacity: 0.5;
+}
+
+/* In one column, nothing sits beside the slot, so an empty one would only
+   be a gap. */
+@media (max-width: 40em) {
+  .turn-slot:empty {
+    display: none;
+  }
+}
+
+.combat-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  /* Centred in the space under the banner. */
+  margin: auto 0;
+  padding: 0 0.25rem 0.25rem;
+}
+
+.combat-options .btn {
+  width: 100%;
+}
+
+.inventory {
+  flex: 0 1 auto;
+  min-width: min(13rem, 100%);
+}
+
+/* Goal takes the rest of the row, up to the log's right edge. */
+.goal {
+  flex: 1 1 16rem;
+}
+
+.inventory-list,
+.goal-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: auto 0;
+  padding: 0 0.5rem;
+}
+
+.inventory-list li,
+.goal-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+}
+
+.inventory-list li {
+  font-weight: bold;
+}
+
+/* A small parchment diamond in front of each item, so it reads as a list.
+   Drawn with ::before, so it's decoration only (not read). */
+.inventory-list li::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--parchment);
+  transform: rotate(45deg);
+}
+
+.inventory-empty {
+  margin: auto 0;
+  padding: 0 0.5rem;
+  font-style: italic;
+}
+
+/* Before the key is found, its sprite is greyed out and faded. The text
+   says the same in words ("Find the gold key."). */
+.goal-todo .item-sprite {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.goal-done {
+  font-weight: bold;
+}
+
+/* ---------- End card ---------- */
+
+.end-card {
+  text-align: center;
+}
+
+.end-card h2 {
+  margin: 0 0 0.375rem;
+  font-size: 2rem;
+}
+
+.end-card p {
+  margin: 0 0 0.5rem;
+}
+
+.end-stats {
+  font-weight: bold;
+}
+
+.end-card .btn {
+  margin: 0.5rem 0 0.25rem;
+}
