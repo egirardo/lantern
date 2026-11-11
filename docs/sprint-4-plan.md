@@ -289,10 +289,20 @@ Decided Nov 4 as the **first stretch item**. **Go or no-go on Wed Nov 11 morning
 
 **Room agents (Sun Nov 8):** they place barrels and crates as named decor as usual. If F goes ahead, I add `containers` to rooms 2 and 3 afterwards. It's only data, so the rooms don't need rebuilding.
 
-- [ ] Go or no-go decided (Wed Nov 11)
+- [x] Go or no-go decided (Wed Nov 11): **no-go.** Phase L had slipped two days, and every new feature needs my VoiceOver time. Potions go in the report as future work; healing stays as it is.
 - [ ] Agent F PR reviewed and merged, VoiceOver check of drinking the last potion
 
-## UI skin (agent): Pixel RPG UI Pack — **cut on Nov 4** (decision 8)
+## UI skin (agent): Pixel RPG UI Pack — **cut on Nov 4** (decision 8), **back on Nov 11**
+
+**Back on Nov 11 (instead of potions and music):** the whole page gets a dungeon look, built by **Agent K** after #50 is merged. The plan below changed in these ways:
+
+- **No hand-slicing:** the sheet has no slices, but every piece stands alone on transparency, so Claude Code cut all 124 pieces with a small script (plain Python, nothing installed). I picked the pieces from an overview page.
+- **A mockup first:** Claude Code built an HTML mockup from the real pieces, and I adjusted it over 11 drafts (layout, centring, tab pieces, the plum panel without its top line, an inventory without boxes). The agent gets it as a reference for the look, not a pixel spec: the CSS must be responsive, and pass 400% zoom (WCAG 1.4.10) even though there's no phone layout.
+- **More than a skin:** a start screen (split, with the account panel; "Continue" when a game is in progress), one end card with **Play again** (reloads the page, since the ended save already makes the next load a new game), a visible **health display**, the inventory as a list with sprites, and a new **Goal** panel ("Find the gold key." → "… Find the great door.").
+- **The book menu:** How to play, Settings and Account are one modal `<dialog>` drawn as the pack's open book, with its tab pieces as ARIA tabs (my idea). The header's three buttons open it on their tab. Account lives there instead of under the game; the label stays "Account" whether signed in or not. Agent K builds it, and I review the focus code (changes decision 7 for the settings dialog).
+- **High contrast** turns the skin off, including the icons (plum on black fails 3:1, WCAG 1.4.11), and the book's tabs show their names as text.
+- **The map label** becomes just "Dungeon map" now that How to play exists (decision 9, option B), so option C in Phase L isn't needed.
+
 
 Kept below for the report ("future improvements"). The font choice stays.
 
@@ -318,8 +328,8 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 **License safeguards:** commit only the pieces I use, credit the author in the README with a link, note that I asked for permission on the itch.io page and haven't had a reply (keep a screenshot of the comments), and write it in the report as a known risk. The skin is one stylesheet and one folder, so it can be removed quickly if the author says no.
 
 - [x] Font chosen: **Pixel Operator** (Jayvee Enaguas), CC0, Regular and Bold (Nov 3, in `public/assets/fonts/`)
-- [ ] Pieces sliced and exported
-- [ ] Brief written
+- [x] Pieces sliced and exported (all 124, by script, Nov 11)
+- [x] Mockup approved and brief written (Nov 11)
 - [ ] UI skin PR reviewed and merged, corrections logged
 
 ## Phase L: accessibility settings (Sun Nov 8 – Mon Nov 9)
@@ -327,10 +337,10 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save layer on Tue Nov 10.
 
 - [x] Settings in the store, with the `prefers-reduced-motion` default (tests)
-- [ ] Settings dialog with focus management
-- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin"), and draws the lantern light with a hard edge instead of a soft fade (decided Nov 4), so lit and dark tiles are easy to tell apart
-- **Idea (Nov 6), not a task yet: background music with an on/off setting.** When the settings dialog is built, Claude Code suggests a few open-license tracks (CC0 first, e.g. from OpenGameArt, so there's nothing to credit or redistribute wrongly; CC BY only with the credit in the README). Rules if it's added: **off by default** (music talks over the screen reader, and WCAG 1.4.2 requires a way to stop audio that plays by itself), it starts only after the player turns it on (browsers block autoplay anyway), the setting is saved with the others, and there's a volume or at least a clear on/off. Sound cues were moved after submission (decision 4), so this is a stretch item: decide at the Wed Nov 11 go/no-go with potions.
-- [ ] Log verbosity also decides the map's label: verbose gives "Dungeon map. Use the arrow keys to move.", brief gives "Dungeon map" (decision 9, option C). **Check first** whether it's still needed once the start screen has "How to play" (option B)
+- [ ] Settings dialog with focus management: **now the Settings tab of the book menu, built by Agent K** (see "UI skin")
+- [ ] **Split on Nov 11:** reduced motion, the lantern's hard edge and brief verbosity by **Agent L (#52)**, the high contrast and text size CSS by **Agent K**. Was: text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin"), and draws the lantern light with a hard edge instead of a soft fade (decided Nov 4), so lit and dark tiles are easy to tell apart
+- **Idea (Nov 6), not a task yet: background music with an on/off setting.** When the settings dialog is built, Claude Code suggests a few open-license tracks (CC0 first, e.g. from OpenGameArt, so there's nothing to credit or redistribute wrongly; CC BY only with the credit in the README). Rules if it's added: **off by default** (music talks over the screen reader, and WCAG 1.4.2 requires a way to stop audio that plays by itself), it starts only after the player turns it on (browsers block autoplay anyway), the setting is saved with the others, and there's a volume or at least a clear on/off. Sound cues were moved after submission (decision 4), so this is a stretch item: decide at the Wed Nov 11 go/no-go with potions. **No-go (Nov 11):** future work, together with sound cues.
+- [x] ~~Log verbosity also decides the map's label~~ Not needed: the start screen and the book have How to play, so the label is just "Dungeon map" (option B, Agent K). Was: log verbosity also decides the map's label: verbose gives "Dungeon map. Use the arrow keys to move.", brief gives "Dungeon map" (decision 9, option C). **Check first** whether it's still needed once the start screen has "How to play" (option B)
 - [ ] PR reviewed
 
 ## Saves, accounts and sync (Tue Nov 10 – Wed Nov 11)
@@ -355,3 +365,8 @@ Rule 8: local-first. Saves and settings always go to localStorage; when logged i
 - [ ] README: setup, tech stack, asset credits and licenses
 - [ ] AI log summary and the Result section in `docs/project-plan.md`
 - [ ] Deployed, and the repo and deploy link submitted
+
+## Ideas for after submission (added Nov 11)
+
+- **A death and win count on the account:** shown on the start screen ("You have escaped 3 times and fallen 5 times"). It needs a new column in the saves table (or its own table) with RLS tests, and a local count for guests, so it doesn't fit before the code freeze.
+- **The goal panel with more steps,** if the dungeon gets more goals than the key and the door.
