@@ -199,6 +199,16 @@ export class RoomScene extends Phaser.Scene {
           }
         }
       }
+
+      // 5. Reduced motion was turned on or off in the settings: stop or start
+      // the idle loops now. Without this, the sprites on screen would only
+      // notice on the next step (the player's walk, an enemy redraw), and a
+      // player who just asked for stillness would still see bobbing sprites.
+      if (
+        state.settings.reducedMotion !== previousState.settings.reducedMotion
+      ) {
+        this.applyMotionSetting(state)
+      }
     })
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)
     this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe)
@@ -267,7 +277,8 @@ export class RoomScene extends Phaser.Scene {
 
   // Starts a sprite's idle loop, or shows a still frame if the player prefers
   // reduced motion. Called whenever a sprite should stand still: when it is
-  // made, after the player's walk, and on every redraw of the enemies.
+  // made, after the player's walk, on every redraw of the enemies, and when
+  // the reduced motion setting changes (applyMotionSetting).
   // `animationName` is 'idle' for everyone except an unmasked mimic, which
   // stands with its 'unmasked' loop instead (see enemyAnimationName).
   private playIdle(
@@ -301,6 +312,31 @@ export class RoomScene extends Phaser.Scene {
       { key: animationKey(spriteName, animationName), randomFrame: true },
       true,
     )
+  }
+
+  // Plays idle again on the player and every enemy sprite, so playIdle can
+  // pick the loop or the still frame from the new setting. A walk or a hit
+  // flash already running is left to finish: both go back to idle by
+  // themselves when they end (the tween's onComplete, the flash timer), and
+  // by then playIdle reads the new setting.
+  private applyMotionSetting(state: GameState) {
+    const player = this.playerSprite
+    if (
+      player &&
+      !this.tweens.isTweening(player) &&
+      !this.hitTimers.has(player)
+    ) {
+      this.playIdle(player, this.PLAYER_SPRITE)
+    }
+    // drawEnemies already calls playIdle on every lit enemy, with the right
+    // loop for each one (idle, or 'unmasked' for an unmasked mimic), and keeps
+    // the sprites it already has. So it is reused here instead of repeating
+    // that choice. Enemies only get the red tint when hit, never a hit frame,
+    // so playIdle can't cut a flash short.
+    const { grid, playerPosition, enemies } = state
+    if (grid === null || playerPosition === null) return
+    const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
+    this.drawEnemies(enemies, visibleTiles)
   }
 
   private drawRoom(tiledMap: TiledMap) {
