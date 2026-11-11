@@ -76,6 +76,7 @@ Code: MIT, see [LICENSE](LICENSE).
 
 - **[DungeonTileset II Extended](https://nijikokun.itch.io/dungeontileset-ii-extended)** by nijikokun, an extension of **[DungeonTileset II](https://0x72.itch.io/dungeontileset-ii)** by 0x72. License: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/) (public domain dedication). Used for the dungeon tiles and characters. No attribution is required, but the authors deserve the credit.
 - **Pixel Operator** font by Jayvee Enaguas (HarvettFox96). License: [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). Used for all text in the game. The font files and their license are in `public/assets/fonts/`.
+- **Pixel RPG UI Pack** by immunitys (itch.io). TODO(owner): link. The license allows editing and commercial use and asks for credit. Used for the panels, banners, the book menu, its tabs and the button icons. Only the pieces the game uses are included, some of them edited; the list is in [`public/assets/ui/CREDITS.md`](public/assets/ui/CREDITS.md).
 
 ## Project context
 
