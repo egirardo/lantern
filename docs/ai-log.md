@@ -1242,6 +1242,100 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** Graphify is only useful for code that's already merged. For reviewing agent branches, which is most of what I do now, it can't help. That's the same kind of limit as the missing `LANTERN_RADIUS`: it's a snapshot, so I can't rely on it alone.
 - **How I verified it:** The Graphify result named the indexed commit (`d4de013`), and the save files are only on `feature/saves`.
 
+#### 2026-11-10 — Handing the login form and the decor reveals to agents
+
+- **Tool:** Claude Code
+- **Category:** Planning
+- **What I asked:** I didn't have time to write the login form myself today, so I asked Claude Code for a plan to hand it to an agent, and then whether a second agent could run alongside it.
+- **What I got:**
+  - Claude Code read the auth code first. It found that Agent D's sync already starts when a player signs in, so most of Wednesday's "wire sync to login" was already done. It also found that typing in a form can't move the player (the arrow keys only work while the map has focus), and that the project has no React Testing Library, so the panel can't be unit tested without a new dependency.
+  - A plan for Agent I (login and sign-up), with three questions for me. Where the form goes: below the game for now, but I asked for a self-contained component that I can move into a menu later. Whether the agent may use my `.env.local`: yes, so it can test against the real project. Email confirmation: I asked whether to turn it off, and Claude Code said to keep it on, because that's what real players get. The agent was told not to call sign-up against the real project, because of Supabase's low email limit.
+  - For the second agent, Claude Code suggested Phase K step 7 (decor reveals), because it touches different files from the login form. It advised against Phase L in parallel, because that shares `index.css` and `App.tsx` with the login form. I made the three step 7 decisions from its options: touching tiles with the same name are one piece except crates, each piece once per visit, and the agent writes the tests this time.
+  - Setup: two worktrees with a link to `node_modules`, and my `.env.local` copied into Agent I's. The `CLAUDE.md` status update was the first commit on `feature/login`, so it didn't need its own PR. Each brief said which files are off limits, so the two agents couldn't conflict.
+- **Outcome:** ✅ kept
+- **Why:** It kept the work moving while I couldn't sit with it. Moving the login form to an agent changes decision 7. I'm still the one who reviews it and tests it with VoiceOver, which is the part that needs me.
+- **How I verified it:** I checked the plan and answered the questions before the agents started. Both agents stayed inside their files (checked in the reviews below), and the two PRs don't touch the same files.
+
+#### 2026-11-10 — Reviewing Agent I's login form (#50)
+
+- **Tool:** Claude Code
+- **Category:** Review, Accessibility, Coding
+- **What I asked:** To read through Agent I's code before I test it in the browser, and why "forgot password" and a password-length hint were left out.
+- **What I got:**
+  - A review of `AccountPanel.tsx` and `auth-messages.ts`. It found a real `<form>`, `autocomplete` for password managers, paste allowed, errors as text with `aria-describedby` and `aria-invalid`, `aria-disabled` instead of `disabled` while a request is pending (so focus doesn't drop), and a live region that is always in the page. Focus goes to the "Account" heading after sign-in, so a second Enter can't sign me straight out.
+  - One gap: no password rule on the sign-up form. Claude Code said this was a gap in its own brief, not the agent's mistake. Without the rule, the player only learns the requirement after a failed sign-up, which goes against WCAG 3.3.2. I gave it the rule from my dashboard (8 characters, with a lowercase letter, an uppercase letter, a number and a symbol). Claude Code added it under the password field in sign-up mode, used the same text in the weak password message, and updated the test.
+  - On forgot password: it's more than a form (a reset email, a page to set a new password, redirect settings in Supabase). WCAG doesn't require it, and local progress is never lost. Claude Code recommended leaving it until after submission, like the magic links.
+  - **A mistake:** for its mutation check, Claude Code used `git checkout` to undo the broken line. That reset the whole file to the last commit and removed its new edits too. It noticed in `git diff --stat`, put the edits back, and did the check again by copying the file first. Nothing was committed in the broken state.
+- **Outcome:** ✏️ kept with changes
+- **Why:** The panel follows the accessibility rules I set, and the agent explained its focus choices. The password rule was missing, and that matters for 3.3.2. I agree that forgot password can wait.
+- **How I verified it:** The agent ran the checks and the real Supabase calls (wrong password, sign-in, sign-out, offline). All 18 RLS tests ran against the real project for the first time, and they all passed. After the password rule: 710 tests, typecheck, lint, Prettier and the build pass, and the mutation check failed as it should. Next I'll test in the browser: the 10 manual steps in the PR, VoiceOver, a password manager, sign-up with a confirmation email, and keyboard only.
+
+#### 2026-11-10 — Reviewing Agent J's decor reveals (#51)
+
+- **Tool:** Claude Code
+- **Category:** Review
+- **What I asked:** To read through Agent J's code before my VoiceOver check.
+- **What I got:**
+  - A review of `feature-reveal.ts` (the flood fill, the seen list and the grouping), `describeFeatureReveal` and the store wiring. The decor lines come after the enemy, exit and item lines in all three places (arrival, a step, and a step that starts a fight), and are made in one function, so Phase L's brief verbosity can turn them off.
+  - Claude Code ran a copy of the grouping on all four maps to check for pieces that touch and would be merged wrongly. There were none. The entrance hall has 2 pillars and 4 crates, the basement 1 empty chest and 4 crates, the crypt 4 pillars, 2 fountains and 20 crates.
+  - Notes: two comments ran past the line length (Claude Code wrapped them at my request), two pillars side by side in a future room would be announced as one, and there's no test for a decor line before the "next to exit" cue in the same step.
+  - The agent's list of what I'll hear on arrival in each room, to compare during my VoiceOver pass. The longest burst on arrival is 4 lines.
+- **Outcome:** ✅ kept
+- **Why:** It follows my decisions and the pattern of the enemy and exit reveals. The agent kept pieces out of the store so there's only one copy of the facts (rule 2). "An empty chest" in the basement and the mimic's "a chest" now tell an open chest from a closed one in words, as a sighted player sees it.
+- **How I verified it:** 715 tests, typecheck, lint, Prettier and the build pass. The agent's 16 mutation checks are all caught. Claude Code checked the pieces on the real maps. Still to do: my VoiceOver pass, listening to "A pillar appears to the east." in the entrance hall and the crate lines in the crypt.
+
+#### 2026-11-11 — Browser and VoiceOver checks of the login form (#50) and decor reveals (#51)
+
+- **Tool:** Claude Code
+- **Category:** Accessibility, Review, Coding
+- **What I asked:** For the testing steps for both PRs, then help each time something didn't behave as expected.
+- **What I got:**
+  - A checklist built from the agent's 10 steps in #50, plus the password rule, two sync checks across Safari and Chrome, and a list of what I should hear on arrival in each room for #51. I asked for it again with every step numbered, because the first version skipped from 4 to 8 on my screen.
+  - **A network error on the first wrong password:** Claude Code checked from the terminal that Supabase was up and returned `invalid_credentials` for the same request, and that the code passes the error through unchanged. The second try gave the right message, so it was a one-off.
+  - **"Signed in as" twice:** the status line kept its message on screen under the button, while the panel already showed it under the heading. Claude Code made the status visually hidden after sign-in and sign-out (still read aloud). "Signing in…" and "Check your email" stay visible, since nothing else shows them.
+  - **Focus after sign-out seemed to land on the email field:** Claude Code gave me a Console line that logs `document.activeElement` after 5 seconds. Focus was on the Account heading; VoiceOver was reading Safari's AutoFill suggestion. In Chrome, "Signed out…" is read; in Safari, AutoFill talks over it. Accepted as a known Safari issue: the message is in a status region (WCAG 4.1.3), and the panel shows the new state.
+  - **Safari's generated password** couldn't be shown or copied, and wasn't offered again. Claude Code explained that Safari protects it, and gave three checks (the toggle with a typed password, paste from Notes, signing up with the generated one) that showed our form works.
+  - **Accounts unavailable (check 10):** I had edited the main folder's `.env.local` (and the wrong lines), not the worktree's. Instead of editing files, Claude Code started a second dev server on port 5174 with the two Supabase variables set to empty.
+  - **The email limit:** sign-up hit Supabase's email limit, so I did the other checks first.
+  - **A weak password created an account:** after I deleted the user and tried again, Supabase still accepted a password that breaks the rule. Claude Code said the form only checks for empty fields and Supabase checks the rest, so the rule was most likely not saved in the dashboard. After I checked the dashboard, the weak password was rejected.
+  - **The rule wasn't read when the fields were already filled:** Claude Code moved it between the label and the field, so it's read in reading order too, not only as a description.
+  - For #51, its arrival list said I'd hear the hall's demon on the way back up. I can't: the demon guards the stairs, so it's always beaten by then. The list came from the agent's tests, which start each room fresh.
+- **Outcome:** ✏️ kept with changes
+- **Why:** Both PRs work. The fixes were small and in what the panel shows, not its logic. The Safari findings are browser behaviour I can't change from the page, and I'll mention them in the WCAG evaluation.
+- **How I verified it:** All 12 checks of #50 in Safari with VoiceOver (and Chrome for the sync checks and the sign-out message), including a real sign-up with a confirmation email and sync both ways: a newer save loaded in Chrome, and an ended game started a new one (I tried both winning and dying). All 5 checks of #51 with VoiceOver. After the fixes: typecheck, lint, Prettier and the UI tests pass, and I rechecked both in the browser.
+
+#### 2026-11-11 — Potions and music cut, the dungeon UI instead
+
+- **Tool:** Claude Code
+- **Category:** Planning, Coding, Accessibility
+- **What I asked:** The go/no-go for potions and music. Then, instead of either, to redesign the whole page with the Pixel RPG UI Pack, whose unclear license I decided to accept. I asked for a mockup to adjust before an agent builds it.
+- **What I got:**
+  - Claude Code recommended no-go for both (Phase L had slipped two days, and every feature needs my VoiceOver time) and pointed out that the high contrast and text size settings are really part of the skin's CSS. It suggested splitting Phase L between two agents.
+  - It warned me off the other UI pack in my Downloads: its readme forbids redistributing the files, and a public repo would be that.
+  - The pack's Aseprite file has no slices, so the planned 1–1.5 h of hand-cutting was replaced by a small Python script (no installs) that cut all 124 pieces by transparency, with an overview page. It then listed the UI pieces the page needs, and found that the page doesn't show health at all.
+  - An HTML mockup from the real pieces, over 11 drafts. My changes: the account form on the start screen (split, with a divider) and an Account button in the game; the book menu with tabs (my idea; Claude Code added the ARIA tabs pattern, Escape and focus return); the pack's own tab pieces; the dark line removed from the plum panels; banner text centred (I measured the offsets in Chrome DevTools); no Defend or Flee (I'd forgotten I decided against Flee on Nov 2); an inventory list instead of boxes; and a goal panel, which Claude Code had only suggested for the report.
+  - Accessibility points: icons go away in high contrast (my call; Claude Code added that the book's tabs then need their names as text), and "no mobile" still has to pass 400% zoom (WCAG 1.4.10 Reflow is AA).
+  - Play again reloads the page instead of a new store reset action, since the ended save already makes the next load a new game.
+  - Briefs for Agent K (the UI) and Agent L (the rest of Phase L). Agent L started at once; Agent K waits for #50, since both change `App.tsx` and `index.css`.
+- **Outcome:** ✏️ kept with changes
+- **Why:** A page that looks like the dungeon makes the game feel finished, and potions or music wouldn't have. Seeing a mockup first meant I could change the design in minutes instead of reviewing an agent's PR. Accepting the license is my decision; the safeguards stay (only the pieces used, credit, a known risk in the report).
+- **How I verified it:** I looked at every draft in the browser, used DevTools to measure the tab and banner positions, and tried the high contrast preview. Claude Code checked its drafts with headless Chrome screenshots. I'll review Agent K's PR and test it with VoiceOver.
+
+#### 2026-11-11 — Agent L: settings in the game (#52)
+
+- **Tool:** Claude Code (Agent L in its own worktree)
+- **Category:** Coding, Review
+- **What I asked:** To apply reduced motion, the high contrast lantern and brief log verbosity, as in the brief.
+- **What I got:**
+  - Reduced motion now comes from the store, and changing it stops or starts the idle loops at once.
+  - Brief mode skips the decor lines but still marks the pieces as seen, in the one place Agent J built for this.
+  - In high contrast, the dark is solid black with one clear square per lit tile. The agent explained why it drew squares instead of a circle: a circle of radius 2.5 would cut through the edge tiles.
+  - It wrote its own tests and mutation-checked them. To check the drawing, it drove a headless browser that was already on the machine (nothing installed) and compared screenshots.
+  - Claude Code's review checked that the agent's empty-room trick for the lantern shape is right: the light is pure distance, and walls don't block it.
+- **Outcome:** ✅ kept (pending my check)
+- **Why:** It follows the decisions (the hard edge on Nov 4, brief mode on Nov 9) and keeps the rules in `src/game/`.
+- **How I verified it:** 724 tests, typecheck, lint, Prettier and the build pass. Still to do: my own check in the browser and with VoiceOver, through the Console until the settings book exists.
+
 ---
 
 ## Agent-built rooms: evaluation
@@ -1257,7 +1351,10 @@ Filled in from Sprint 3 onwards. One row per agent-built room, compared with the
 | `dingy-basement` and `forgotten-vault` | Claude Code (Opus 5.5) | #43 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | Four, all design (by the agent, one commit each): candlesticks removed, the mimic moved out of the arrival light, the stairs arrival moved to their foot, no stacked crates. Descriptions shortened to the new rule. One deviation accepted (the demon guarding the hatch diagonally) | None in the rooms. The descriptions told a screen reader user more than the canvas shows, which led to the new description rule | About 30 min for both PRs together (map renders, then a playtest through the whole dungeon) | About 1–2 hours per room (painting in Tiled, the room file, checking exits and arrivals) |
 | `old-crypt` | Claude Code (Opus 5.5) | #44 | Yes: tests (room file tests), typecheck, lint, Prettier, build. No axe scan yet | A redesign by me (carpet way back out of the south edge, symmetric pillars, fountains, a crate maze), built by the agent. Candlesticks removed, shorter description | None in the room. Same description finding as #43 | Included in the 30 min above | About 2 hours (the crate maze takes longer) |
 | Engine: the mimic (Agent H) | Claude Code (Opus 5.5) | #46 | Yes: typecheck, lint, Prettier, 600 tests, build | One, mine: the reduced-motion still frame changed to the fully open mouth (`frames: [2, 1]`, a stricter test), done by Claude Code | None found. The still frame was a clarity fix for reduced motion. Noted: "An enemy blocks your path" if the player walks into the disguised mimic outside a fight (can't happen in the vault) | About 30 min (code review, playtest, browser checks) | About a day (the disguise, the unmasking, the loot and the animation, with tests) |
-| Engine: saves and sync (Agent D) | Claude Code (Opus 5.5) | (this PR) | Yes: typecheck, lint, Prettier, 680 tests, build (after merging `dev`). The 18 RLS tests are skipped without a Supabase project | None. Every DevTools check passed as a guest. Sync with an account isn't tested yet (waits for the login form) | None found. Rule 5 is covered: when a sync replaces the game, a log line says why. Settings are saved but not used by the game yet (Phase L) | About 45 min (merge and checks, the DevTools checks in Safari) | Two to three days (the schemas, newest-wins, the ended record, sync timing and the tests) |
+| Engine: saves and sync (Agent D) | Claude Code (Opus 5.5) | #49 | Yes: typecheck, lint, Prettier, 680 tests, build (after merging `dev`). The 18 RLS tests are skipped without a Supabase project | None. Every DevTools check passed as a guest. Sync with an account isn't tested yet (waits for the login form) | None found. Rule 5 is covered: when a sync replaces the game, a log line says why. Settings are saved but not used by the game yet (Phase L) | About 45 min (merge and checks, the DevTools checks in Safari) | Two to three days (the schemas, newest-wins, the ended record, sync timing and the tests) |
+| Engine: login and sign-up form (Agent I) | Claude Code (Opus 5.5) | #50 | Yes: typecheck, lint, Prettier, 710 tests, build. All 18 RLS tests ran against the real project for the first time and passed. Real sign-in, wrong password, sign-out and offline tested from a script (no browser) | One, from a gap in Claude Code's brief: the password rule on the sign-up form (WCAG 3.3.2), added by Claude Code in one commit | The missing password rule (fixed). In my checks: "Signed in as" shown twice and the rule not read with filled fields (both fixed by Claude Code); Safari's AutoFill talks over "Signed out" (known Safari issue) | About 20 min (code review and the password rule), plus about 2 hours of browser, VoiceOver and sync checks on Nov 11 | About a day (the form, errors, focus, the live region and the error messages) |
+| Engine: decor reveals, Phase K step 7 (Agent J) | Claude Code (Opus 5.5) | #51 | Yes: typecheck, lint, Prettier, 715 tests, build. 16 mutation checks, all caught | None in the code. Two comments rewrapped by Claude Code | None found. My VoiceOver pass (Nov 11) passed all 5 checks, including the crypt's crate lines and "A pillar appears to the east." | About 15 min (code review and the check on the real maps), plus about 30 min of VoiceOver | Half a day to a day (the flood fill, grouping, store wiring and the tests) |
+| Engine: settings in the game, Phase L (Agent L) | Claude Code (Opus 5.5) | #52 | Yes: typecheck, lint, Prettier, 724 tests, build. Mutation-checked its own tests | None in Claude Code's review | None found yet. Still to check in the browser and with VoiceOver | About 10 min (code review) so far | About a day (the live settings in Phaser, the hard edge and the tests) |
 |      |               |    |                                                  |                    |                            |                      |                                 |
 
 **Notes per room:**
@@ -1281,6 +1378,8 @@ Filled in during Sprint 5.
   - Oct 13: Claude Code's contradictory explanation of auto-deleting branches, and outdated Vercel instructions
   - Oct 16: Claude Code's `.refine` sketch wasn't valid code (a comment as the function body)
   - Nov 10: Claude Code's DevTools checklist for the saves expected the save to update on damage, and high contrast to show, before checking the code
+  - Nov 10: Claude Code's brief for the login form left out the password rule (WCAG 3.3.2), and its mutation check used `git checkout`, which also removed its own uncommitted edits (noticed and restored)
+  - Nov 11: Claude Code's list of arrival lines for #51 included the hall's demon on the way back, which can't happen (it guards the stairs); the list came from tests that start each room fresh
 - **How I verified AI output:**
 - **Agent workflow results:** reference room vs agent-built rooms
 - **What I would do differently:**

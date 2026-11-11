@@ -1,3 +1,4 @@
+import { AccountPanel } from './ui/AccountPanel'
 import { AdventureLog } from './ui/AdventureLog'
 import { CombatMenu } from './ui/CombatMenu'
 import { ExitButton } from './ui/ExitButton'
@@ -31,6 +32,10 @@ function App() {
         </div>
         <AdventureLog />
       </div>
+      {/* Below the game, so the Tab order is the game first and the account
+          last: playing never needs it (guest play is the default). It's
+          self-contained, so it can move into a menu later. */}
+      <AccountPanel />
     </main>
   )
 }
