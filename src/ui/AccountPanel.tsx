@@ -90,8 +90,17 @@ export function AccountPanel({
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
-  // The text in the live region ("Signing in…", "Signed out."…).
-  const [status, setStatus] = useState('')
+  // The text in the live region ("Signing in…", "Signed out."…), and whether
+  // it's also shown on screen. After signing in or out, the panel itself
+  // already says the new state ("Signed in as …", "You're playing as a
+  // guest"), so the message is only read out: shown as well, sighted players
+  // saw "Signed in as" twice (found in the Nov 11 browser check). Messages the
+  // rest of the panel doesn't show ("Signing in…", "Check your email") stay
+  // visible.
+  const [status, setStatusState] = useState({ text: '', visible: true })
+  function setStatus(text: string, { visible = true } = {}) {
+    setStatusState({ text, visible })
+  }
 
   // Whether a request is on its way. Two copies, for two jobs:
   // - the state re-renders the buttons with aria-disabled;
@@ -161,7 +170,7 @@ export function AccountPanel({
     setPassword('')
     setShowPassword(false)
     setMode('sign-in')
-    setStatus(statusText)
+    setStatus(statusText, { visible: false })
     headingRef.current?.focus()
   }
 
@@ -224,7 +233,7 @@ export function AccountPanel({
 
     try {
       await signOut()
-      setStatus('Signed out. You are playing as a guest.')
+      setStatus('Signed out. You are playing as a guest.', { visible: false })
       // Same reason as after signing in: the Sign out button is about to
       // disappear, and the heading is always there. From it, the next Tab
       // reaches the email field of the sign-in form.
@@ -362,6 +371,19 @@ export function AccountPanel({
 
           <div className="account-field">
             <label htmlFor={passwordId}>Password</label>
+            {/* The rule only matters when choosing a password, so it's only
+                shown when creating an account (WCAG 3.3.2: say what's
+                needed before the player has to guess). It sits between the
+                label and the field, not under it: aria-describedby reads it
+                when the field gets focus, but VoiceOver can drop a
+                description when the field already has text (found in the
+                Nov 11 check). Here it's also read in normal reading order,
+                before the field, so it can't be missed. */}
+            {!isSignIn && (
+              <p id={passwordHintId} className="account-hint">
+                {PASSWORD_REQUIREMENTS}
+              </p>
+            )}
             <div className="account-password-row">
               {/* autocomplete tells the password manager what to do:
                   current-password fills a saved one, new-password offers
@@ -395,14 +417,6 @@ export function AccountPanel({
                 Show password
               </button>
             </div>
-            {/* The rule only matters when choosing a password, so it's only
-                shown when creating an account (WCAG 3.3.2: say what's
-                needed before the player has to guess). */}
-            {!isSignIn && (
-              <p id={passwordHintId} className="account-hint">
-                {PASSWORD_REQUIREMENTS}
-              </p>
-            )}
             {errors.password && (
               <p id={passwordErrorId} className="account-error">
                 <span className="account-error-prefix">Error: </span>
@@ -443,8 +457,16 @@ export function AccountPanel({
           reader only announces changes to a region that already existed.
           role="status" is a polite live region, so it waits for a pause
           instead of interrupting (nothing here is urgent). */}
-      <p role="status" className="account-status">
-        {status}
+      {/* visually-hidden (index.css) hides it from view but not from
+          screen readers, so it's still announced. The region itself stays
+          on the page either way. */}
+      <p
+        role="status"
+        className={
+          status.visible ? 'account-status' : 'account-status visually-hidden'
+        }
+      >
+        {status.text}
       </p>
     </section>
   )
