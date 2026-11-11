@@ -23,6 +23,7 @@ import {
   describePickUp,
   describeItemReveal,
   describeLoot,
+  describeFeatureReveal,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -733,6 +734,41 @@ describe('describeItemReveal', () => {
   it('uses "The" when the item has been seen before', () => {
     expect(describeItemReveal('gold key', 'south', true)).toBe(
       'The gold key lies to the south.',
+    )
+  })
+})
+
+describe('describeFeatureReveal', () => {
+  it('uses "A" for one piece', () => {
+    expect(describeFeatureReveal('pillar', 1, 'north')).toBe(
+      'A pillar appears to the north.',
+    )
+  })
+
+  it('uses "An" before a name that starts with a vowel, with the hyphen as a space', () => {
+    expect(describeFeatureReveal('empty-chest', 1, 'south-west')).toBe(
+      'An empty chest appears to the south-west.',
+    )
+  })
+
+  it('uses the plural with no article for more than one piece', () => {
+    expect(describeFeatureReveal('crate', 2, 'east')).toBe(
+      'Crates appear to the east.',
+    )
+  })
+
+  // All five names in tile-names.json, one and several, so a new name with
+  // an odd article or plural shows up here first.
+  it.each([
+    ['pillar', 'A pillar appears', 'Pillars appear'],
+    ['crate', 'A crate appears', 'Crates appear'],
+    ['empty-chest', 'An empty chest appears', 'Empty chests appear'],
+    ['candlestick', 'A candlestick appears', 'Candlesticks appear'],
+    ['fountain', 'A fountain appears', 'Fountains appear'],
+  ])('words %s right in the singular and plural', (name, one, several) => {
+    expect(describeFeatureReveal(name, 1, 'west')).toBe(`${one} to the west.`)
+    expect(describeFeatureReveal(name, 3, 'west')).toBe(
+      `${several} to the west.`,
     )
   })
 })

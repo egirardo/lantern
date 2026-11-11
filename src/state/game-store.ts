@@ -11,6 +11,7 @@ import {
   describeAlreadyEscaped,
   describeArrivalExit,
   describeExitReveal,
+  describeFeatureReveal,
   describeItemReveal,
   describeMove,
   describeNextToExit,
@@ -45,6 +46,11 @@ import {
 import { itemDisplayName, pickUpItems, type StoreItem } from '../game/items'
 import type { Feature } from '../game/features'
 import {
+  getNewlyLitPieces,
+  groupFeaturePieces,
+  groupFeatureReveals,
+} from '../game/feature-reveal'
+import {
   defaultSettings,
   osPrefersReducedMotion,
   settingsSchema,
@@ -67,9 +73,9 @@ export type GameState = {
   grid: Grid | null
   // The named tiles in the room (e.g. barrels), from the tile names table,
   // at most one per cell. Next to the grid, which only says 'floor' or
-  // 'wall'. Nothing reads it yet: the blocked-move text (Phase K step 3) and
-  // the reveal narration (step 7) will. [] until a room is loaded, like
-  // enemies: unlike grid, an empty list is also a real answer (no decor).
+  // 'wall'. Read by the blocked-move text (Phase K step 3) and the decor
+  // reveals (step 7). [] until a room is loaded, like enemies: unlike grid,
+  // an empty list is also a real answer (no decor).
   features: Feature[]
   room: Room | null
   tiledMap: TiledMap | null
@@ -121,6 +127,12 @@ export type GameState = {
   // can say "A gold key" the first time and "The gold key" after, like
   // seenEnemyIds. A room load starts it again.
   seenItemIds: string[]
+  // The decor pieces already announced in this room visit, by their key from
+  // groupFeaturePieces (e.g. 'pillar@3,0'). Unlike enemies and exits, decor
+  // is announced only once per visit (decided Nov 10), so this list decides
+  // *whether* a piece is announced, not only the wording. A room load starts
+  // it again, so coming back to a room announces its decor again.
+  seenPieceKeys: string[]
   // The items picked up and the enemies defeated, in every room so far, as
   // 'room-id/id' (e.g. 'dingy-basement/key-1'). Ids are only unique within
   // a room, so the room id goes in front. loadRoom leaves these out, so a key
@@ -300,6 +312,38 @@ function exitRevealEntries({
   return { entries, seenExitIndexes: [...seenExitIndexes, ...newIndexes] }
 }
 
+// The decor lines for one step (Phase K step 7), with the updated seen keys
+// for the same set(). All decor reveals are made here and nowhere else, so
+// Phase L's brief verbosity can switch them off in one place (it skips decor
+// reveals, never enemy or exit reveals).
+// - The pieces are grouped from the room's features on every call instead of
+//   being kept in the store: they follow from `features`, so keeping them
+//   too would be a second copy of the same facts (rule 2). Grouping at most
+//   120 cells is cheap.
+// - One line per name and direction (groupFeatureReveals), all polite.
+function featureRevealEntries(
+  features: Feature[],
+  litAfter: Position[],
+  from: Position,
+  seenPieceKeys: string[],
+): { entries: LogEntry[]; seenPieceKeys: string[] } {
+  const newlyLit = getNewlyLitPieces(
+    groupFeaturePieces(features),
+    litAfter,
+    seenPieceKeys,
+  )
+  const entries = groupFeatureReveals(newlyLit, litAfter, from).map((group) =>
+    politeEntry(
+      describeFeatureReveal(group.name, group.count, group.direction),
+    ),
+  )
+  // getNewlyLitPieces only returns unseen pieces, so no key is added twice.
+  return {
+    entries,
+    seenPieceKeys: [...seenPieceKeys, ...newlyLit.map((piece) => piece.key)],
+  }
+}
+
 // A factory, so every test can get its own fresh store instead of sharing one.
 // initialSettings is a parameter for the same reason as random: a test can
 // start with the settings it needs. The default asks the operating system
@@ -328,6 +372,7 @@ export function createGameStore(
     seenExitIndexes: [],
     arrivalExitIndex: null,
     seenItemIds: [],
+    seenPieceKeys: [],
     takenItemIds: [],
     defeatedEnemyIds: [],
     player: PLAYER,
@@ -454,6 +499,8 @@ export function createGameStore(
         start,
         [],
       )
+      // The new room's decor starts unseen ([]), like everything above.
+      const featureReveal = featureRevealEntries(features, litAfter, start, [])
       set({
         grid,
         features,
@@ -477,11 +524,13 @@ export function createGameStore(
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
         seenItemIds: itemReveal.seenItemIds,
+        seenPieceKeys: featureReveal.seenPieceKeys,
         arrivalExitIndex,
         // One batch for the whole room change: the exit lines (empty at the
         // start of a game), then the description, then a pickup (almost
         // always none), then the enemy reveals, then the exit reveals
-        // (decided Nov 6), then the item reveals (Nov 8). The pickup comes
+        // (decided Nov 6), then the item reveals (Nov 8), then the decor
+        // reveals (Nov 10, last because they matter least). The pickup comes
         // right after the description for the same reason it comes right
         // after the step in movePlayer: first what happens to the player,
         // then what the light shows.
@@ -493,6 +542,7 @@ export function createGameStore(
           ...reveal.entries,
           ...exitReveal.entries,
           ...itemReveal.entries,
+          ...featureReveal.entries,
         ],
         pendingExitLines: [],
         combat: null, // loading a new room ends any fight in progress
@@ -560,6 +610,7 @@ export function createGameStore(
         seenEnemyIds,
         seenExitIndexes,
         seenItemIds,
+        seenPieceKeys,
         arrivalExitIndex,
         takenItemIds,
         log,
@@ -660,6 +711,13 @@ export function createGameStore(
         result.newPosition,
         seenItemIds,
       )
+      // Decor that came into the light for the first time in this visit.
+      const featureReveal = featureRevealEntries(
+        features,
+        litAfter,
+        result.newPosition,
+        seenPieceKeys,
+      )
 
       // Only a step that actually happened can start a fight. A blocked move
       // means you're standing where you were.
@@ -694,10 +752,12 @@ export function createGameStore(
           seenEnemyIds: reveal.seenEnemyIds,
           seenExitIndexes: exitReveal.seenExitIndexes,
           seenItemIds: itemReveal.seenItemIds,
+          seenPieceKeys: featureReveal.seenPieceKeys,
           // Step, then the pickup (Nov 8), then enemy reveals, then exit
-          // reveals (decided Nov 6), then item reveals (Nov 8), then the exit
-          // next to the player (Nov 8). The pickup sits right after the step
-          // because it's part of the step: the player stepped onto the key.
+          // reveals (decided Nov 6), then item reveals (Nov 8), then decor
+          // reveals (Nov 10), then the exit next to the player (Nov 8). The
+          // pickup sits right after the step because it's part of the step:
+          // the player stepped onto the key.
           // "You are next to the exit… Press Enter" stays last, because it's
           // the cue to act, like "It's your turn." in a fight.
           log: [
@@ -707,6 +767,7 @@ export function createGameStore(
             ...reveal.entries,
             ...exitReveal.entries,
             ...itemReveal.entries,
+            ...featureReveal.entries,
             ...nextToEntries,
           ],
         })
@@ -725,9 +786,10 @@ export function createGameStore(
         seenEnemyIds: reveal.seenEnemyIds,
         seenExitIndexes: exitReveal.seenExitIndexes,
         seenItemIds: itemReveal.seenItemIds,
+        seenPieceKeys: featureReveal.seenPieceKeys,
         // Step, then the pickup, then enemy reveals, then exit reveals, then
-        // item reveals, then the fight start (decided Nov 4 and Nov 6, items
-        // Nov 8). A step can pick up a key and start a fight at once: the key
+        // item reveals, then decor reveals, then the fight start (decided
+        // Nov 4 and Nov 6, items Nov 8, decor Nov 10). A step can pick up a key and start a fight at once: the key
         // is picked up first, because the player is already standing on it
         // when the enemy attacks, and the fight lines end with "It's your
         // turn.", the cue to act, so they must come last.
@@ -738,6 +800,7 @@ export function createGameStore(
           ...reveal.entries,
           ...exitReveal.entries,
           ...itemReveal.entries,
+          ...featureReveal.entries,
           ...withIds(step.lines),
         ],
       })
