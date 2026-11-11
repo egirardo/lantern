@@ -26,7 +26,9 @@
   --parchment-light: #ebe6c6;
   --ink: #2e222f;
   --plum: #6d4e54;
-  --plum-hover: #7a5960;
+  /* Darker than plum, not lighter: parchment text on the mockup's lighter
+     hover (#7a5960) was only 4.05:1, below 4.5:1. */
+  --plum-hover: #5f434a;
   --plum-dark: #57404f;
   --night: #342730;
   --slate: #3e3546;
@@ -39,8 +41,9 @@
      backgrounds; panels with a light background set it to ink (below),
      because yellow on parchment would be almost invisible. */
   --focus-ring: var(--focus);
-  /* Error text: light red on dark, dark red on light (set per surface). */
-  --error: #ffb3ab;
+  /* Error text: light red on dark, dark red on light (set per surface).
+     Light enough for 5:1 on the plum panel. */
+  --error: #ffc9c2;
 
   /* The text size setting (use-settings-on-root.ts sets --text-scale on
      this element). The root font size is the browser's own size (100%,

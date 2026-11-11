@@ -10,10 +10,13 @@ import { uiAsset } from './ui-asset'
 //   have 8 of 12 health left."). Announcing it here too would say it twice.
 export function HealthDisplay() {
   // Two numbers, so this only re-renders when health changes.
-  const current = useStore(gameStore, (s) => s.player.currentHealth)
+  // Never below 0 on screen, even if the last hit was bigger than what was
+  // left.
+  const current = useStore(gameStore, (s) =>
+    Math.max(0, s.player.currentHealth),
+  )
   const max = useStore(gameStore, (s) => s.player.maxHealth)
-  // Below 0 can't be drawn, so the bar stops at empty.
-  const percent = Math.max(0, Math.round((current / max) * 100))
+  const percent = Math.round((current / max) * 100)
 
   return (
     <div className="health">

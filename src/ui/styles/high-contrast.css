@@ -26,7 +26,7 @@
   --focus-ring: #ff0;
   --health: #fff;
   --health-light: #fff;
-  --error: #ffb3ab;
+  --error: #ffc9c2;
 }
 
 [data-contrast='high'] body {
@@ -55,7 +55,9 @@
   background: #000;
   color: #fff;
   --focus-ring: #ff0;
-  --error: #ffb3ab;
+  --error: #ffc9c2;
+  /* Native controls back in their dark look, on black. */
+  color-scheme: dark;
 }
 
 [data-contrast='high'] .banner,
@@ -103,6 +105,7 @@
 }
 
 [data-contrast='high'] .health-bar {
+  border-color: #fff;
   box-shadow: none;
 }
 
