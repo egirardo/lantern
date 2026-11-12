@@ -31,11 +31,11 @@ export function GameScreen() {
         <ExitButton />
       </div>
       <div className="below">
-        {/* The turn slot keeps its place in the row even when it's empty,
-            so Inventory and Goal never jump sideways when a fight starts or
-            ends (see .turn-slot in game.css). The combat menu and the end
-            card are never shown at the same time: a fight is over before
-            the game ends. */}
+        {/* The turn slot keeps its place in the row when there's no
+            fight (the menu then shows an idle box), so Inventory and Goal
+            never jump sideways when a fight starts or ends (see .turn-slot
+            in game.css). The combat menu and the end card are never shown
+            at the same time: a fight is over before the game ends. */}
         <div className="turn-slot">
           <CombatMenu />
           <EndCard />

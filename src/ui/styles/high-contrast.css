@@ -121,8 +121,8 @@
   box-shadow: none;
 }
 
-[data-contrast='high'] .turn-slot:empty {
-  opacity: 1;
+[data-contrast='high'] .combat-idle {
+  border-color: #fff;
 }
 
 [data-contrast='high'] .start-screen {

@@ -184,7 +184,8 @@
 }
 
 /* The place for the combat menu and the end card. It's always there, with
-   the same width, even when it's empty, so Inventory and Goal stay exactly
+   the same width, also when there's no fight (then the menu shows its idle
+   box), so Inventory and Goal stay exactly
    where they are when a fight starts or ends (the player's eyes and mouse
    don't have to find them again). Its own width, not the buttons' width,
    for the same reason: the buttons stack in a column inside it. */
@@ -198,18 +199,28 @@
   flex: 1;
 }
 
-/* Empty (no fight, game not over): a faint dashed outline marks the place.
-   It has no text, so a screen reader finds nothing there. */
-.turn-slot:empty {
-  min-height: 6rem;
-  border: 2px dashed var(--plum);
-  opacity: 0.5;
+/* No fight: a dashed box where the attack buttons go, with its line of
+   text (CombatMenu.tsx). About a button's height (.btn), so the panel is
+   the same size as with one attack button. */
+.combat-idle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin: auto 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 2px dashed var(--parchment-shade);
+  border-radius: 6px;
+  font-style: italic;
+  text-align: center;
 }
 
-/* In one column, nothing sits beside the slot, so an empty one would only
-   be a gap. */
+/* In one column, nothing sits beside the panel, so with no fight it would
+   only push Inventory and Goal down. The whole slot is hidden (:has picks
+   the slot that holds the idle panel), so no empty gap is left either.
+   display: none hides it from screen readers too, so both get the same. */
 @media (max-width: 40em) {
-  .turn-slot:empty {
+  .turn-slot:has(> .combat-menu-idle) {
     display: none;
   }
 }

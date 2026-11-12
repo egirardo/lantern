@@ -27,6 +27,12 @@ function returnFocus(previousFocus: HTMLElement | null) {
 
 export function CombatMenu() {
   const combat = useStore(gameStore, (state) => state.combat)
+  // At the end of the game the end card takes the turn slot instead (see
+  // EndCard.tsx, which uses the same two checks).
+  const gameOver = useStore(
+    gameStore,
+    (state) => state.hasEscaped || state.player.currentHealth <= 0,
+  )
   const menuRef = useRef<HTMLElement>(null)
   // What had focus when the fight started. A ref instead of a variable inside
   // the effect, because the click handler needs it too, at the end of the
@@ -98,8 +104,27 @@ export function CombatMenu() {
     }
   }
 
-  if (!combat) {
+  if (gameOver) {
     return null
+  }
+
+  // No fight: the panel stays, with a dashed box where the attack buttons
+  // go (decided Nov 12). The box has a line of text, so a screen reader
+  // user who finds the "Your turn" heading also hears why there's nothing
+  // to do, instead of a heading with nothing under it. The heading id is
+  // the same, so the section keeps its name.
+  if (!combat) {
+    return (
+      <section
+        aria-labelledby="combat-menu-heading"
+        className="panel-dark combat-menu combat-menu-idle"
+      >
+        <h2 id="combat-menu-heading" className="banner">
+          Your turn
+        </h2>
+        <p className="combat-idle">No enemies near.</p>
+      </section>
+    )
   }
 
   const options = getAttackOptions(combat)
