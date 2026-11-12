@@ -217,9 +217,15 @@ export function AccountPanel({
           // they can sign in right here. Focus stays on the submit button:
           // it's the same element, now labelled "Sign in", so nothing
           // disappears under the player.
+          //
+          // The message is true whether the account is new or not (found
+          // Nov 12): for an email that already has an account, Supabase
+          // sends no email and answers exactly like a new sign-up, so nobody
+          // can use this form to find out which emails are registered. We
+          // keep that protection and don't say "Account created".
           setMode('sign-in')
           setStatus(
-            'Account created. Check your email and open the confirmation link, then sign in here.',
+            'Check your email. If this is a new account, open the confirmation link, then sign in here. If you already have an account, you can sign in now.',
           )
         }
       }
