@@ -60,6 +60,18 @@
   color-scheme: dark;
 }
 
+/* The book's pages without their art (book.css), with a gap instead of
+   the spine between them. */
+[data-contrast='high'] .book-pages {
+  column-gap: 1.5rem;
+}
+
+[data-contrast='high'] .book-page,
+[data-contrast='high'] .book-page + .book-page {
+  border: 0;
+  border-image: none;
+}
+
 [data-contrast='high'] .banner,
 [data-contrast='high'] .start-account .account-panel > h2 {
   min-height: 0;
