@@ -6,8 +6,10 @@ import { uiAsset } from './ui-asset'
 // - The text carries the information. The bar only repeats it for the eye,
 //   so it's aria-hidden, and the text never relies on the bar's colour or
 //   length (WCAG 1.4.1).
-// - No live region: the log already announces every change in health ("You
-//   have 8 of 12 health left."). Announcing it here too would say it twice.
+// - No live region: the log already announces every hit with its damage, and
+//   low health has its own urgent line (the one assertive announcement).
+//   Announcing the total here on every hit would flood the screen reader.
+//   A screen reader user can read it at any time, right after the map.
 export function HealthDisplay() {
   // Two numbers, so this only re-renders when health changes.
   // Never below 0 on screen, even if the last hit was bigger than what was

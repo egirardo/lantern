@@ -39,7 +39,8 @@ export function HowToPlay() {
         </p>
         <p>
           You and the enemies take turns, and dice decide every hit. The log
-          tells you each roll and how much health you have left.
+          tells you each roll and the damage. Your health is shown under the
+          map.
         </p>
         <h3>The goal</h3>
         <p>
