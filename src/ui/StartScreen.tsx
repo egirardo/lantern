@@ -94,7 +94,9 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
       {/* The divider between the halves is decoration only. */}
       <div className="start-divider" aria-hidden="true" />
       <div className="panel-dark start-account">
-        <AccountPanel headingLevel={2} />
+        {/* hideFormUntilChosen: no login form at load, so Safari's AutoFill
+            can't take focus away from Start (see AccountPanel). */}
+        <AccountPanel headingLevel={2} hideFormUntilChosen />
       </div>
     </div>
   )
