@@ -34,8 +34,8 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
       <div className="start-intro">
         <h1 className="start-title">Lantern</h1>
         <p>
-          You wake in a dark dungeon with only a lantern. Find the key, and the
-          way out.
+          You wake in a dark dungeon with only a lantern. It’s up to you to find
+          the way out.
         </p>
         {/* A list, so a screen reader says how many choices there are. */}
         {/* role="list" looks redundant, but Safari drops the list
