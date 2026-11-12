@@ -1,8 +1,6 @@
 # UI art credits
 
-The pieces in this folder come from the **Pixel RPG UI Pack** by **immunitys** (itch.io).
-
-TODO(owner): link
+The pieces in this folder come from the **Pixel RPG UI Pack** by **immunitys** on itch.io: <https://immunitys.itch.io/pixel-ui-pack>
 
 The pack's license allows editing and commercial use and asks for credit. Only the pieces the game uses are included here, renamed to say what they are.
 
