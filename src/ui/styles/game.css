@@ -236,6 +236,10 @@
 
 .combat-options .btn {
   width: 100%;
+  /* .btn is a flex box: justify-content centres its content, and
+     text-align the lines if a long enemy name wraps. */
+  justify-content: center;
+  text-align: center;
 }
 
 .inventory {
@@ -260,6 +264,9 @@
 .goal-list li {
   display: flex;
   align-items: center;
+  /* Centred in the panel, like the banner above it. */
+  justify-content: center;
+  text-align: center;
   gap: 0.625rem;
   font-size: 1.125rem;
 }
@@ -283,6 +290,7 @@
   margin: auto 0;
   padding: 0 0.5rem;
   font-style: italic;
+  text-align: center;
 }
 
 /* Before the key is found, its sprite is greyed out and faded. The text
