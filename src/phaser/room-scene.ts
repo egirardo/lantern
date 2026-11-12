@@ -577,10 +577,18 @@ export class RoomScene extends Phaser.Scene {
     // No room loaded yet, so there is nothing to light.
     if (grid === null || playerPosition === null) return
 
-    // Move the hole to the player's tile. During a walk, the tween in
-    // movePlayerSprite then moves it along with the sprite on every frame,
-    // and it ends up back here on the same tile.
-    const { x, y } = this.tileCenter(playerPosition)
+    // The lantern is carried by the player, so the hole goes where the
+    // sprite is drawn, not straight to the player's tile. movePlayerSprite
+    // has already run: on a slide the sprite is still on the tile it's
+    // leaving (the tween then moves the sprite and the hole together), on a
+    // jump it's already on the new tile. The sprite's feet are at the tile
+    // centre, the same point the hole is centred on, so its x and y fit.
+    //
+    // Why not the tile: a Phaser tween doesn't call onUpdate on its first
+    // frame (it only reads its start values). Putting the hole on the new
+    // tile here showed it one tile ahead for that frame, then it snapped
+    // back: a small jolt at the start of every step.
+    const { x, y } = this.playerSprite ?? this.tileCenter(playerPosition)
     this.darkness?.setPosition(x, y)
 
     const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
