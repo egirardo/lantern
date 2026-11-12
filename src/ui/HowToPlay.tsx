@@ -43,10 +43,10 @@ export function HowToPlay() {
           map.
         </p>
         <h3>The goal</h3>
-        <p>
-          Somewhere in the dungeon is a gold key. Find it, then find the great
-          door and unlock it to escape.
-        </p>
+        {/* Says nothing about the key or the locked door: the player finds
+            those out by exploring, and the Goal panel tells them the next
+            step once they do (decided Nov 12). */}
+        <p>Explore the dungeon and find the way out.</p>
         <p>
           The Goal panel under the map shows your next step, and Inventory shows
           what you carry.
