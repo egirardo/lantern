@@ -24,9 +24,12 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
 
   // Start (or Continue) gets focus when the screen appears (decision 9), so
   // Enter or Space begins the game at once, and a screen reader starts on
-  // the main action: "Start, button". The intro is linked to the button with
-  // aria-describedby (below), because focus skips past it: without the link,
-  // a screen reader user would never hear it unless they went back to look.
+  // the main action: "Start, button". The title and the intro are linked to
+  // the button with aria-describedby (below), because focus skips past them:
+  // without the link, a screen reader user would never hear them unless they
+  // went back to look. The page title ("Lantern" in index.html) doesn't help
+  // either: in testing (Nov 12), VoiceOver didn't read it on load, because
+  // focus moving here at once takes over the announcement.
   useEffect(() => {
     startRef.current?.focus()
   }, [])
@@ -34,8 +37,11 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
   return (
     <div className="start-screen">
       <div className="start-intro">
-        <h1 className="start-title">Lantern</h1>
-        {/* The id lets the Start button point here (aria-describedby). */}
+        {/* The ids let the Start button point to the title and the intro
+            (aria-describedby). */}
+        <h1 id="start-title" className="start-title">
+          Lantern
+        </h1>
         <p id="start-intro-text">
           You wake in a dark dungeon with only a lantern. It’s up to you to find
           the way out.
@@ -47,15 +53,16 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
         {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
         <ul className="plain-list start-actions" role="list">
           <li>
-            {/* aria-describedby adds the intro as the button's description:
-                VoiceOver reads the name first ("Start, button"), then the
-                description after a short pause. The name stays short, so
+            {/* aria-describedby adds the title and the intro, in that
+                order, as the button's description: VoiceOver reads the name
+                first ("Start, button"), then "Lantern. You wake in…" after
+                a short pause. The name stays short, so
                 the button is still easy to find in a list of buttons. */}
             <button
               ref={startRef}
               type="button"
               className="btn"
-              aria-describedby="start-intro-text"
+              aria-describedby="start-title start-intro-text"
               onClick={onStart}
             >
               <img className="icon" src={uiAsset('icon-start.png')} alt="" />
