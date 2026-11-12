@@ -78,8 +78,8 @@ export function AccountPanel({
   // When true, a guest first sees two buttons, Sign in and Create an
   // account, and the form only appears when one is pressed. Used on the
   // start screen: with a login form on the page at load, Safari's AutoFill
-  // took focus away from Start at once (found Nov 12), so Enter no longer
-  // started the game. In the book's Account tab the player has already
+  // moved focus to the email field at once (found Nov 12), so a screen
+  // reader started there instead of at the top of the page. In the book's Account tab the player has already
   // asked for the form, so it's shown at once there.
   hideFormUntilChosen?: boolean
 }) {

@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { useStore } from 'zustand'
 import { gameStore } from '../state/game-store'
 import { AccountPanel } from './AccountPanel'
@@ -10,6 +9,13 @@ import { uiAsset } from './ui-asset'
 // Left: the title, a short intro and the buttons. Right: the account panel.
 // The game isn't on the page yet (App only renders it after Start), so
 // nobody can tab or read their way into it from here.
+//
+// Focus is not moved when the page loads (changed Nov 12, replacing
+// decision 9's focus on Start). Moving it made VoiceOver read Start twice,
+// in Safari and Chrome, and skip the page title. Without it, a screen
+// reader reads the page from the top: the title, the intro, then the
+// buttons. Start is the first Tab stop, so a keyboard player presses Tab
+// once, then Enter.
 type StartScreenProps = {
   onStart: () => void
   onOpenBook: (tab: BookTab) => void
@@ -20,29 +26,12 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
   // start-label.ts). A string from the selector, so this only re-renders
   // when the label changes, e.g. when a sync loads a save from the account.
   const label = useStore(gameStore, startButtonLabel)
-  const startRef = useRef<HTMLButtonElement>(null)
-
-  // Start (or Continue) gets focus when the screen appears (decision 9), so
-  // Enter or Space begins the game at once, and a screen reader starts on
-  // the main action: "Start, button". The title and the intro are linked to
-  // the button with aria-describedby (below), because focus skips past them:
-  // without the link, a screen reader user would never hear them unless they
-  // went back to look. The page title ("Lantern" in index.html) doesn't help
-  // either: in testing (Nov 12), VoiceOver didn't read it on load, because
-  // focus moving here at once takes over the announcement.
-  useEffect(() => {
-    startRef.current?.focus()
-  }, [])
 
   return (
     <div className="start-screen">
       <div className="start-intro">
-        {/* The ids let the Start button point to the title and the intro
-            (aria-describedby). */}
-        <h1 id="start-title" className="start-title">
-          Lantern
-        </h1>
-        <p id="start-intro-text">
+        <h1 className="start-title">Lantern</h1>
+        <p>
           You wake in a dark dungeon with only a lantern. It’s up to you to find
           the way out.
         </p>
@@ -53,18 +42,7 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
         {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
         <ul className="plain-list start-actions" role="list">
           <li>
-            {/* aria-describedby adds the title and the intro, in that
-                order, as the button's description: VoiceOver reads the name
-                first ("Start, button"), then "Lantern. You wake in…" after
-                a short pause. The name stays short, so
-                the button is still easy to find in a list of buttons. */}
-            <button
-              ref={startRef}
-              type="button"
-              className="btn"
-              aria-describedby="start-title start-intro-text"
-              onClick={onStart}
-            >
+            <button type="button" className="btn" onClick={onStart}>
               <img className="icon" src={uiAsset('icon-start.png')} alt="" />
               {label}
             </button>
@@ -95,7 +73,7 @@ export function StartScreen({ onStart, onOpenBook }: StartScreenProps) {
       <div className="start-divider" aria-hidden="true" />
       <div className="panel-dark start-account">
         {/* hideFormUntilChosen: no login form at load, so Safari's AutoFill
-            can't take focus away from Start (see AccountPanel). */}
+            can't move focus into it (see AccountPanel). */}
         <AccountPanel headingLevel={2} hideFormUntilChosen />
       </div>
     </div>
