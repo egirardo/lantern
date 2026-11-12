@@ -124,9 +124,15 @@ h3 {
 /* ---------- Pixel art ---------- */
 
 /* Pixel art is drawn at whole-number scales (2×, 3×) and without smoothing,
-   so every art pixel stays a sharp square. */
+   so every art pixel stays a sharp square. The panels and banners are
+   9-slices (below): without this, the browser smooths the parts it
+   stretches, and their edges look soft next to the icons (found Nov 12). */
 .icon,
-.item-sprite {
+.item-sprite,
+.panel-light,
+.panel-dark,
+.banner,
+.start-account .account-panel > h2 {
   image-rendering: pixelated;
 }
 
