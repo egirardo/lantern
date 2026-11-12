@@ -54,6 +54,7 @@ import {
   defaultSettings,
   osPrefersReducedMotion,
   settingsSchema,
+  type LogVerbosity,
   type Settings,
 } from './settings'
 import type { SaveContent } from '../save/save-rules'
@@ -321,22 +322,30 @@ function exitRevealEntries({
 //   too would be a second copy of the same facts (rule 2). Grouping at most
 //   120 cells is cheap.
 // - One line per name and direction (groupFeatureReveals), all polite.
+// - Brief verbosity (decided Nov 9) returns no lines, but the newly lit
+//   pieces still count as seen. The player did pass them, so switching back
+//   to verbose later must not announce a pile of decor they walked by long
+//   ago. Only the words are skipped, not the bookkeeping.
 function featureRevealEntries(
   features: Feature[],
   litAfter: Position[],
   from: Position,
   seenPieceKeys: string[],
+  verbosity: LogVerbosity,
 ): { entries: LogEntry[]; seenPieceKeys: string[] } {
   const newlyLit = getNewlyLitPieces(
     groupFeaturePieces(features),
     litAfter,
     seenPieceKeys,
   )
-  const entries = groupFeatureReveals(newlyLit, litAfter, from).map((group) =>
-    politeEntry(
-      describeFeatureReveal(group.name, group.count, group.direction),
-    ),
-  )
+  const entries =
+    verbosity === 'brief'
+      ? []
+      : groupFeatureReveals(newlyLit, litAfter, from).map((group) =>
+          politeEntry(
+            describeFeatureReveal(group.name, group.count, group.direction),
+          ),
+        )
   // getNewlyLitPieces only returns unseen pieces, so no key is added twice.
   return {
     entries,
@@ -500,7 +509,13 @@ export function createGameStore(
         [],
       )
       // The new room's decor starts unseen ([]), like everything above.
-      const featureReveal = featureRevealEntries(features, litAfter, start, [])
+      const featureReveal = featureRevealEntries(
+        features,
+        litAfter,
+        start,
+        [],
+        get().settings.logVerbosity,
+      )
       set({
         grid,
         features,
@@ -616,6 +631,7 @@ export function createGameStore(
         log,
         player,
         combat,
+        settings,
       } = get()
       // No room loaded yet, so there's nowhere to move and nothing to narrate.
       // After this check, TypeScript knows none of them is null (narrowing).
@@ -717,6 +733,7 @@ export function createGameStore(
         litAfter,
         result.newPosition,
         seenPieceKeys,
+        settings.logVerbosity,
       )
 
       // Only a step that actually happened can start a fight. A blocked move

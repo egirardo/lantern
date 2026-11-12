@@ -25,6 +25,7 @@ export const settingsSchema = z.strictObject({
 
 export type Settings = z.infer<typeof settingsSchema>
 export type TextSize = Settings['textSize']
+export type LogVerbosity = Settings['logVerbosity']
 
 // How much bigger each text size is than the default, as a multiplier for
 // the root font size (in rem, so the browser's own zoom still works on top).
