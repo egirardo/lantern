@@ -101,6 +101,13 @@
   margin: 0.5rem auto 0;
 }
 
+/* More room between the text and the first button under it (Sign in for a
+   guest, Sign out when signed in), so the buttons sit centred in the space
+   under the text instead of close up to it (decided Nov 13). */
+.start-account .account-panel > p + button {
+  margin-top: 1.5rem;
+}
+
 /* An invalid field gets a thicker, dashed border as well as a colour, so it
    isn't marked by colour alone. The error text says the rest. */
 .account-panel input[aria-invalid='true'] {
