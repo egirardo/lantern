@@ -13,6 +13,7 @@ import type { StoreEnemy } from '../game/spawn-enemies'
 import type { StoreItem } from '../game/items'
 import { getVisibleTiles, isLit, LANTERN_RADIUS } from '../game/visibility'
 import { prefersReducedMotion } from './reduced-motion'
+import { litOffsets } from './lantern-shape'
 import { hitEnemies, wasHit } from './hits'
 import {
   animationKey,
@@ -82,9 +83,13 @@ export class RoomScene extends Phaser.Scene {
   // its layers) when the player goes through an exit to another room.
   private map?: Phaser.Tilemaps.Tilemap
   private playerSprite?: Phaser.GameObjects.Sprite
-  // One big black image with a soft round hole in the middle. It is made when
-  // the room is drawn and moved so the hole is always over the player.
+  // One big black image with a hole in the middle: soft and round, or with
+  // a hard tile edge in high contrast. It is made when the room is drawn and
+  // moved so the hole is always over the player.
   private darkness?: Phaser.GameObjects.Image
+  // The canvas texture the darkness Image shows. Kept so paintDarkness can
+  // paint it again when high contrast is turned on or off.
+  private darknessTexture?: Phaser.Textures.CanvasTexture
   // The enemy sprites currently on screen: only the lit enemies, by enemy id.
   // They are Phaser objects, not game state: where the enemies are and who is
   // alive is always read from the store. A Map (not a list) so drawEnemies can
@@ -199,6 +204,23 @@ export class RoomScene extends Phaser.Scene {
           }
         }
       }
+
+      // 5. High contrast was turned on or off: paint the dark again, hard or
+      // soft. Only the picture on the texture changes; the Image showing it
+      // stays where it is, so the hole is still over the player.
+      if (state.settings.highContrast !== previousState.settings.highContrast) {
+        this.paintDarkness(state.settings.highContrast)
+      }
+
+      // 6. Reduced motion was turned on or off in the settings: stop or start
+      // the idle loops now. Without this, the sprites on screen would only
+      // notice on the next step (the player's walk, an enemy redraw), and a
+      // player who just asked for stillness would still see bobbing sprites.
+      if (
+        state.settings.reducedMotion !== previousState.settings.reducedMotion
+      ) {
+        this.applyMotionSetting(state)
+      }
     })
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)
     this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe)
@@ -267,7 +289,8 @@ export class RoomScene extends Phaser.Scene {
 
   // Starts a sprite's idle loop, or shows a still frame if the player prefers
   // reduced motion. Called whenever a sprite should stand still: when it is
-  // made, after the player's walk, and on every redraw of the enemies.
+  // made, after the player's walk, on every redraw of the enemies, and when
+  // the reduced motion setting changes (applyMotionSetting).
   // `animationName` is 'idle' for everyone except an unmasked mimic, which
   // stands with its 'unmasked' loop instead (see enemyAnimationName).
   private playIdle(
@@ -301,6 +324,31 @@ export class RoomScene extends Phaser.Scene {
       { key: animationKey(spriteName, animationName), randomFrame: true },
       true,
     )
+  }
+
+  // Plays idle again on the player and every enemy sprite, so playIdle can
+  // pick the loop or the still frame from the new setting. A walk or a hit
+  // flash already running is left to finish: both go back to idle by
+  // themselves when they end (the tween's onComplete, the flash timer), and
+  // by then playIdle reads the new setting.
+  private applyMotionSetting(state: GameState) {
+    const player = this.playerSprite
+    if (
+      player &&
+      !this.tweens.isTweening(player) &&
+      !this.hitTimers.has(player)
+    ) {
+      this.playIdle(player, this.PLAYER_SPRITE)
+    }
+    // drawEnemies already calls playIdle on every lit enemy, with the right
+    // loop for each one (idle, or 'unmasked' for an unmasked mimic), and keeps
+    // the sprites it already has. So it is reused here instead of repeating
+    // that choice. Enemies only get the red tint when hit, never a hit frame,
+    // so playIdle can't cut a flash short.
+    const { grid, playerPosition, enemies } = state
+    if (grid === null || playerPosition === null) return
+    const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
+    this.drawEnemies(enemies, visibleTiles)
   }
 
   private drawRoom(tiledMap: TiledMap) {
@@ -359,7 +407,8 @@ export class RoomScene extends Phaser.Scene {
   // Makes the dark: a texture painted with the browser's canvas drawing API,
   // and one Image that shows it. A texture is the picture itself (stored once in
   // the texture manager); an Image is a game object that shows a texture at a
-  // position. drawLight only moves the Image, so the picture is painted once.
+  // position. drawLight only moves the Image, so the picture is painted once
+  // per room (paintDarkness), and again only when high contrast changes.
   private createDarkness(mapWidth: number, mapHeight: number) {
     // Twice the map's size in both directions. The hole is in the middle, so
     // even with the player in a corner, the image still reaches past the
@@ -382,41 +431,75 @@ export class RoomScene extends Phaser.Scene {
     if (!texture) {
       throw new Error('Failed to create the darkness texture')
     }
-    const context = texture.getContext()
-
-    // A radial gradient blends colours outwards from a centre point. It goes
-    // from a circle of radius 0 to one of radius LIGHT_DARK_RADIUS, both at
-    // the middle of the texture. The colour stops are fractions of that
-    // distance (0 = centre, 1 = the outer circle). Past the outer circle the
-    // last colour, solid black, carries on to the edges.
-    const centerX = width / 2
-    const centerY = height / 2
-    const darkRadius = LIGHT_DARK_RADIUS * this.tileSize
-    const gradient = context.createRadialGradient(
-      centerX,
-      centerY,
-      0,
-      centerX,
-      centerY,
-      darkRadius,
-    )
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)') // see-through
-    gradient.addColorStop(
-      LIGHT_CLEAR_RADIUS / LIGHT_DARK_RADIUS,
-      'rgba(0, 0, 0, 0)', // still see-through: the fade starts here
-    )
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 1)') // solid black
-    context.fillStyle = gradient
-    context.fillRect(0, 0, width, height)
-
-    // Painting on the canvas doesn't reach the screen by itself. refresh()
-    // sends the new pixels to the GPU (WebGL), so Phaser can draw them.
-    texture.refresh()
+    this.darknessTexture = texture
+    this.paintDarkness(gameStore.getState().settings.highContrast)
 
     // An Image's origin is its centre by default, so placing it at a point
     // puts the middle of the hole exactly on that point.
     this.darkness = this.add.image(0, 0, DARKNESS_TEXTURE)
     this.darkness.setDepth(DARKNESS_DEPTH)
+  }
+
+  // Paints the dark on its canvas texture: the soft lantern light, or, with
+  // high contrast, a hard edge where every lit tile is fully clear and every
+  // other tile fully black (decided Nov 4), so lit and dark tiles can be told
+  // apart at a glance. Called when the texture is made and again whenever
+  // the high contrast setting changes.
+  private paintDarkness(highContrast: boolean) {
+    const texture = this.darknessTexture
+    if (!texture) return
+    const context = texture.getContext()
+    const { width, height } = texture
+    // The middle of the texture, where the middle of the player's tile goes.
+    const centerX = width / 2
+    const centerY = height / 2
+
+    // Start from an empty canvas. Painting is layered like real paint, so
+    // without this the new picture would be painted over the old one.
+    context.clearRect(0, 0, width, height)
+
+    if (highContrast) {
+      // Solid black everywhere, then one see-through square cut out for each
+      // lit tile. clearRect makes pixels fully transparent, with no fade.
+      // The squares come from litOffsets, which asks getVisibleTiles, so the
+      // picture follows the game's rule exactly instead of a circle that
+      // would cut through the edge tiles.
+      context.fillStyle = 'rgb(0, 0, 0)'
+      context.fillRect(0, 0, width, height)
+      for (const offset of litOffsets(LANTERN_RADIUS)) {
+        // A tile reaches half a tile to each side of its middle.
+        const left = centerX + (offset.x - 0.5) * this.tileSize
+        const top = centerY + (offset.y - 0.5) * this.tileSize
+        context.clearRect(left, top, this.tileSize, this.tileSize)
+      }
+    } else {
+      // A radial gradient blends colours outwards from a centre point. It
+      // goes from a circle of radius 0 to one of radius LIGHT_DARK_RADIUS,
+      // both at the middle of the texture. The colour stops are fractions of
+      // that distance (0 = centre, 1 = the outer circle). Past the outer
+      // circle the last colour, solid black, carries on to the edges.
+      const darkRadius = LIGHT_DARK_RADIUS * this.tileSize
+      const gradient = context.createRadialGradient(
+        centerX,
+        centerY,
+        0,
+        centerX,
+        centerY,
+        darkRadius,
+      )
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0)') // see-through
+      gradient.addColorStop(
+        LIGHT_CLEAR_RADIUS / LIGHT_DARK_RADIUS,
+        'rgba(0, 0, 0, 0)', // still see-through: the fade starts here
+      )
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 1)') // solid black
+      context.fillStyle = gradient
+      context.fillRect(0, 0, width, height)
+    }
+
+    // Painting on the canvas doesn't reach the screen by itself. refresh()
+    // sends the new pixels to the GPU (WebGL), so Phaser can draw them.
+    texture.refresh()
   }
 
   private drawPlayer(position: Position) {
@@ -577,10 +660,18 @@ export class RoomScene extends Phaser.Scene {
     // No room loaded yet, so there is nothing to light.
     if (grid === null || playerPosition === null) return
 
-    // Move the hole to the player's tile. During a walk, the tween in
-    // movePlayerSprite then moves it along with the sprite on every frame,
-    // and it ends up back here on the same tile.
-    const { x, y } = this.tileCenter(playerPosition)
+    // The lantern is carried by the player, so the hole goes where the
+    // sprite is drawn, not straight to the player's tile. movePlayerSprite
+    // has already run: on a slide the sprite is still on the tile it's
+    // leaving (the tween then moves the sprite and the hole together), on a
+    // jump it's already on the new tile. The sprite's feet are at the tile
+    // centre, the same point the hole is centred on, so its x and y fit.
+    //
+    // Why not the tile: a Phaser tween doesn't call onUpdate on its first
+    // frame (it only reads its start values). Putting the hole on the new
+    // tile here showed it one tile ahead for that frame, then it snapped
+    // back: a small jolt at the start of every step.
+    const { x, y } = this.playerSprite ?? this.tileCenter(playerPosition)
     this.darkness?.setPosition(x, y)
 
     const visibleTiles = getVisibleTiles(grid, playerPosition, LANTERN_RADIUS)
