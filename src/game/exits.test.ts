@@ -192,7 +192,7 @@ describe('exitStep', () => {
 
   it('keeps a locked exit shut without the key', () => {
     const step = exitStep({ ...input, position: { x: 3, y: 1 } })
-    expect(step.kind).toBe('stay')
+    expect(step.kind).toBe('locked')
     expect(texts(step)).toEqual(['The door is locked. You need a key.'])
   })
 
@@ -202,7 +202,7 @@ describe('exitStep', () => {
       position: { x: 3, y: 1 },
       inventory: ['golden-key'],
     })
-    expect(step.kind).toBe('stay')
+    expect(step.kind).toBe('locked')
   })
 
   it('unlocks a locked exit with the key, then goes through', () => {
@@ -223,7 +223,7 @@ describe('exitStep', () => {
 
   it('keeps the locked final exit shut without the key', () => {
     const step = exitStep({ ...input, position: { x: 2, y: 2 } })
-    expect(step.kind).toBe('stay')
+    expect(step.kind).toBe('locked')
     expect(texts(step)).toEqual(['The door is locked. You need a key.'])
   })
 
@@ -261,6 +261,16 @@ describe('exitStep', () => {
       inCombat: true,
     })
     expect(texts(step)).toEqual(["You can't leave during a fight."])
+  })
+
+  it('stays (not locked) at a locked exit during a fight', () => {
+    // The fight line wins, so the player hasn't been told about the lock.
+    const step = exitStep({
+      ...input,
+      position: { x: 3, y: 1 },
+      inCombat: true,
+    })
+    expect(step.kind).toBe('stay')
   })
 })
 
