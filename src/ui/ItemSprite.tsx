@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { isSpriteName } from '../assets/manifest'
 import {
   SPRITE_SCALE,
   frameStyle,
-  isSpriteName,
   loadAtlas,
   sheetUrl,
   stillFrameName,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { SPRITES, TILESETS } from './manifest'
+import { SPRITES, TILESETS, isSpriteName } from './manifest'
 import dungeonAtlas from '../../public/assets/dungeon/sprites.json'
 import enemiesData from '../game/enemies.json'
 import itemsData from '../game/items.json'
@@ -76,5 +76,24 @@ describe('asset manifest', () => {
     const itemTypes = Object.keys(itemsData)
 
     expect(typesWithoutSprite(itemTypes)).toEqual([])
+  })
+})
+
+describe('isSpriteName', () => {
+  it('is true for a sprite in the manifest', () => {
+    expect(isSpriteName('gold-key')).toBe(true)
+    expect(isSpriteName('skeleton')).toBe(true)
+  })
+
+  it('is false for a name that has no sprite', () => {
+    expect(isSpriteName('health-potion')).toBe(false)
+    expect(isSpriteName('')).toBe(false)
+  })
+
+  // The reason for Object.hasOwn: `'toString' in SPRITES` is true, because
+  // every object inherits toString, but it isn't a sprite.
+  it('is false for names every object inherits', () => {
+    expect(isSpriteName('toString')).toBe(false)
+    expect(isSpriteName('constructor')).toBe(false)
   })
 })

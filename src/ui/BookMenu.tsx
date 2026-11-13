@@ -42,13 +42,30 @@ export function BookMenu({ openTab, onSelectTab, onClose }: BookMenuProps) {
 
   const isOpen = openTab !== null
 
-  // Open the dialog when the parent picks a tab. In an effect, because
-  // showModal() needs the real DOM element, which only exists after React
-  // has rendered. The dialog's `open` check makes it safe to run twice
-  // (StrictMode runs effects twice in development).
+  // Open the dialog when the parent picks a tab, and close it when the parent
+  // sets openTab to null. In an effect, because showModal() and close() need
+  // the real DOM element, which only exists after React has rendered. The
+  // dialog's `open` check makes both safe to run twice (StrictMode runs
+  // effects twice in development): the second run finds the dialog already
+  // open, or already closed, and does nothing.
   useEffect(() => {
     const dialog = dialogRef.current
-    if (!dialog || !isOpen || dialog.open) return
+    if (!dialog) return
+
+    if (!isOpen) {
+      // The parent closed the book (the component's contract: the parent
+      // decides). Today App only sets null in onClose, after the dialog has
+      // closed, so dialog.open is already false here and nothing happens.
+      // If the parent ever closes it itself, dialog.close() fires `close`
+      // once, and handleClose runs as for Escape: onClose() sets null again,
+      // which React ignores because the state doesn't change (so no new
+      // render and no loop), and focus goes back to the opener once.
+      // close() sets dialog.open to false at once, so a second run of this
+      // effect can't close it twice.
+      if (dialog.open) dialog.close()
+      return
+    }
+    if (dialog.open) return
 
     // Remember the opener before showModal moves focus into the dialog.
     const active = document.activeElement
