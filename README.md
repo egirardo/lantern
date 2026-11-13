@@ -15,7 +15,7 @@ Press **Start** (or **Continue** if you have a game in progress). Focus moves to
 | Tab                       | Move between the map, the log and the panels           |
 | Enter / Space on a button | Attack an enemy, use an exit, open a menu page         |
 | Escape (in the menu)      | Close the menu; focus goes back to the button          |
-| Left / Right (on a tab)   | Move between the menu's tabs (Home / End: first, last) |
+| Arrow keys (on a tab)     | Move between the menu's tabs (Home / End: first, last) |
 
 A fight starts when you step next to an enemy. Focus moves to the attack buttons in the **Actions** panel; when the fight ends, it goes back to the map. Next to an exit, Actions shows an exit button too, so you can find it by tabbing. Turns have no time limit: the game waits for you.
 
