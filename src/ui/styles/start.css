@@ -1,6 +1,19 @@
 /* The start screen (mockup sections 2 and 2b): two halves with a divider,
    stacked (with a horizontal divider) when the window is narrow. */
 
+/* The start screen's <main>: as tall as the window (minus the body's 1rem
+   padding at the top and bottom), with the panel centred in it vertically
+   (decided Nov 13). min-height, not height: in a short window, or with
+   large text, the page simply grows and scrolls. 100vh first for older
+   browsers; 100dvh follows the visible window when a mobile browser's bars
+   come and go. */
+.screen-start {
+  display: grid;
+  align-content: center;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
+}
+
 .start-screen {
   display: grid;
   /* Two equal halves and a 4px divider between them. minmax(0, 1fr)

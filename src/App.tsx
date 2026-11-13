@@ -33,7 +33,7 @@ function App() {
   return (
     <>
       {screen === 'start' ? (
-        <main className="screen">
+        <main className="screen screen-start">
           <StartScreen onStart={start} onOpenBook={setBookTab} />
         </main>
       ) : (
