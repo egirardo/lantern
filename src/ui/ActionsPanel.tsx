@@ -128,11 +128,7 @@ export function ActionsPanel() {
     return (
       <section
         aria-labelledby="actions-heading"
-        className={
-          exitLabel === null
-            ? 'panel-dark actions-panel actions-panel-idle'
-            : 'panel-dark actions-panel'
-        }
+        className="panel-dark actions-panel"
       >
         <h2 id="actions-heading" className="banner">
           Actions

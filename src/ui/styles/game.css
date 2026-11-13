@@ -196,16 +196,10 @@
   text-align: center;
 }
 
-/* In one column, the log column sits under the map, so with nothing to do
-   the idle panel would only push Health, Inventory and Goal further down.
-   The whole slot is hidden (:has picks the slot that holds the idle
-   panel), so no empty gap is left either. display: none hides it from
-   screen readers too, so both get the same. */
+/* One column (narrow windows, 400% zoom). The idle Actions panel stays
+   visible here too (decided Nov 13), so the panel and its heading are in
+   the same place at every width. */
 @media (max-width: 40em) {
-  .actions-slot:has(> .actions-panel-idle) {
-    display: none;
-  }
-
   /* The map is small here, so the card goes under it instead of over it,
      in the normal flow, without the backdrop. (.map-frame in front, because
      the .end-overlay rule comes later in this file and would win.) */
