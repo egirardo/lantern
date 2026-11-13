@@ -45,6 +45,10 @@
   /* The end card's backdrop is placed over the canvas from here. */
   position: relative;
   align-self: flex-start;
+  /* Centred when the log wraps under it and the map is alone on its line
+     (found Nov 13). Beside the log there's no free space on the line (the
+     log grows into it), so the auto margins are 0 and nothing moves. */
+  margin-inline: auto;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
@@ -236,7 +240,7 @@
 
 /* Health: your line now, the enemies' lines in a fight later. */
 .health {
-  flex: 0 1 auto;
+  flex: 1 1 15rem;
   min-width: min(15rem, 100%);
 }
 
@@ -281,11 +285,14 @@
 }
 
 .inventory {
-  flex: 0 1 auto;
+  flex: 1 1 13rem;
   min-width: min(13rem, 100%);
 }
 
-/* Goal takes the rest of the row, up to the log's right edge. */
+/* All three panels grow (flex-grow 1), so they share the row evenly and
+   every line is filled when the row wraps in a smaller window, with no
+   empty space beside a panel (found Nov 13). The bases (15rem, 13rem,
+   16rem) are where they start before growing, and decide when they wrap. */
 .goal {
   flex: 1 1 16rem;
 }
