@@ -8,6 +8,7 @@ import {
 import type { TiledMap } from '../rooms/tiled-schema'
 import { toTileIndices } from '../rooms/tile-indices'
 import { gameStore, type GameState } from '../state/game-store'
+import { selectEnding } from '../state/ending'
 import type { Position } from '../game/movement'
 import type { StoreEnemy } from '../game/spawn-enemies'
 import type { StoreItem } from '../game/items'
@@ -220,6 +221,22 @@ export class RoomScene extends Phaser.Scene {
         state.settings.reducedMotion !== previousState.settings.reducedMotion
       ) {
         this.applyMotionSetting(state)
+      }
+
+      // 7. The game has just ended (victory or defeat): pause the scene, so
+      // the idle loops stop and nothing moves under the end card, which now
+      // covers the map (decided Nov 13). The pause waits until the last step
+      // and hit flash have finished, so the frame that stays isn't caught
+      // halfway through a slide or tinted red. A paused scene still shows its
+      // last frame. It's never resumed: Play again reloads the page.
+      if (
+        selectEnding(state) !== null &&
+        selectEnding(previousState) === null
+      ) {
+        this.time.delayedCall(
+          Math.max(WALK_DURATION, HIT_FLASH_DURATION) + 50,
+          () => this.scene.pause(),
+        )
       }
     })
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe)

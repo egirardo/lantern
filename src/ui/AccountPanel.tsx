@@ -72,8 +72,16 @@ function accountsAvailable(): boolean {
 
 export function AccountPanel({
   headingLevel = 2,
+  hideFormUntilChosen = false,
 }: {
   headingLevel?: HeadingLevel
+  // When true, a guest first sees two buttons, Sign in and Create an
+  // account, and the form only appears when one is pressed. Used on the
+  // start screen: with a login form on the page at load, Safari's AutoFill
+  // moved focus to the email field at once (found Nov 12), so a screen
+  // reader started there instead of at the top of the page. In the book's Account tab the player has already
+  // asked for the form, so it's shown at once there.
+  hideFormUntilChosen?: boolean
 }) {
   // A function passed to useState runs only on the first render (a "lazy
   // initial state"), so the check isn't repeated on every re-render.
@@ -84,6 +92,9 @@ export function AccountPanel({
   const [user, setUser] = useState<User | null | undefined>(undefined)
 
   const [mode, setMode] = useState<Mode>('sign-in')
+  // Whether the guest has pressed Sign in or Create an account (only used
+  // with hideFormUntilChosen).
+  const [formChosen, setFormChosen] = useState(false)
   // Controlled inputs: React state holds what's typed, so an error never
   // clears the fields, and we can read the values when the form is sent.
   const [email, setEmail] = useState('')
@@ -170,6 +181,8 @@ export function AccountPanel({
     setPassword('')
     setShowPassword(false)
     setMode('sign-in')
+    // Back to the two buttons for the next time the player is a guest.
+    setFormChosen(false)
     setStatus(statusText, { visible: false })
     headingRef.current?.focus()
   }
@@ -204,9 +217,15 @@ export function AccountPanel({
           // they can sign in right here. Focus stays on the submit button:
           // it's the same element, now labelled "Sign in", so nothing
           // disappears under the player.
+          //
+          // The message is true whether the account is new or not (found
+          // Nov 12): for an email that already has an account, Supabase
+          // sends no email and answers exactly like a new sign-up, so nobody
+          // can use this form to find out which emails are registered. We
+          // keep that protection and don't say "Account created".
           setMode('sign-in')
           setStatus(
-            'Account created. Check your email and open the confirmation link, then sign in here.',
+            'Check your email. If this is a new account, open the confirmation link, then sign in here. If you already have an account, you can sign in now.',
           )
         }
       }
@@ -234,9 +253,13 @@ export function AccountPanel({
     try {
       await signOut()
       setStatus('Signed out. You are playing as a guest.', { visible: false })
+      // The two buttons again (with hideFormUntilChosen), so AutoFill
+      // doesn't pop up on the start screen's form right after signing out.
+      setFormChosen(false)
       // Same reason as after signing in: the Sign out button is about to
       // disappear, and the heading is always there. From it, the next Tab
-      // reaches the email field of the sign-in form.
+      // reaches the email field of the sign-in form (or, on the start
+      // screen, the Sign in button).
       headingRef.current?.focus()
     } catch (caught) {
       setStatus('')
@@ -258,6 +281,19 @@ export function AccountPanel({
       setMode((current) => (current === 'sign-in' ? 'sign-up' : 'sign-in'))
       setErrors({})
       setStatus('')
+    })
+    formHeadingRef.current?.focus()
+  }
+
+  // Shows the form in the chosen mode (with hideFormUntilChosen). Focus
+  // moves to the form's heading, as when switching modes: the button that
+  // was pressed disappears, and the heading says where the player is ("Sign
+  // in, heading"). flushSync puts the form on the page first, so the
+  // heading exists when it gets focus.
+  function chooseForm(chosen: Mode) {
+    flushSync(() => {
+      setMode(chosen)
+      setFormChosen(true)
     })
     formHeadingRef.current?.focus()
   }
@@ -322,6 +358,30 @@ export function AccountPanel({
             onClick={handleSignOut}
           >
             Sign out
+          </button>
+        </>
+      )
+    }
+
+    // The start screen, before the guest has chosen: no form fields yet,
+    // so AutoFill has nothing to grab. Sign in is the main button and
+    // Create an account the text link below it, like the form's own pair.
+    if (hideFormUntilChosen && !formChosen) {
+      return (
+        <>
+          <p>
+            You’re playing as a guest, and your progress is saved in this
+            browser. Sign in to keep it on all your devices.
+          </p>
+          <button type="button" onClick={() => chooseForm('sign-in')}>
+            Sign in
+          </button>
+          <button
+            type="button"
+            className="account-switch"
+            onClick={() => chooseForm('sign-up')}
+          >
+            Create an account
           </button>
         </>
       )

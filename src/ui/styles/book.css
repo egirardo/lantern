@@ -1,0 +1,271 @@
+/* The book menu (BookMenu.tsx, mockup section 4): an open book with its tabs
+   on the right edge. In a narrow window: one page, tabs in a row above. */
+
+/* The <dialog> itself is only a transparent box around the book. The
+   browser's own style for a modal dialog already caps its size to the
+   window and makes it scroll when the book is taller than the window. */
+.book-dialog {
+  width: min(100% - 1rem, 60rem);
+  padding: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+/* Everything behind the open dialog is dimmed. */
+.book-dialog::backdrop {
+  background: rgb(0 0 0 / 0.75);
+}
+
+/* The book and its side column. The side column comes first in the DOM
+   (Close, then the tabs, then the pages: the tabs pattern puts the tabs
+   before the panel they control), and the grid areas draw it on the right. */
+.book {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'pages side';
+  align-items: start;
+}
+
+/* The two pages side by side. Each page draws its own half of the book
+   (below), so they meet at the middle of the spine with no gap. */
+.book-pages {
+  grid-area: pages;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* The book art's own height at 3× (152 art pixels), so at normal text
+     size the art isn't squashed. In px, not rem: it follows the art, not
+     the text size. The book still grows when the text needs more room. */
+  min-height: 456px;
+  color: var(--ink);
+  --focus-ring: var(--ink);
+  --error: #8b1e2d;
+  /* The pages are light, so native controls (the checkboxes, the select
+     menus) use their light look here: the dark one is a dark grey box that
+     looks out of place on parchment. */
+  color-scheme: light;
+}
+
+/* The How to play panel takes focus itself (it has nothing focusable
+   inside). Its ring is drawn outside the book, on the dark backdrop, so it's
+   yellow there, not the ink used inside the pages. */
+.book-pages:focus-visible {
+  outline-color: var(--focus);
+}
+
+/* Each page is a 9-slice of its half of the book (book-left.png and
+   book-right.png, 133×152, the pack's book cut at the middle of the spine).
+   The slice numbers (art pixels: top, right, bottom, left) are chosen so
+   that the page's inner border line, the spine and the stains in the
+   corners are all in the fixed parts, drawn at exactly 3× ("/ 48px 66px…"
+   is each slice × 3). Only plain parchment and the cover's edges stretch,
+   and pixelated keeps every art pixel a sharp square, like the tabs.
+
+   The border-width is separate from the art's width: it's where the text
+   starts, 5 art pixels (15px) inside the page's border line on every side.
+   The art may be wider than the border (the corner stains then lie under
+   the padding), because border-image-width only draws, it doesn't push the
+   content. */
+.book-page {
+  border-style: solid;
+  border-color: transparent;
+  border-width: 30px 54px 51px 60px;
+  border-image: url('/assets/ui/book-left.png') 16 22 22 24 fill / 48px 66px
+    66px 72px stretch;
+  image-rendering: pixelated;
+}
+
+/* The right page, mirrored: spine on its left, the outer cover on its
+   right. The bigger right and bottom slices keep the moon-shaped stain in
+   the bottom-right corner unstretched. */
+.book-page + .book-page {
+  border-width: 30px 60px 51px 54px;
+  border-image: url('/assets/ui/book-right.png') 16 32 27 13 fill / 48px 96px
+    81px 39px stretch;
+}
+
+.book-page p {
+  margin: 0 0 0.5rem;
+}
+
+.book-page h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1.125rem;
+}
+
+.book-page h3:first-child {
+  margin-top: 0;
+}
+
+/* The heading at the top of the left page: the tab's name in a frame. The
+   account panel's own heading gets the same look in the book. */
+.page-banner,
+.book-page .account-panel > h2 {
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0 0.375rem;
+  border: 2px solid var(--parchment-shade);
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+/* ---------- Settings ---------- */
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.setting-check input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--plum);
+  /* A thin ring in the text colour around the box. The browser's own grey
+     border is only 3.0:1 on parchment, right at the WCAG 1.4.11 minimum;
+     the ring makes the box clear (10:1). A box-shadow, not an outline, so
+     the focus ring (an outline) is left alone. */
+  box-shadow: 0 0 0 1px currentColor;
+}
+
+.setting select {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid var(--ink);
+  background: var(--parchment-light);
+  color: var(--ink);
+  font: inherit;
+}
+
+/* ---------- The side column: Close and the tabs ---------- */
+
+/* Pulled 30px over the book's right cover, above it (z-index), so the tabs
+   look like they stick out from between the pages. */
+.book-side {
+  grid-area: side;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 24px 0 0 -30px;
+}
+
+.book-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The tab pieces are 16×16; drawn at 3× (48px). position: relative lets the
+   open tab move 6px (2 art pixels) left, onto the top page. */
+.book-tab,
+.book-close {
+  position: relative;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: center / 48px 48px no-repeat;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+.book-tab[aria-selected='true'] {
+  left: -6px;
+}
+
+/* The open tab is the light piece, the others the darker one. */
+.book-tab-help[aria-selected='true'] {
+  background-image: url('/assets/ui/tab-help.png');
+}
+.book-tab-help[aria-selected='false'] {
+  background-image: url('/assets/ui/tab-help-dark.png');
+}
+.book-tab-settings[aria-selected='true'] {
+  background-image: url('/assets/ui/tab-settings.png');
+}
+.book-tab-settings[aria-selected='false'] {
+  background-image: url('/assets/ui/tab-settings-dark.png');
+}
+.book-tab-account[aria-selected='true'] {
+  background-image: url('/assets/ui/tab-account.png');
+}
+.book-tab-account[aria-selected='false'] {
+  background-image: url('/assets/ui/tab-account-dark.png');
+}
+
+/* Close is never selected: the dark X, and the light X on hover and focus. */
+.book-close {
+  background-image: url('/assets/ui/tab-close-dark.png');
+}
+.book-close:hover,
+.book-close:focus-visible {
+  background-image: url('/assets/ui/tab-close.png');
+}
+
+/* The tab names: read by screen readers, hidden on screen next to the
+   icons, shown in high contrast (high-contrast.css). The same pattern as
+   .visually-hidden in base.css. */
+.tab-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Narrow windows: one page, tabs in a row on top ---------- */
+
+@media (max-width: 48em) {
+  .book {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'side'
+      'pages';
+  }
+
+  /* The row sits on the page's top edge; the open tab moves down onto the
+     page instead of left. */
+  .book-side,
+  .book-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .book-side {
+    margin: 0 0 -6px 1rem;
+  }
+
+  .book-tab[aria-selected='true'] {
+    left: 0;
+    top: 6px;
+  }
+
+  /* One page: the book's spine would sit in the middle of the text, so
+     the plain parchment frame is used instead, at 2×. */
+  .book-pages {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border: 20px solid transparent;
+    border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch;
+    image-rendering: pixelated;
+  }
+
+  /* No book art on the pages themselves here. */
+  .book-page,
+  .book-page + .book-page {
+    border: 0;
+    border-image: none;
+  }
+
+  .book-page + .book-page {
+    margin-top: 1rem;
+  }
+}

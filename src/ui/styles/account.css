@@ -1,0 +1,141 @@
+/* The account panel (AccountPanel.tsx), on the start screen (a plum panel)
+   and in the book (parchment). Everything hangs off .account-panel, so the
+   panel looks right wherever it's placed. Colours come from the surface it
+   sits on through custom properties (--focus-ring, --error). */
+
+.account-panel p {
+  margin: 0 0 0.5rem;
+}
+
+/* The panel's own heading as a banner on the start screen. */
+.start-account .account-panel > h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 2.125rem;
+  margin: 0 auto 0.625rem;
+  padding: 0 0.75rem 0.625rem;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 2px 36px;
+  border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch;
+  color: var(--ink);
+  font-size: 1.125rem;
+}
+
+.account-panel h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.125rem;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.account-password-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Inputs: light fields with ink text and border, on both surfaces. */
+.account-panel input {
+  min-height: 2.5rem;
+  padding: 0.375rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 2px;
+  background: var(--parchment-light);
+  color: var(--ink);
+  font: inherit;
+}
+
+.account-password-row input {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+/* The panel's buttons look like the other buttons (.btn in base.css). The
+   panel's markup stays unchanged, so the style is given here. */
+.account-panel button {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.375rem 0.875rem 0.5625rem;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--plum);
+  box-shadow: inset 0 -4px 0 var(--plum-dark);
+  color: var(--parchment);
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.account-panel button:hover {
+  background: var(--plum-hover);
+}
+
+/* "Create an account" / "I already have an account" as a text link, as in
+   the mockup: a secondary action next to the main button. The underline
+   says it can be pressed without relying on colour. */
+.account-panel .account-switch {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+/* On the start screen, Sign in, Sign out and the link are centred. */
+.start-account .account-panel form > button[type='submit'],
+.start-account .account-panel > button,
+.start-account .account-switch {
+  display: block;
+  margin: 0.5rem auto 0;
+}
+
+/* More room above the main button, so it doesn't sit close up to what's
+   above it (decided Nov 13): the text, for a guest's Sign in or Sign out,
+   and the last field, for the form's Sign in or Create account. */
+.start-account .account-panel > p + button,
+.start-account .account-panel form > button[type='submit'] {
+  margin-top: 1.5rem;
+}
+
+/* An invalid field gets a thicker, dashed border as well as a colour, so it
+   isn't marked by colour alone. The error text says the rest. */
+.account-panel input[aria-invalid='true'] {
+  border: 3px dashed var(--error);
+}
+
+/* The "Error:" prefix is real text, so errors don't rely on colour. */
+.account-error {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--error);
+}
+
+.account-error-prefix {
+  font-weight: bold;
+}
+
+/* While a request is pending, the buttons say so with aria-disabled. They
+   stay focusable, so they only look dimmed. */
+.account-panel button[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.account-status:empty {
+  margin: 0;
+}
+
+.account-hint {
+  margin: 0 0 0.25rem;
+}
