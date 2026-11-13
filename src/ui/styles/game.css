@@ -244,8 +244,13 @@
   min-width: min(15rem, 100%);
 }
 
+/* minmax(0, 1fr): one column that may shrink to the panel's width. By
+   default the column is never narrower than its widest content, the bar's
+   7rem, so with large text on a narrow screen the bar and text spilled out
+   of the panel (found Nov 13). Now the bar's max-width: 100% can work. */
 .health-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   margin: auto 0;
   padding: 0 0.5rem;
