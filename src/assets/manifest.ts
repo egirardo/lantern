@@ -134,3 +134,20 @@ export const SPRITES = {
 } as const satisfies Record<string, SpriteDefinition>
 
 export type SpriteName = keyof typeof SPRITES
+
+// True if `name` is a sprite in the manifest. Enemy and item types are plain
+// strings in the store, but SPRITES only has keys for the sprites listed
+// above. This type guard checks at runtime that the name exists, and tells
+// TypeScript that `name` is a SpriteName after the check. An enemy's or
+// item's sprite has the same name as its type (e.g. 'gold-key'), rule 7.
+//
+// Object.hasOwn instead of `name in SPRITES`, because `in` also finds names
+// every object inherits, like 'toString'.
+//
+// It lives here, next to SPRITES, because both the Phaser scene and the
+// React UI need it, and neither may import from the other (Phaser only
+// renders, React is the accessible layer). The manifest is plain data with
+// no Phaser or React imports, so both can import from it.
+export function isSpriteName(name: string): name is SpriteName {
+  return Object.hasOwn(SPRITES, name)
+}
