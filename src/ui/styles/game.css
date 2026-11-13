@@ -99,8 +99,12 @@
 /* Only this box scrolls. height: 0 with flex-grow: 1 means "no height of
    your own, take what's left": its height comes from the row (the map's
    height), never from the number of lines, so a long log scrolls instead of
-   making the row taller. min-height keeps it readable when it's under the
-   map.
+   making the row taller. min-height keeps it readable.
+   The minimum is small (8rem, about 5 lines) beside the map, so the log,
+   the gap and the end card (the tallest thing under the log) still fit in
+   the map's height, and the row under them isn't pushed down (found
+   Nov 13; high contrast's thin borders hid it). In one column the log
+   takes the full width under the map, so it gets more (15rem, below).
    Gotcha (found in the browser check): the shorthand `flex: 1` doesn't work
    here. It sets flex-basis to 0%, and a percentage of a height that isn't
    fixed is ignored, so the box grew with its lines again. With the default
@@ -110,7 +114,7 @@
 .adventure-log-entries {
   flex-grow: 1;
   height: 0;
-  min-height: 15rem;
+  min-height: 8rem;
   overflow-y: auto;
   /* Room for the scrollbar on both sides, so the text doesn't shift when it
      appears. */
@@ -188,6 +192,11 @@
 @media (max-width: 40em) {
   .actions-slot:has(> .actions-panel-idle) {
     display: none;
+  }
+
+  /* The log under the map, full width: room for about 10 lines. */
+  .adventure-log-entries {
+    min-height: 15rem;
   }
 }
 
