@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from 'zustand'
+import { selectEnding } from '../state/ending'
 import { gameStore } from '../state/game-store'
 import { getAttackOptions } from '../game/narration'
 import { ExitButton } from './ExitButton'
@@ -35,12 +36,9 @@ function returnFocus(previousFocus: HTMLElement | null) {
 // one name; the log says "It's your turn." in a fight.
 export function ActionsPanel() {
   const combat = useStore(gameStore, (state) => state.combat)
-  // At the end of the game the end card takes the turn slot instead (see
-  // EndCard.tsx, which uses the same two checks).
-  const gameOver = useStore(
-    gameStore,
-    (state) => state.hasEscaped || state.player.currentHealth <= 0,
-  )
+  // At the end of the game the panel is gone (the end card covers the map
+  // instead, see EndCard.tsx).
+  const gameOver = useStore(gameStore, selectEnding) !== null
   // The exit button's label, or null when there's no exit next to the
   // player (or a fight is on). A string, so this only re-renders when it
   // changes.

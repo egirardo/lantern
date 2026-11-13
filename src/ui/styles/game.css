@@ -42,6 +42,8 @@
    stretching when the log is taller. min-width: 0 lets it shrink below the
    canvas's width in a narrow window (a flex item won't by default). */
 .map-frame {
+  /* The end card's backdrop is placed over the canvas from here. */
+  position: relative;
   align-self: flex-start;
   flex: 0 1 auto;
   min-width: 0;
@@ -168,6 +170,12 @@
   flex: 1;
 }
 
+/* At the end of the game the Actions panel is gone: no empty slot (and no
+   gap) under the log, which then takes the whole column. */
+.actions-slot:empty {
+  display: none;
+}
+
 /* Nothing to do: a dashed box where the buttons go, with its line of text
    (ActionsPanel.tsx). About a button's height (.btn), so the panel is the
    same size as with one button. */
@@ -192,6 +200,15 @@
 @media (max-width: 40em) {
   .actions-slot:has(> .actions-panel-idle) {
     display: none;
+  }
+
+  /* The map is small here, so the card goes under it instead of over it,
+     in the normal flow, without the backdrop. (.map-frame in front, because
+     the .end-overlay rule comes later in this file and would win.) */
+  .map-frame .end-overlay {
+    position: static;
+    padding: 0.75rem 0 0;
+    background: none;
   }
 
   /* The log under the map, full width: room for about 10 lines. */
@@ -325,9 +342,22 @@
   font-weight: bold;
 }
 
-/* ---------- End card ---------- */
+/* ---------- End card, over the map ---------- */
+
+/* A dark see-through backdrop over the canvas (inside the frame's 4px
+   padding), with the card centred on it. The scene under it is paused
+   (RoomScene), so nothing moves behind the result. */
+.end-overlay {
+  position: absolute;
+  inset: 4px;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.7);
+}
 
 .end-card {
+  max-width: 24rem;
   text-align: center;
 }
 

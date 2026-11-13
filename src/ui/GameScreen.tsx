@@ -10,8 +10,8 @@ import { RoomLoader } from './RoomLoader'
 // The game screen (mockup section 1), below the header. The DOM order is the
 // visual order, row by row, so Tab and a screen reader follow what's on
 // screen:
-// 1. the map, and beside it the adventure log with Actions (or the end
-//    card) under it;
+// 1. the map (with the end card over it when the game is over), and beside
+//    it the adventure log with Actions under it;
 // 2. Health, Inventory and Goal.
 //
 // Actions sits beside the map, not in the bottom row (changed Nov 13): a
@@ -30,16 +30,17 @@ export function GameScreen() {
       <div className="play">
         <div className="map-frame">
           <PhaserGame />
+          {/* After the map in the page, laid over it on screen. */}
+          <EndCard />
         </div>
         <div className="log-column">
           <AdventureLog />
           {/* The actions slot keeps its place when there's nothing to do
               (the panel then shows an idle box), so the log doesn't change
-              size. The Actions panel and the end card are never shown at
-              the same time: the panel is gone when the game ends. */}
+              size. At the end of the game it's empty and hidden, and the
+              log takes the whole column. */}
           <div className="actions-slot">
             <ActionsPanel />
-            <EndCard />
           </div>
         </div>
       </div>

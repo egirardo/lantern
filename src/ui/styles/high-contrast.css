@@ -125,6 +125,11 @@
   border-color: #fff;
 }
 
+/* The end card's backdrop solid black, so the map doesn't show through. */
+[data-contrast='high'] .end-overlay {
+  background: #000;
+}
+
 [data-contrast='high'] .start-screen {
   outline: 0;
   background: #000;
