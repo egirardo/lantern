@@ -44,6 +44,13 @@ function App() {
         <>
           <header className="screen game-header">
             <h1>Lantern</h1>
+            {/* The arrow keys only work while the map has focus, and a
+                click elsewhere or the book takes it away. This says how to
+                get it back, where a sighted player sees it (WCAG 3.3.2; #53
+                VoiceOver pass, Nov 13). Plain text, read by screen readers
+                too: after Start focus is on the map, so they only reach it
+                by going back up the page. */}
+            <p className="header-hint">Click the map or tab to it to play.</p>
             {/* Each button opens the book on its own page. The icons are
                 decoration; the button's text is its name. */}
             <div className="header-buttons">

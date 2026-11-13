@@ -12,11 +12,17 @@
   margin-bottom: 1rem;
 }
 
-/* margin-right: auto pushes the buttons to the right edge. */
+/* margin-right: auto pushes the hint and the buttons to the right edge. */
 .game-header h1 {
   margin: 0 auto 0 0;
   font-size: 2rem;
   text-shadow: 2px 2px 0 var(--ink);
+}
+
+/* The hint sits just left of the buttons. The normal text colour, so its
+   contrast is the page's own. */
+.header-hint {
+  margin: 0;
 }
 
 .header-buttons {
