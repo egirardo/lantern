@@ -101,10 +101,11 @@
   margin: 0.5rem auto 0;
 }
 
-/* More room between the text and the first button under it (Sign in for a
-   guest, Sign out when signed in), so the buttons sit centred in the space
-   under the text instead of close up to it (decided Nov 13). */
-.start-account .account-panel > p + button {
+/* More room above the main button, so it doesn't sit close up to what's
+   above it (decided Nov 13): the text, for a guest's Sign in or Sign out,
+   and the last field, for the form's Sign in or Create account. */
+.start-account .account-panel > p + button,
+.start-account .account-panel form > button[type='submit'] {
   margin-top: 1.5rem;
 }
 
