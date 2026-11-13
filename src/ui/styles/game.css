@@ -76,15 +76,24 @@
   image-rendering: pixelated;
 }
 
+/* Beside the map: the log, with Your turn under it. flex: 1 1 15rem: the
+   column takes the space next to the map, and wraps under it when less
+   than 15rem is left (15rem keeps it beside the map in a 1000px window with
+   Large text). */
+.log-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1 1 15rem;
+  min-width: min(15rem, 100%);
+}
+
 /* The log: the banner on top, the entries fill the rest of the parchment.
-   flex: 1 1 15rem: it takes the space next to the map, and wraps under it
-   when less than 15rem is left (15rem keeps it beside the map in a
-   1000px window with Large text). */
+   flex-grow: it takes the column's height that Your turn doesn't use. */
 .adventure-log {
   display: flex;
   flex-direction: column;
-  flex: 1 1 15rem;
-  min-width: min(15rem, 100%);
+  flex-grow: 1;
 }
 
 /* Only this box scrolls. height: 0 with flex-grow: 1 means "no height of
@@ -168,9 +177,9 @@
   box-shadow: inset 0 3px 0 var(--health-light);
 }
 
-/* ---------- Row 3: Your turn, Inventory, Goal ---------- */
+/* ---------- Row 3: Inventory and Goal ---------- */
 
-/* stretch: the three panels get the height of the tallest. */
+/* stretch: the panels get the height of the taller one. */
 .below {
   display: flex;
   flex-wrap: wrap;
@@ -183,18 +192,16 @@
   flex-direction: column;
 }
 
-/* The place for the combat menu and the end card. It's always there, with
-   the same width, also when there's no fight (then the menu shows its idle
-   box), so Inventory and Goal stay exactly
-   where they are when a fight starts or ends (the player's eyes and mouse
-   don't have to find them again). Its own width, not the buttons' width,
-   for the same reason: the buttons stack in a column inside it. */
+/* ---------- Your turn, under the log ---------- */
+
+/* The place for the combat menu and the end card, as wide as the log. It
+   keeps its own height (flex: none), and the log takes the rest. */
 .turn-slot {
-  flex: 0 1 18rem;
-  min-width: min(14rem, 100%);
+  display: flex;
+  flex-direction: column;
+  flex: none;
 }
 
-/* The panel inside fills the slot's height, like the others in the row. */
 .turn-slot > * {
   flex: 1;
 }
@@ -215,8 +222,8 @@
   text-align: center;
 }
 
-/* In one column, nothing sits beside the panel, so with no fight it would
-   only push Inventory and Goal down. The whole slot is hidden (:has picks
+/* In one column, the log column sits under the map, so with no fight the
+   idle panel would only push health, Inventory and Goal further down. The whole slot is hidden (:has picks
    the slot that holds the idle panel), so no empty gap is left either.
    display: none hides it from screen readers too, so both get the same. */
 @media (max-width: 40em) {
