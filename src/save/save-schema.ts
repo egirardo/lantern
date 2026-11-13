@@ -35,6 +35,18 @@ export const saveSchema = z.strictObject({
   // A save is never made at 0 health (that's game over), so 0 is invalid.
   health: z.number().int().min(1).max(PLAYER.maxHealth),
   inventory: z.array(z.string()),
+  // Whether the player has tried the locked great door (the Goal panel's
+  // steps, Nov 13). Added after saves were already out there, so a save
+  // without it must still load: .default(false) fills it in when it's
+  // missing, instead of the strict object failing the whole save. That's
+  // also why SAVE_VERSION stays 1: bumping it would throw every old save
+  // away for one field that has a safe default. false is the safe answer
+  // for an old save: at worst the goal says "Explore your surroundings."
+  // until the player tries the door again.
+  // With a default, Zod's input type has the field as optional and its
+  // output type (z.infer, so `Save`) as a plain boolean: once parsed, a
+  // save always has it.
+  foundLockedExit: z.boolean().default(false),
   takenItemIds: z.array(z.string()),
   defeatedEnemyIds: z.array(z.string()),
   updatedAt: timestampSchema,

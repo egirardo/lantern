@@ -24,6 +24,7 @@ const savedInRoom2: SaveContent = {
   enteredFrom: 'room-1',
   health: 5,
   inventory: ['gold-key'],
+  foundLockedExit: true,
   takenItemIds: ['room-1/key-1'],
   defeatedEnemyIds: ['room-1/e1'],
 }

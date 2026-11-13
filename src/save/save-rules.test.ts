@@ -22,6 +22,7 @@ const source: SaveSource = {
   enteredFrom: 'room-2',
   player: { ...PLAYER, currentHealth: 4 },
   inventory: ['gold-key'],
+  foundLockedExit: true,
   takenItemIds: ['room-2/key-1'],
   defeatedEnemyIds: ['room-2/e1'],
 }
@@ -49,6 +50,7 @@ describe('buildSave', () => {
       enteredFrom: 'room-2',
       health: 4,
       inventory: ['gold-key'],
+      foundLockedExit: true,
       takenItemIds: ['room-2/key-1'],
       defeatedEnemyIds: ['room-2/e1'],
       updatedAt: '2026-11-09T10:00:00.000Z',
@@ -80,6 +82,9 @@ describe('sameContent', () => {
       false,
     )
     expect(sameContent(content, { ...content, inventory: [] })).toBe(false)
+    expect(sameContent(content, { ...content, foundLockedExit: false })).toBe(
+      false,
+    )
     expect(
       sameContent(content, { ...content, takenItemIds: ['room-2/key-2'] }),
     ).toBe(false)
@@ -97,6 +102,7 @@ describe('sameContent', () => {
       enteredFrom: null,
       player: PLAYER,
       inventory: [],
+      foundLockedExit: false,
       takenItemIds: [],
       defeatedEnemyIds: [],
     }
