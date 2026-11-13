@@ -27,20 +27,20 @@ export function HowToPlay() {
         <h3>Exits</h3>
         <p>
           When you stand next to an exit, the log says so. Press Enter to use
-          it, or press the exit button under the map. Going through an exit
-          heals you to full health.
+          it, or press the exit button in the Actions panel. Going through an
+          exit heals you to full health.
         </p>
       </div>
       <div className="book-page">
         <h3>Fighting</h3>
         <p>
           A fight starts when you step next to an enemy. Focus moves to the
-          attack buttons under the map: choose the enemy to attack.
+          attack buttons in the Actions panel: choose the enemy to attack.
         </p>
         <p>
           You and the enemies take turns, and dice decide every hit. The log
-          tells you each roll and the damage. Your health is shown under the
-          map.
+          tells you each roll and the damage. Your health is shown in the Health
+          panel.
         </p>
         <h3>The goal</h3>
         {/* Says nothing about the key or the locked door: the player finds

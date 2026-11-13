@@ -121,7 +121,7 @@
   box-shadow: none;
 }
 
-[data-contrast='high'] .combat-idle {
+[data-contrast='high'] .actions-empty {
   border-color: #fff;
 }
 

@@ -175,7 +175,7 @@ h3 {
   --error: #8b1e2d;
 }
 
-/* Plum: Your turn, Inventory, Goal, Account on the start screen. */
+/* Plum: Actions, Health, Inventory, Goal, Account on the start screen. */
 .panel-dark {
   border: 24px solid transparent;
   border-image: url('/assets/ui/panel-plum.png') 12 fill / 24px stretch;

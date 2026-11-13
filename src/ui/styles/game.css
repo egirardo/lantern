@@ -76,7 +76,7 @@
   image-rendering: pixelated;
 }
 
-/* Beside the map: the log, with Your turn under it. flex: 1 1 15rem: the
+/* Beside the map: the log, with Actions under it. flex: 1 1 15rem: the
    column takes the space next to the map, and wraps under it when less
    than 15rem is left (15rem keeps it beside the map in a 1000px window with
    Large text). */
@@ -89,7 +89,7 @@
 }
 
 /* The log: the banner on top, the entries fill the rest of the parchment.
-   flex-grow: it takes the column's height that Your turn doesn't use. */
+   flex-grow: it takes the column's height that Actions doesn't use. */
 .adventure-log {
   display: flex;
   flex-direction: column;
@@ -134,57 +134,15 @@
   font-weight: bold;
 }
 
-/* ---------- Row 2: health and the exit button ---------- */
+/* ---------- Row 2: Health, Inventory and Goal ---------- */
 
-/* min-height is about a button's height, so the row doesn't grow (and push
-   the panels below down) when the exit button appears. */
-.hud {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  min-height: 3rem;
-  margin: 0.75rem 0 1rem;
-}
-
-.health {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.health-text {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: bold;
-}
-
-/* The bar is decoration (aria-hidden): the text says the numbers. */
-.health-bar {
-  width: 10rem;
-  max-width: 100%;
-  height: 1.125rem;
-  border: 2px solid var(--ink);
-  background: var(--night);
-  box-shadow: 0 0 0 2px var(--plum);
-}
-
-.health-bar span {
-  display: block;
-  height: 100%;
-  background: var(--health);
-  box-shadow: inset 0 3px 0 var(--health-light);
-}
-
-/* ---------- Row 3: Inventory and Goal ---------- */
-
-/* stretch: the panels get the height of the taller one. */
+/* stretch: the panels get the height of the tallest. */
 .below {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   align-items: stretch;
+  margin-top: 1rem;
 }
 
 .below > * {
@@ -192,24 +150,24 @@
   flex-direction: column;
 }
 
-/* ---------- Your turn, under the log ---------- */
+/* ---------- Actions, under the log ---------- */
 
-/* The place for the combat menu and the end card, as wide as the log. It
+/* The place for the Actions panel and the end card, as wide as the log. It
    keeps its own height (flex: none), and the log takes the rest. */
-.turn-slot {
+.actions-slot {
   display: flex;
   flex-direction: column;
   flex: none;
 }
 
-.turn-slot > * {
+.actions-slot > * {
   flex: 1;
 }
 
-/* No fight: a dashed box where the attack buttons go, with its line of
-   text (CombatMenu.tsx). About a button's height (.btn), so the panel is
-   the same size as with one attack button. */
-.combat-idle {
+/* Nothing to do: a dashed box where the buttons go, with its line of text
+   (ActionsPanel.tsx). About a button's height (.btn), so the panel is the
+   same size as with one button. */
+.actions-empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,17 +180,18 @@
   text-align: center;
 }
 
-/* In one column, the log column sits under the map, so with no fight the
-   idle panel would only push health, Inventory and Goal further down. The whole slot is hidden (:has picks
-   the slot that holds the idle panel), so no empty gap is left either.
-   display: none hides it from screen readers too, so both get the same. */
+/* In one column, the log column sits under the map, so with nothing to do
+   the idle panel would only push Health, Inventory and Goal further down.
+   The whole slot is hidden (:has picks the slot that holds the idle
+   panel), so no empty gap is left either. display: none hides it from
+   screen readers too, so both get the same. */
 @media (max-width: 40em) {
-  .turn-slot:has(> .combat-menu-idle) {
+  .actions-slot:has(> .actions-panel-idle) {
     display: none;
   }
 }
 
-.combat-options {
+.actions-options {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
@@ -241,12 +200,58 @@
   padding: 0 0.25rem 0.25rem;
 }
 
-.combat-options .btn {
+.actions-options .btn {
   width: 100%;
   /* .btn is a flex box: justify-content centres its content, and
-     text-align the lines if a long enemy name wraps. */
+     text-align the lines if a long label wraps. */
   justify-content: center;
   text-align: center;
+}
+
+/* Health: your line now, the enemies' lines in a fight later. */
+.health {
+  flex: 0 1 auto;
+  min-width: min(15rem, 100%);
+}
+
+.health-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: auto 0;
+  padding: 0 0.5rem;
+}
+
+/* The icon, "You: 8 / 12" and the bar on one line, centred like the
+   Inventory and Goal content; the bar wraps under the text in a narrow
+   panel. */
+.health-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+}
+
+.health-text {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+
+/* The bar is decoration (aria-hidden): the text says the numbers. */
+.health-bar {
+  width: 7rem;
+  max-width: 100%;
+  height: 1.125rem;
+  border: 2px solid var(--ink);
+  background: var(--night);
+}
+
+.health-bar span {
+  display: block;
+  height: 100%;
+  background: var(--health);
+  box-shadow: inset 0 3px 0 var(--health-light);
 }
 
 .inventory {

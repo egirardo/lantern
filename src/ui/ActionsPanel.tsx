@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useStore } from 'zustand'
 import { gameStore } from '../state/game-store'
 import { getAttackOptions } from '../game/narration'
+import { ExitButton } from './ExitButton'
+import { selectExitLabel } from './exit-label'
 
 // How long to wait before moving focus into the menu at the start of a fight.
 // VoiceOver lost track when focus moved in the same moment the page changed
@@ -25,7 +27,13 @@ function returnFocus(previousFocus: HTMLElement | null) {
   }
 }
 
-export function CombatMenu() {
+// The Actions panel (decided Nov 13, renamed from Your turn): what the
+// player can do right now, as buttons. In a fight, one attack button per
+// enemy; next to an exit, the exit button; otherwise "Nothing to do here.".
+// At the end of the game it's gone, and the end card takes its place.
+// The heading is always "Actions", so a screen reader user finds it under
+// one name; the log says "It's your turn." in a fight.
+export function ActionsPanel() {
   const combat = useStore(gameStore, (state) => state.combat)
   // At the end of the game the end card takes the turn slot instead (see
   // EndCard.tsx, which uses the same two checks).
@@ -33,6 +41,10 @@ export function CombatMenu() {
     gameStore,
     (state) => state.hasEscaped || state.player.currentHealth <= 0,
   )
+  // The exit button's label, or null when there's no exit next to the
+  // player (or a fight is on). A string, so this only re-renders when it
+  // changes.
+  const exitLabel = useStore(gameStore, selectExitLabel)
   const menuRef = useRef<HTMLElement>(null)
   // What had focus when the fight started. A ref instead of a variable inside
   // the effect, because the click handler needs it too, at the end of the
@@ -108,21 +120,32 @@ export function CombatMenu() {
     return null
   }
 
-  // No fight: the panel stays, with a dashed box where the attack buttons
-  // go (decided Nov 12). The box has a line of text, so a screen reader
-  // user who finds the "Your turn" heading also hears why there's nothing
-  // to do, instead of a heading with nothing under it. The heading id is
-  // the same, so the section keeps its name.
+  // No fight: the exit button when the player stands next to an exit.
+  // Otherwise a dashed box where the buttons go (decided Nov 12), with a
+  // line of text, so a screen reader user who finds the "Actions" heading
+  // also hears why there's nothing to press, instead of a heading with
+  // nothing under it. The heading id is the same in every case, so the
+  // section keeps its name.
   if (!combat) {
     return (
       <section
-        aria-labelledby="combat-menu-heading"
-        className="panel-dark combat-menu combat-menu-idle"
+        aria-labelledby="actions-heading"
+        className={
+          exitLabel === null
+            ? 'panel-dark actions-panel actions-panel-idle'
+            : 'panel-dark actions-panel'
+        }
       >
-        <h2 id="combat-menu-heading" className="banner">
-          Your turn
+        <h2 id="actions-heading" className="banner">
+          Actions
         </h2>
-        <p className="combat-idle">No enemies near.</p>
+        {exitLabel === null ? (
+          <p className="actions-empty">Nothing to do here.</p>
+        ) : (
+          <div className="actions-options">
+            <ExitButton label={exitLabel} />
+          </div>
+        )}
       </section>
     )
   }
@@ -132,17 +155,17 @@ export function CombatMenu() {
   return (
     <section
       ref={menuRef}
-      aria-labelledby="combat-menu-heading"
-      className="panel-dark combat-menu"
+      aria-labelledby="actions-heading"
+      className="panel-dark actions-panel"
     >
-      <h2 id="combat-menu-heading" className="banner">
-        Your turn
+      <h2 id="actions-heading" className="banner">
+        Actions
       </h2>
       {/* role="list" looks redundant, but Safari drops the list
           semantics of a list styled with list-style: none (.plain-list),
           and VoiceOver then doesn't say "list, n items". */}
       {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
-      <ul className="plain-list combat-options" role="list">
+      <ul className="plain-list actions-options" role="list">
         {options.map((option) => (
           <li key={option.id}>
             {/* data-enemy-id lets attack() find this button by enemy id. */}

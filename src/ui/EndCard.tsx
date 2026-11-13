@@ -8,7 +8,7 @@ import { uiAsset } from './ui-asset'
 // It doesn't take focus (decided Nov 3–6, path A). At the end, the last log
 // lines are still being read ("Defeat. Game over…", "Victory! You climb
 // out…"), and moving focus here made VoiceOver drop them (tested Nov 4). So
-// focus stays where it is (CombatMenu puts it on the map after the last
+// focus stays where it is (ActionsPanel puts it on the map after the last
 // attack), and the player tabs to Play again when ready. There's no time
 // limit.
 export function EndCard() {
