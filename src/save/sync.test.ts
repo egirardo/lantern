@@ -40,6 +40,7 @@ function saveAt(updatedAt: string, changes: Partial<Save> = {}): Save {
     enteredFrom: FIRST_ROOM_ID,
     health: 6,
     inventory: ['gold-key'],
+    foundLockedExit: false,
     takenItemIds: [`${FIRST_ROOM_ID}/key-1`],
     defeatedEnemyIds: [],
     updatedAt,
@@ -182,6 +183,23 @@ describe('saving to localStorage', () => {
     })
   })
 
+  it('saves as soon as the player has found the locked door', () => {
+    const { store, localSave } = setup()
+    store.getState().loadRoom(firstRoom, validMap)
+    // Only the flag changes (as when the player tries the locked door), and
+    // that alone is enough for a save.
+    store.setState({ foundLockedExit: true })
+    expect(localSave()).toMatchObject({ foundLockedExit: true })
+  })
+
+  it('starts from an old local save without foundLockedExit, as false', () => {
+    const old: Partial<Save> = saveAt(EARLY)
+    delete old.foundLockedExit
+    const { store } = setup({ localSave: old })
+    expect(store.getState().currentRoomId).toBe('room-2')
+    expect(store.getState().foundLockedExit).toBe(false)
+  })
+
   it('saves the room entered from after an exit, once the next room loads', () => {
     const { store, localSave } = setup()
     store.getState().loadRoom(firstRoom, validMap)
@@ -258,6 +276,17 @@ describe('sync when signed in', () => {
     await session.idle()
     expect(store.getState().player.currentHealth).toBe(9)
     expect(localSave()).toEqual(remote)
+  })
+
+  it('restores foundLockedExit from a newer remote save', async () => {
+    const remote = saveAt(LATE, { foundLockedExit: true })
+    const { store, session } = setup({
+      user: 'player-1',
+      localSave: saveAt(EARLY),
+      remoteSave: { data: remote, updatedAt: LATE },
+    })
+    await session.idle()
+    expect(store.getState().foundLockedExit).toBe(true)
   })
 
   it('says so in the log when the remote save replaces a room on screen', async () => {

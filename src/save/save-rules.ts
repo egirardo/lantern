@@ -16,6 +16,7 @@ export type SaveSource = Pick<
   | 'enteredFrom'
   | 'player'
   | 'inventory'
+  | 'foundLockedExit'
   | 'takenItemIds'
   | 'defeatedEnemyIds'
 >
@@ -31,6 +32,7 @@ export function saveContent(state: SaveSource): SaveContent {
     enteredFrom: state.enteredFrom,
     health: state.player.currentHealth,
     inventory: state.inventory,
+    foundLockedExit: state.foundLockedExit,
     takenItemIds: state.takenItemIds,
     defeatedEnemyIds: state.defeatedEnemyIds,
   }
@@ -59,6 +61,7 @@ export function newGameContent(firstRoomId: string, maxHealth: number) {
     enteredFrom: null,
     health: maxHealth,
     inventory: [],
+    foundLockedExit: false,
     takenItemIds: [],
     defeatedEnemyIds: [],
   } satisfies SaveContent
@@ -73,6 +76,9 @@ export function sameContent(a: SaveContent, b: SaveContent): boolean {
     a.enteredFrom === b.enteredFrom &&
     a.health === b.health &&
     sameList(a.inventory, b.inventory) &&
+    // Needed so trying the locked door counts as a change and is saved
+    // straight away, even when nothing else changed.
+    a.foundLockedExit === b.foundLockedExit &&
     sameList(a.takenItemIds, b.takenItemIds) &&
     sameList(a.defeatedEnemyIds, b.defeatedEnemyIds)
   )

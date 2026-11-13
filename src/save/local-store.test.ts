@@ -16,6 +16,7 @@ const save: Save = {
   enteredFrom: 'entrance-hall',
   health: 7,
   inventory: [],
+  foundLockedExit: false,
   takenItemIds: [],
   defeatedEnemyIds: [],
   updatedAt: '2026-11-09T10:00:00.000Z',
@@ -56,6 +57,14 @@ describe('local save', () => {
     storage.values.set(SAVE_KEY, JSON.stringify({ ...save, version: 0 }))
     expect(readLocalSave(storage)).toBeNull()
     expect(warn).toHaveBeenCalledOnce()
+  })
+
+  it('reads an old save without foundLockedExit as false', () => {
+    const storage = fakeStorage()
+    const oldSave: Partial<Save> = { ...save, foundLockedExit: true }
+    delete oldSave.foundLockedExit
+    storage.values.set(SAVE_KEY, JSON.stringify(oldSave))
+    expect(readLocalSave(storage)).toEqual({ ...save, foundLockedExit: false })
   })
 
   it('ignores text that is not JSON with a warning', () => {
