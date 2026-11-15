@@ -105,7 +105,7 @@ describe('beginCombat', () => {
       'The skeleton attacks you! A fight begins.',
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
-      'The skeleton hits you for 4 damage (15 + 3 = 18 against armor class 12).',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
       "It's your turn.",
     ])
   })
@@ -166,9 +166,9 @@ describe('beginCombat', () => {
       'The skeleton attacks you! A fight begins.',
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
-      'The skeleton hits you for 6 damage (15 + 3 = 18 against armor class 12).',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 6 damage.',
       'You have fallen.',
-      'Defeat. Game over. Reload the page to try again.',
+      'Defeat. Game over. Press Tab to reach Play again.',
     ])
   })
 })
@@ -194,8 +194,8 @@ describe('playerAttackStep', () => {
     expect(step.player.currentHealth).toBe(8)
     expect(step.combat?.turnIndex).toBe(0) // your turn again
     expect(texts(step)).toEqual([
-      'You hit the skeleton for 2 damage (15 + 3 = 18 against armor class 12).',
-      'The skeleton hits you for 4 damage (15 + 3 = 18 against armor class 12).',
+      'You attack the skeleton: you roll 15 + 3 = 18 against AC 12 and hit for 2 damage.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
       "It's your turn.",
     ])
   })
@@ -481,7 +481,7 @@ describe('the mimic: unmasking and the carried key (Nov 9)', () => {
       "The chest springs open. It's a mimic! A fight begins.",
       'The mimic rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
-      'The mimic hits you for 4 damage (15 + 3 = 18 against armor class 12).',
+      'The mimic attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
       "It's your turn.",
     ])
   })
@@ -542,7 +542,7 @@ describe('the mimic: unmasking and the carried key (Nov 9)', () => {
     expect(step.loot).toEqual(['gold-key'])
     expect(step.enemies).toEqual([])
     expect(texts(step)).toEqual([
-      'You hit the mimic for 6 damage (15 + 3 = 18 against armor class 12).',
+      'You attack the mimic: you roll 15 + 3 = 18 against AC 12 and hit for 6 damage.',
       'The mimic is defeated.',
       'The mimic drops a gold key. You pick it up.',
       'Victory. No enemies are left standing.',

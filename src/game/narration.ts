@@ -76,18 +76,22 @@ export function describeCombatEvent(
       const { attackerId, targetId, result } = event
       const who = subject(state, attackerId)
       const target = object(state, targetId)
-      // The numbers: what was rolled, and what it had to beat to hit.
-      const roll = `${describeRoll(result.naturalRoll, result.total)} against armor class ${result.opposingArmorClass}`
+      // The line follows the order things happen (Nov 15): who attacks whom,
+      // the roll and what it had to beat, then the result. "AC" is short
+      // for armor class; How to play explains it, so the line stays short.
+      // `it` for an enemy, because the enemy was just named at the start.
+      const attack = `${who} ${verb(attackerId, 'attack', 'attacks')} ${target}`
+      const roll = `${verb(attackerId, 'you roll', 'it rolls')} ${describeRoll(result.naturalRoll, result.total)} against AC ${result.opposingArmorClass}`
       if (result.hit) {
         if (result.natural20) {
           return `${who} ${verb(attackerId, 'roll', 'rolls')} a natural 20 and ${verb(attackerId, 'land', 'lands')} a critical hit on ${target} for ${result.damage} damage!`
         }
-        return `${who} ${verb(attackerId, 'hit', 'hits')} ${target} for ${result.damage} damage (${roll}).`
+        return `${attack}: ${roll} and ${verb(attackerId, 'hit', 'hits')} for ${result.damage} damage.`
       }
       if (result.natural1) {
         return `${who} ${verb(attackerId, 'roll', 'rolls')} a natural 1 and ${verb(attackerId, 'miss', 'misses')} ${target}!`
       }
-      return `${who} ${verb(attackerId, 'miss', 'misses')} ${target} (${roll}).`
+      return `${attack}: ${roll} and ${verb(attackerId, 'miss', 'misses')}.`
     }
     case 'initiative': {
       const { combatantId, initiativeRoll } = event
@@ -110,7 +114,9 @@ export function describeCombatEvent(
         : // The game over message is a log line too, so a screen reader hears
           // it in the same batch as the killing blow. Moving focus to a
           // separate message dropped that batch in VoiceOver (tested Nov 4).
-          'Defeat. Game over. Reload the page to try again.'
+          // Focus stays on the map, and Tab from the map reaches Play again
+          // (EndCard.tsx), so the line says how to get there (Nov 15).
+          'Defeat. Game over. Press Tab to reach Play again.'
     }
   }
 }
@@ -482,9 +488,11 @@ export function describeFullHealth(player: Combatant): string {
 }
 
 // The player uses the final exit and wins. The visible victory message says
-// the same, so the log carries the whole message (like game over).
+// the same, so the log carries the whole message (like game over). Focus
+// stays on the map, and Tab reaches Play again (EndCard.tsx), so the line
+// says how to get there (Nov 15).
 export function describeEscape(): string {
-  return 'Victory! You climb out of the dungeon. Reload the page to play again.'
+  return 'Victory! You climb out of the dungeon. Press Tab to reach Play again.'
 }
 
 // The player tries to move or use an exit after winning.

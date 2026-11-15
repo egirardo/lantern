@@ -868,7 +868,7 @@ describe('gameStore', () => {
       store.getState().takeExit()
       expect(store.getState().hasEscaped).toBe(true)
       expect(texts(store).at(-1)).toBe(
-        'Victory! You climb out of the dungeon. Reload the page to play again.',
+        'Victory! You climb out of the dungeon. Press Tab to reach Play again.',
       )
 
       store.getState().movePlayer('east')
