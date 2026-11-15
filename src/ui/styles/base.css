@@ -121,6 +121,38 @@ h3 {
   margin-inline: auto;
 }
 
+/* The page as a column at least as tall as the window (minus the body's
+   1rem padding at the top and bottom), so the footer can sit at the bottom
+   of the window on both screens when the page is shorter than the window
+   (a "sticky footer"). When the page is taller, the footer simply comes
+   after the content. 100vh first for older browsers; 100dvh follows the
+   visible window when a mobile browser's bars come and go. */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
+}
+
+/* The footer with the link to the source code (App.tsx), under both
+   screens. margin-top: auto takes all the free space above it in the
+   column, which pushes it to the bottom. The link is underlined, so it's
+   recognized as a link without relying on color (WCAG 1.4.1). */
+.site-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* ---------- Pixel art ---------- */
 
 /* Pixel art is drawn at whole-number scales (2×, 3×) and without smoothing,
