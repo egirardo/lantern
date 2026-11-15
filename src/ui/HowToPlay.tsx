@@ -42,6 +42,15 @@ export function HowToPlay() {
           tells you each roll and the damage. Your health is shown in the Health
           panel.
         </p>
+        {/* The log writes "AC" to keep the attack lines short (Nov 15), so
+            this is where the abbreviation is explained. The rule is the one
+            in src/game/combat.ts: total at least the AC hits, and a natural
+            20 or 1 always hits or misses. */}
+        <p>
+          An attack rolls a 20-sided die and adds a bonus. It hits if the total
+          is at least the target’s armor class (AC). A natural 20 always hits,
+          and a natural 1 always misses.
+        </p>
         <h3>The goal</h3>
         {/* Says nothing about the key or the locked door: the player finds
             those out by exploring, and the Goal panel tells them the next
