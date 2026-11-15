@@ -236,7 +236,7 @@ describe('exitStep', () => {
     expect(step.kind).toBe('escape')
     expect(texts(step)).toEqual([
       'You unlock the door with the gold key.',
-      'Victory! You climb out of the dungeon. Reload the page to play again.',
+      'Victory! You climb out of the dungeon. Press Tab to reach Play again.',
     ])
   })
 
@@ -249,7 +249,7 @@ describe('exitStep', () => {
     })
     expect(step.kind).toBe('escape')
     expect(texts(step)).toEqual([
-      'Victory! You climb out of the dungeon. Reload the page to play again.',
+      'Victory! You climb out of the dungeon. Press Tab to reach Play again.',
     ])
   })
 

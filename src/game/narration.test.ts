@@ -151,25 +151,25 @@ describe('describeCombatEvent', () => {
   describe('attack', () => {
     it('describes a hit by the player', () => {
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', hit))).toBe(
-        'You hit the skeleton for 3 damage (12 + 2 = 14 against armor class 10).',
+        'You attack the skeleton: you roll 12 + 2 = 14 against AC 10 and hit for 3 damage.',
       )
     })
 
     it('describes a hit by an enemy', () => {
       expect(describeCombatEvent(state, attack('e1', PLAYER_ID, hit))).toBe(
-        'The skeleton hits you for 3 damage (12 + 2 = 14 against armor class 10).',
+        'The skeleton attacks you: it rolls 12 + 2 = 14 against AC 10 and hits for 3 damage.',
       )
     })
 
     it('describes a miss by the player', () => {
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', miss))).toBe(
-        'You miss the skeleton (5 + 2 = 7 against armor class 10).',
+        'You attack the skeleton: you roll 5 + 2 = 7 against AC 10 and miss.',
       )
     })
 
     it('describes a miss by an enemy', () => {
       expect(describeCombatEvent(state, attack('e1', PLAYER_ID, miss))).toBe(
-        'The skeleton misses you (5 + 2 = 7 against armor class 10).',
+        'The skeleton attacks you: it rolls 5 + 2 = 7 against AC 10 and misses.',
       )
     })
 
@@ -231,13 +231,15 @@ describe('describeCombatEvent', () => {
       const negative: CombatResult = { ...miss, naturalRoll: 8, total: 7 }
       expect(
         describeCombatEvent(state, attack(PLAYER_ID, 'e1', negative)),
-      ).toBe('You miss the skeleton (8 - 1 = 7 against armor class 10).')
+      ).toBe(
+        'You attack the skeleton: you roll 8 - 1 = 7 against AC 10 and miss.',
+      )
     })
 
     it('shows a zero bonus with a plus sign', () => {
       const zero: CombatResult = { ...miss, naturalRoll: 8, total: 8 }
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', zero))).toBe(
-        'You miss the skeleton (8 + 0 = 8 against armor class 10).',
+        'You attack the skeleton: you roll 8 + 0 = 8 against AC 10 and miss.',
       )
     })
 
@@ -302,7 +304,7 @@ describe('describeCombatEvent', () => {
     it('describes a defeat', () => {
       expect(
         describeCombatEvent(state, { type: 'combat-ended', outcome: 'defeat' }),
-      ).toBe('Defeat. Game over. Reload the page to try again.')
+      ).toBe('Defeat. Game over. Press Tab to reach Play again.')
     })
   })
 })
@@ -651,7 +653,7 @@ describe('exit lines', () => {
       'You go through the exit to the north.',
     )
     expect(describeEscape()).toBe(
-      'Victory! You climb out of the dungeon. Reload the page to play again.',
+      'Victory! You climb out of the dungeon. Press Tab to reach Play again.',
     )
     expect(describeAlreadyEscaped()).toBe(
       'You have already escaped the dungeon.',
