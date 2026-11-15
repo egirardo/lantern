@@ -27,12 +27,16 @@
   align-items: start;
 }
 
-/* The two pages side by side. Each page draws its own half of the book
-   (below), so they meet at the middle of the spine with no gap. */
+/* The tab panel. It holds all three tabs' spreads (BookMenu.tsx), stacked
+   in one grid cell. A grid cell is as tall as its tallest content, so the
+   book keeps the height of the longest tab (How to play) whichever tab is
+   open, and the browser does the measuring at every text size. The shorter
+   spreads stretch to that height (grid items stretch by default), so their
+   parchment fills the whole book. */
 .book-pages {
   grid-area: pages;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   /* The book art's own height at 3× (152 art pixels), so at normal text
      size the art isn't squashed. In px, not rem: it follows the art, not
      the text size. The book still grows when the text needs more room. */
@@ -44,6 +48,22 @@
      menus) use their light look here: the dark one is a dark grey box that
      looks out of place on parchment. */
   color-scheme: light;
+}
+
+/* One tab's two pages side by side, all three spreads in the same cell.
+   Each page draws its own half of the book (below), so they meet at the
+   middle of the spine with no gap. */
+.book-spread {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* The spreads of the tabs that aren't open. They're `inert` (BookMenu.tsx),
+   so they can't be reached; visibility: hidden stops them being drawn but
+   keeps their height. (display: none would remove the height too.) */
+.book-spread[inert] {
+  visibility: hidden;
 }
 
 /* The How to play panel takes focus itself (it has nothing focusable
@@ -249,8 +269,11 @@
 
   /* One page: the book's spine would sit in the middle of the text, so
      the plain parchment frame is used instead, at 2×. */
-  .book-pages {
+  .book-spread {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .book-pages {
     min-height: 0;
     padding: 0.5rem 0.75rem 0.75rem;
     border: 20px solid transparent;

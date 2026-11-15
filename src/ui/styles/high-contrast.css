@@ -62,7 +62,9 @@
 
 /* The book's pages without their art (book.css), with a gap instead of
    the spine between them. */
-[data-contrast='high'] .book-pages {
+/* The gap between a spread's two pages (BookMenu.tsx renders each tab's
+   pages in a .book-spread). */
+[data-contrast='high'] .book-spread {
   column-gap: 1.5rem;
 }
 
