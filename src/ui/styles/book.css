@@ -92,6 +92,9 @@
   border-width: 30px 54px 51px 60px;
   border-image: url('/assets/ui/book-left.png') 16 22 22 24 fill / 48px 66px
     66px 72px stretch;
+  /* The parchment fallback under the art, as on .panel-light (base.css). */
+  background-color: var(--parchment);
+  background-clip: padding-box;
   image-rendering: pixelated;
 }
 
@@ -278,6 +281,8 @@
     padding: 0.5rem 0.75rem 0.75rem;
     border: 20px solid transparent;
     border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch;
+    background-color: var(--parchment);
+    background-clip: padding-box;
     image-rendering: pixelated;
   }
 

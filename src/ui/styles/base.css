@@ -168,6 +168,13 @@ h3 {
 .panel-light {
   border: 20px solid transparent;
   border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch;
+  /* A plain parchment colour under the art (axe scan, Nov 13). If the
+     image doesn't load, the ink text would otherwise sit on the dark page
+     at 1.14:1; with this it's still readable. When the art loads, its
+     `fill` covers the colour. padding-box keeps the colour inside the
+     border, so it doesn't show through the art's rough edges. */
+  background-color: var(--parchment);
+  background-clip: padding-box;
   padding: 0.25rem 0.5rem;
   color: var(--ink);
   /* Ink focus ring and dark red errors on the light background. */
@@ -199,6 +206,9 @@ h3 {
   border-color: transparent;
   border-width: 2px 36px;
   border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch;
+  /* The same parchment fallback as .panel-light, for the ink text. */
+  background-color: var(--parchment);
+  background-clip: padding-box;
   color: var(--ink);
   font-size: 1.125rem;
   font-weight: bold;

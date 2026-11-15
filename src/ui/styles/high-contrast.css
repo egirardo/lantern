@@ -72,6 +72,9 @@
 [data-contrast='high'] .book-page + .book-page {
   border: 0;
   border-image: none;
+  /* No parchment fallback colour: the black .book-pages shows through.
+     (High contrast turns --parchment white, which would hide white text.) */
+  background: none;
 }
 
 [data-contrast='high'] .banner,
@@ -80,6 +83,8 @@
   padding: 0;
   border: 0;
   border-image: none;
+  /* No parchment fallback colour here either (see .book-page above). */
+  background: none;
   color: #fff;
 }
 

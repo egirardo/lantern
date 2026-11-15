@@ -21,6 +21,9 @@
   border-color: transparent;
   border-width: 2px 36px;
   border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch;
+  /* The parchment fallback under the art, as on .banner (base.css). */
+  background-color: var(--parchment);
+  background-clip: padding-box;
   color: var(--ink);
   font-size: 1.125rem;
 }
