@@ -24,6 +24,8 @@ import {
   describeItemReveal,
   describeLoot,
   describeFeatureReveal,
+  describeHealth,
+  getEnemyHealthRows,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
 import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
@@ -353,6 +355,101 @@ describe('describeRecovery', () => {
 describe('describeYourTurn', () => {
   it('says it is your turn', () => {
     expect(describeYourTurn()).toBe("It's your turn.")
+  })
+})
+
+describe('describeHealth', () => {
+  const state = makeState({
+    player: makeCombatant({ name: 'Hero', currentHealth: 12, maxHealth: 12 }),
+    enemies: [
+      {
+        id: 'e1',
+        combatant: makeCombatant({
+          name: 'demon',
+          currentHealth: 10,
+          maxHealth: 10,
+        }),
+      },
+    ],
+  })
+
+  it('says the player\'s health as "You have …"', () => {
+    expect(describeHealth(state, PLAYER_ID, 8)).toBe(
+      'You have 8 out of 12 health.',
+    )
+  })
+
+  it("says an enemy's health with the same name as the attack line", () => {
+    expect(describeHealth(state, 'e1', 6)).toBe(
+      'The demon has 6 out of 10 health.',
+    )
+  })
+
+  it('uses the health it is given, not the one in the state', () => {
+    // The state says 10, but a step can have several hits, so the caller
+    // passes the health right after the hit.
+    expect(describeHealth(state, 'e1', 3)).toBe(
+      'The demon has 3 out of 10 health.',
+    )
+  })
+})
+
+describe('getEnemyHealthRows', () => {
+  it('returns no rows when there is no fight', () => {
+    expect(getEnemyHealthRows(null)).toEqual([])
+  })
+
+  it('returns one row per living enemy, capitalised, in the order of combat.enemies', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({
+            name: 'demon',
+            currentHealth: 6,
+            maxHealth: 10,
+          }),
+        },
+        {
+          id: 'm1',
+          combatant: makeCombatant({
+            name: 'mimic',
+            currentHealth: 5,
+            maxHealth: 5,
+          }),
+        },
+      ],
+    })
+    expect(getEnemyHealthRows(state)).toEqual([
+      { id: 'e1', name: 'Demon', currentHealth: 6, maxHealth: 10 },
+      { id: 'm1', name: 'Mimic', currentHealth: 5, maxHealth: 5 },
+    ])
+  })
+
+  it('keeps the numbers of numbered enemies, so two skeletons are told apart', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton 1' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'skeleton 2' }) },
+      ],
+    })
+    expect(getEnemyHealthRows(state).map((row) => row.name)).toEqual([
+      'Skeleton 1',
+      'Skeleton 2',
+    ])
+  })
+
+  it('leaves out defeated enemies', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({ name: 'skeleton', currentHealth: 0 }),
+        },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+      ],
+    })
+    expect(getEnemyHealthRows(state).map((row) => row.id)).toEqual(['e2'])
   })
 })
 
