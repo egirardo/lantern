@@ -10,8 +10,11 @@
 .screen-start {
   display: grid;
   align-content: center;
-  min-height: calc(100vh - 2rem);
-  min-height: calc(100dvh - 2rem);
+  /* 4rem less for the footer under it (App.tsx), so the footer is in view
+     without scrolling. In rem, so it grows with the text size like the
+     footer's line does. */
+  min-height: calc(100vh - 2rem - 4rem);
+  min-height: calc(100dvh - 2rem - 4rem);
 }
 
 .start-screen {

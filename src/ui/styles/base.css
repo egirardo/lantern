@@ -121,6 +121,23 @@ h3 {
   margin-inline: auto;
 }
 
+/* The footer with the link to the source code (App.tsx), under both
+   screens. The link is underlined, so it's recognized as a link without
+   relying on color (WCAG 1.4.1). */
+.site-footer {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* ---------- Pixel art ---------- */
 
 /* Pixel art is drawn at whole-number scales (2×, 3×) and without smoothing,
