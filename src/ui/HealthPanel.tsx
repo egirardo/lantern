@@ -8,7 +8,7 @@ import { gameStore } from '../state/game-store'
 // "Demon: 6 / 10". The log says the same numbers after each hit (rule 5),
 // so the panel never shows something the log doesn't.
 // - The text carries the information. The bar only repeats it for the eye,
-//   so it's aria-hidden, and the text never relies on the bar's colour or
+//   so it's aria-hidden, and the text never relies on the bar's color or
 //   length (WCAG 1.4.1).
 // - No live region: the log already announces every hit and the health left
 //   after it, and low health has its own urgent line (the one assertive

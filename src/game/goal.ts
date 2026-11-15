@@ -65,8 +65,8 @@ export function describeGoal(
 }
 
 // True for the steps where the player carries the key. The Goal panel uses
-// it to show the key sprite in colour (and the step in bold) instead of
-// greyed out. Here, next to the steps, so adding a step means updating one
+// it to show the key sprite in color (and the step in bold) instead of
+// grayed out. Here, next to the steps, so adding a step means updating one
 // file.
 export function goalHasKey(step: GoalStep): boolean {
   return step === 'find-door' || step === 'return-to-door'

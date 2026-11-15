@@ -10,7 +10,7 @@ import { uiAsset } from './ui-asset'
 // - It never takes focus when it appears: it's simply in the Tab order after
 //   the log.
 // - Pressing it moves focus to the map (#53 VoiceOver pass, Nov 13). The
-//   player arrives next to the exit back, so the button stays, now labelled
+//   player arrives next to the exit back, so the button stays, now labeled
 //   "Go back to the previous room". With focus left on it, Enter again went
 //   straight back, and the arrow keys didn't move the player until they
 //   tabbed to the map. The map is also where focus goes after a fight.

@@ -65,19 +65,19 @@ No other rule failed. Per state, axe reported between 23 and 40 passing rules (f
 | `h3`, `p:nth-child(4)`, `p:nth-child(6)` | Settings page text | 05 |
 | `.book-page:nth-child(2) > h3` | Account page heading on the right page | 06 |
 
-**Verdict: false positive.** The ink colour `--ink: #2e222f` is drawn on parchment, but that parchment is a `border-image` with `fill`, not a `background-color`:
+**Verdict: false positive.** The ink color `--ink: #2e222f` is drawn on parchment, but that parchment is a `border-image` with `fill`, not a `background-color`:
 
 - `.panel-light` (the log and the end card): `src/ui/styles/base.css:168-176`, `border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch` (line 170)
 - `.banner` (every panel heading): `src/ui/styles/base.css:189-207`, `border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch` (line 201)
 - `.book-page` (the book's left and right pages): `src/ui/styles/book.css:69-85`, lines 73 and 83
 
-axe only reads `background-color` and `background-image` up the tree. It skips `border-image`, so it walks up to `body` and uses the page colour `--deep: #201727` (`src/ui/styles/base.css:35`). Ink on `#201727` is 1.14:1, which is the number in every message.
+axe only reads `background-color` and `background-image` up the tree. It skips `border-image`, so it walks up to `body` and uses the page color `--deep: #201727` (`src/ui/styles/base.css:35`). Ink on `#201727` is 1.14:1, which is the number in every message.
 
 **Checked on the real pixels:** I sampled the screenshots (script `sample.mjs`, below) right next to the flagged text. Behind the log lines, the Actions, Health and Goal banners, and both book pages, the pixel is `#d8d3af` (parchment) every time, which gives **10.00:1** with ink, the same ratio as in `docs/wcag-notes.md` (1.4.3 table). The page background next to the panels is `#201727`, as axe says, but no text sits on it.
 
-**More evidence:** in high contrast (states 07, 08, 08b) `high-contrast.css` turns the `border-image` art off and uses plain colours, and axe then finds no contrast violations at all, and no "needs review" either.
+**More evidence:** in high contrast (states 07, 08, 08b) `high-contrast.css` turns the `border-image` art off and uses plain colors, and axe then finds no contrast violations at all, and no "needs review" either.
 
-**One real caveat (not a WCAG failure today):** the parchment panels have no `background-color` behind the `border-image`. If the UI images fail to load (slow network, blocked images), the ink text would sit on `#201727` at 1.14:1 and be unreadable. A `background-color: var(--parchment)` with `background-clip: padding-box` on `.panel-light`, `.banner` and `.book-page` would be a safe fallback and would also let axe measure the right colour. Not changed: the scan is report-only.
+**One real caveat (not a WCAG failure today):** the parchment panels have no `background-color` behind the `border-image`. If the UI images fail to load (slow network, blocked images), the ink text would sit on `#201727` at 1.14:1 and be unreadable. A `background-color: var(--parchment)` with `background-clip: padding-box` on `.panel-light`, `.banner` and `.book-page` would be a safe fallback and would also let axe measure the right color. Not changed: the scan is report-only.
 
 ## Incomplete ("needs review")
 
@@ -86,7 +86,7 @@ All of them are `color-contrast`, where axe couldn't work out the background. No
 | Reason axe gives | Elements | States | My reading |
 | --- | --- | --- | --- |
 | "uses complex text shadows" | `h1` (Lantern title) | 01, 02, 03, 09–13 | Parchment on `#201727`, 11.42:1 (notes, 1.4.3). The ink shadow is decoration (`src/ui/styles/game.css:19`, `src/ui/styles/start.css:69`). Passes. |
-| "background gradient" | `.start-intro > p`, the account panel heading `#…-heading`, its `p`, `.account-switch`, and in 02 the form's `h3` and the email and password labels | 01, 02 | The start screen's `radial-gradient` (`src/ui/styles/start.css:30`). Notes: parchment on its lightest colour `#3e3546` is 7.69:1. Passes, but worth one check with a contrast checker by hand. |
+| "background gradient" | `.start-intro > p`, the account panel heading `#…-heading`, its `p`, `.account-switch`, and in 02 the form's `h3` and the email and password labels | 01, 02 | The start screen's `radial-gradient` (`src/ui/styles/start.css:30`). Notes: parchment on its lightest color `#3e3546` is 7.69:1. Passes, but worth one check with a contrast checker by hand. |
 | "element contains an image node" | `.page-banner`, book `h3` and `p`, `.setting-check`, the Text size and Log labels, account panel heading, labels and `.account-switch` in the book, the end card's `#end-heading`, text and `.end-stats` | 04, 05, 06, 11 | Same parchment `border-image` as above (book pages, end card). 10:1. |
 | "partially obscured by another element" / "partially overlaps other elements" | older log lines (`ol > li:nth-child(1…15)`), some book `p` and `h3` | 04, 05, 06, 09, 10, 11 | Log lines scrolled up under the banner, and book text next to the tabs. Same parchment. Not a problem. |
 
@@ -110,7 +110,7 @@ All scripts are in `/private/tmp/claude-501/-Users-elsagirardo-WU25-projects-lan
 - `scan.mjs`: the main run (states 01–08 and 12–13).
 - `scan2.mjs`: the fight, exit and end card states (09–11), each from a new game.
 - `passes.mjs`: a short extra run that saves the passing and inapplicable rule ids (`passes/*.json`).
-- `sample.mjs`: samples pixel colours from the screenshots and computes the WCAG ratio with ink.
+- `sample.mjs`: samples pixel colors from the screenshots and computes the WCAG ratio with ink.
 - `explore.mjs`, `fightdebug.mjs`, `menufight.mjs`, `menufight2.mjs`, `repro-diag.mjs`, `repro-diag2.mjs`: exploring the Tab order and tracing the late `close` event.
 - `results/*.json`: the full axe output per state (violations with nodes, incomplete); `results/notes.txt`: what the scripts saw (focus, positions, panel text).
 

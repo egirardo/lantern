@@ -44,7 +44,7 @@ const PLAYER_DEPTH = 4
 const WALK_DURATION = 150
 
 // The hit flash: a red tint for a short moment on the sprite that was hit.
-// setTint multiplies the sprite's colours by this colour, so the picture
+// setTint multiplies the sprite's colors by this color, so the picture
 // stays visible and just turns reddish (setTintFill would paint it solid red).
 // It flashes once per hit and never blinks on and off, so it stays far from
 // the flashing limits in WCAG 2.3.1.
@@ -54,9 +54,9 @@ const HIT_FLASH_DURATION = 150
 // The name the dark image is stored under in Phaser's texture manager.
 const DARKNESS_TEXTURE = 'lantern-darkness'
 
-// Where the soft edge of the light starts and ends, in tiles from the centre
+// Where the soft edge of the light starts and ends, in tiles from the center
 // of the player's tile. The picture must agree with the rule in
-// getVisibleTiles (a tile is lit when its centre is within LANTERN_RADIUS):
+// getVisibleTiles (a tile is lit when its center is within LANTERN_RADIUS):
 // - Fully clear up to half a tile inside the radius. Lit tiles straight out
 //   (2 tiles away) are fully clear in the middle, and the lit tiles at
 //   (±2, ±1), about 2.24 tiles away, are only about a quarter dark there.
@@ -97,7 +97,7 @@ export class RoomScene extends Phaser.Scene {
   private playerFacing: Facing = 'right'
   // The timer of each sprite's hit flash that hasn't cleared yet. Kept so a
   // second hit can restart the timer instead of starting a second one, and so
-  // a sprite's timer can be cancelled when the sprite is destroyed.
+  // a sprite's timer can be canceled when the sprite is destroyed.
   private hitTimers = new Map<
     Phaser.GameObjects.Sprite,
     Phaser.Time.TimerEvent
@@ -442,7 +442,7 @@ export class RoomScene extends Phaser.Scene {
     this.darknessTexture = texture
     this.paintDarkness(gameStore.getState().settings.highContrast)
 
-    // An Image's origin is its centre by default, so placing it at a point
+    // An Image's origin is its center by default, so placing it at a point
     // puts the middle of the hole exactly on that point.
     this.darkness = this.add.image(0, 0, DARKNESS_TEXTURE)
     this.darkness.setDepth(DARKNESS_DEPTH)
@@ -481,11 +481,11 @@ export class RoomScene extends Phaser.Scene {
         context.clearRect(left, top, this.tileSize, this.tileSize)
       }
     } else {
-      // A radial gradient blends colours outwards from a centre point. It
+      // A radial gradient blends colors outwards from a center point. It
       // goes from a circle of radius 0 to one of radius LIGHT_DARK_RADIUS,
-      // both at the middle of the texture. The colour stops are fractions of
-      // that distance (0 = centre, 1 = the outer circle). Past the outer
-      // circle the last colour, solid black, carries on to the edges.
+      // both at the middle of the texture. The color stops are fractions of
+      // that distance (0 = center, 1 = the outer circle). Past the outer
+      // circle the last color, solid black, carries on to the edges.
       const darkRadius = LIGHT_DARK_RADIUS * this.tileSize
       const gradient = context.createRadialGradient(
         centerX,
@@ -520,7 +520,7 @@ export class RoomScene extends Phaser.Scene {
       `${hero.framePrefix}0`, // start with the first frame
     )
     // The hero frame is 16×32, twice as tall as a tile. Anchor it at the
-    // bottom centre (its feet), so tileToSpritePosition can place the feet in
+    // bottom center (its feet), so tileToSpritePosition can place the feet in
     // the middle of the tile and let the head stick up into the tile above.
     sprite.setOrigin(0.5, 1)
     // The player is always visible, so they go above the dark.
@@ -589,8 +589,8 @@ export class RoomScene extends Phaser.Scene {
       ease: 'Linear',
       // The lantern is carried by the player, so the hole in the dark follows
       // the sprite on every frame of the slide instead of jumping ahead to
-      // the new tile. The sprite's anchor (its feet) is at the tile centre,
-      // the same point the hole is centred on (see tileToSpritePosition and
+      // the new tile. The sprite's anchor (its feet) is at the tile center,
+      // the same point the hole is centered on (see tileToSpritePosition and
       // tileCenter), so the sprite's x and y can be used as they are.
       onUpdate: () => {
         this.darkness?.setPosition(sprite.x, sprite.y)
@@ -673,7 +673,7 @@ export class RoomScene extends Phaser.Scene {
     // has already run: on a slide the sprite is still on the tile it's
     // leaving (the tween then moves the sprite and the hole together), on a
     // jump it's already on the new tile. The sprite's feet are at the tile
-    // centre, the same point the hole is centred on, so its x and y fit.
+    // center, the same point the hole is centered on, so its x and y fit.
     //
     // Why not the tile: a Phaser tween doesn't call onUpdate on its first
     // frame (it only reads its start values). Putting the hole on the new
@@ -716,7 +716,7 @@ export class RoomScene extends Phaser.Scene {
         throw new Error(`No sprite in the asset manifest for ${item.type}`)
       }
       const art = SPRITES[item.type]
-      // Item frames are 16×16, the size of one tile, so the default centred
+      // Item frames are 16×16, the size of one tile, so the default centered
       // origin is right: the middle of the frame goes on the middle of the
       // tile (unlike the 16×32 characters, which stand on their feet).
       const { x, y } = this.tileCenter(item.position)
@@ -774,7 +774,7 @@ export class RoomScene extends Phaser.Scene {
           `${art.framePrefix}${art.animations.idle.frames[0]}`,
         )
         // Enemy frames are 16×32 like the hero's, so they use the same
-        // bottom-centre origin (see drawPlayer).
+        // bottom-center origin (see drawPlayer).
         sprite.setOrigin(0.5, 1)
         sprite.setDepth(ENEMY_DEPTH)
         this.enemySprites.set(enemy.id, sprite)
@@ -804,7 +804,7 @@ export class RoomScene extends Phaser.Scene {
   // further. The light is measured from the middle of the player's tile, like
   // the rule in getVisibleTiles. This gives the same numbers as
   // tileToSpritePosition below, but means something else: that one is where a
-  // sprite's feet go, this one is the centre of the tile itself.
+  // sprite's feet go, this one is the center of the tile itself.
   private tileCenter(position: Position): { x: number; y: number } {
     return {
       x: position.x * this.tileSize + this.tileSize / 2,
@@ -812,9 +812,9 @@ export class RoomScene extends Phaser.Scene {
     }
   }
 
-  // Tile position -> where the sprite's anchor (bottom centre, its feet) goes in
-  // pixels: the middle of the tile both ways, so the feet stand in the centre of
-  // the tile. With the default centred origin, a 32px-tall sprite would hang
+  // Tile position -> where the sprite's anchor (bottom center, its feet) goes in
+  // pixels: the middle of the tile both ways, so the feet stand in the center of
+  // the tile. With the default centered origin, a 32px-tall sprite would hang
   // half a tile too low.
   private tileToSpritePosition(position: Position): { x: number; y: number } {
     return {

@@ -187,7 +187,7 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
 
 ## Exits and room changes (Fri Nov 6)
 
-The room format already has exits (doors and ladders on blocked tiles with a walkable neighbour). What's missing is using them.
+The room format already has exits (doors and ladders on blocked tiles with a walkable neighbor). What's missing is using them.
 
 **Built by Agent C (decision 7),** after Agent A is merged, because both change `room-scene.ts`. I review the PR and do the VoiceOver check of a room change myself.
 
@@ -195,7 +195,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 1. **Going through an exit.** The player stands next to an exit and uses it (a key, plus a button for the action menu style). This loads the room in the exit's `to`.
    - **Decided Nov 6:** the key is **Enter** on the map. The button appears after the map while the player is next to an exit, with no focus move (it's reachable with Tab). Walking into an exit tile tells the player it's an exit and how to use it, instead of "A wall blocks your path."
-2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbour. `playerStart` is only for the first room of a new game. Pure helper with tests.
+2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbor. `playerStart` is only for the first room of a new game. Pure helper with tests.
 3. **No leaving in a fight.** Moving is already blocked during combat. Using an exit must be blocked too, with a log line.
 4. **Redrawing.** Destroy the old tilemap and player sprite before drawing the new room (two Open reminders in the learning notes).
 5. **Narration and full health.** Entering a room logs its description, as `loadRoom` already does. **Decided Nov 3:** going through an exit also restores the player to full health, with a polite line, because there are no potions and a hard earlier room shouldn't decide a harder later fight. The healing goes in the exit step, not in `loadRoom`, so loading a save later won't heal (the store test that `loadRoom` keeps health stays). Pure helper with tests.
@@ -319,7 +319,7 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 **Accessibility rules for the skin** (from Oct 14):
 
 - Frames are decoration around real HTML text. No text in images (WCAG 1.4.5 Images of Text).
-- Text contrast against the frame colours meets AA (checked with axe).
+- Text contrast against the frame colors meets AA (checked with axe).
 - Focus stays clearly visible on styled buttons (a `border-image` can hide the outline).
 - The high contrast setting turns the skin off or overrides it.
 - **Font (decided Nov 3):** Pixel Operator everywhere, at 16px or a whole multiple by default. The high contrast setting also switches the **adventure log** to a plain system font, for players who find a pixel font hard to read in long text. The text size setting isn't limited to 2× steps: in-between sizes are a bit soft, but the player's choice wins (WCAG 1.4.4).

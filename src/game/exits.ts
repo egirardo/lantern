@@ -49,8 +49,8 @@ export function findAdjacentExit(
 ): AdjacentExit | null {
   for (const exit of exits) {
     for (const direction of DIRECTIONS) {
-      const neighbour = step(position, direction)
-      if (exit.tiles.some((tile) => samePosition(tile, neighbour))) {
+      const neighbor = step(position, direction)
+      if (exit.tiles.some((tile) => samePosition(tile, neighbor))) {
         return { exit, direction }
       }
     }
@@ -131,12 +131,12 @@ export function findArrivalPosition(
 
   for (const tile of exitBack.tiles) {
     for (const direction of DIRECTIONS) {
-      const neighbour = step(tile, direction)
-      const isFloor = grid[neighbour.y]?.[neighbour.x] === 'floor'
+      const neighbor = step(tile, direction)
+      const isFloor = grid[neighbor.y]?.[neighbor.x] === 'floor'
       const isFree = !blocked.some((position) =>
-        samePosition(position, neighbour),
+        samePosition(position, neighbor),
       )
-      if (isFloor && isFree) return neighbour
+      if (isFloor && isFree) return neighbor
     }
   }
   return playerStart

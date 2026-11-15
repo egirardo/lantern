@@ -1,6 +1,6 @@
 /* The account panel (AccountPanel.tsx), on the start screen (a plum panel)
    and in the book (parchment). Everything hangs off .account-panel, so the
-   panel looks right wherever it's placed. Colours come from the surface it
+   panel looks right wherever it's placed. Colors come from the surface it
    sits on through custom properties (--focus-ring, --error). */
 
 .account-panel p {
@@ -84,7 +84,7 @@
 
 /* "Create an account" / "I already have an account" as a text link, as in
    the mockup: a secondary action next to the main button. The underline
-   says it can be pressed without relying on colour. */
+   says it can be pressed without relying on color. */
 .account-panel .account-switch {
   min-height: 2.75rem;
   padding: 0.25rem 0.5rem;
@@ -96,7 +96,7 @@
   text-decoration: underline;
 }
 
-/* On the start screen, Sign in, Sign out and the link are centred. */
+/* On the start screen, Sign in, Sign out and the link are centered. */
 .start-account .account-panel form > button[type='submit'],
 .start-account .account-panel > button,
 .start-account .account-switch {
@@ -112,13 +112,13 @@
   margin-top: 1.5rem;
 }
 
-/* An invalid field gets a thicker, dashed border as well as a colour, so it
-   isn't marked by colour alone. The error text says the rest. */
+/* An invalid field gets a thicker, dashed border as well as a color, so it
+   isn't marked by color alone. The error text says the rest. */
 .account-panel input[aria-invalid='true'] {
   border: 3px dashed var(--error);
 }
 
-/* The "Error:" prefix is real text, so errors don't rely on colour. */
+/* The "Error:" prefix is real text, so errors don't rely on color. */
 .account-error {
   margin: 0.25rem 0 0.5rem;
   color: var(--error);

@@ -399,7 +399,7 @@ describe('getEnemyHealthRows', () => {
     expect(getEnemyHealthRows(null)).toEqual([])
   })
 
-  it('returns one row per living enemy, capitalised, in the order of combat.enemies', () => {
+  it('returns one row per living enemy, capitalized, in the order of combat.enemies', () => {
     const state = makeState({
       enemies: [
         {

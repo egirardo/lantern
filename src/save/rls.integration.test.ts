@@ -129,7 +129,7 @@ describe.skipIf(config === null)(
       { kind: 'save', table: 'saves' },
       { kind: 'settings', table: 'settings' },
     ] as const)('$table', ({ kind, table }) => {
-      // Before every test, A and B each have a row we can recognise.
+      // Before every test, A and B each have a row we can recognize.
       beforeEach(async () => {
         await pushRemote(kind, { owner: 'a' }, new Date().toISOString())
 

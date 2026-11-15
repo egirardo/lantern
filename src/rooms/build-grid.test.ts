@@ -47,7 +47,7 @@ describe('buildGrid', () => {
   })
 
   it('treats a tile with no floor and no wall as a wall', () => {
-    // The centre tile (index 4) is empty in both layers, like a spot the
+    // The center tile (index 4) is empty in both layers, like a spot the
     // room builder forgot to paint. It blocks, so a buggy map can't let the
     // player walk onto empty darkness. It must also still become exactly one
     // tile, or the row gets shorter and every tile after it shifts left.

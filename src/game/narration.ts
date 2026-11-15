@@ -145,7 +145,7 @@ export function describeMove(result: MoveResult, direction: Direction): string {
   // `reason` picks the one MoveResult case that has a name.
   if (result.reason === 'feature') {
     const name = featureDisplayName(result.name)
-    return `You cannot move to the ${direction}. ${capitalise(`${indefiniteArticle(name)} ${name}`)} blocks your path.`
+    return `You cannot move to the ${direction}. ${capitalize(`${indefiniteArticle(name)} ${name}`)} blocks your path.`
   }
   // TypeScript knows result.reason is neither 'exit' nor 'feature' here, so
   // it allows the lookup in BLOCKED_TEXT, which has no entry for them.
@@ -251,7 +251,7 @@ export type EnemyHealthRow = {
 // fight that is still standing, in the order of `combat.enemies` like the
 // attack buttons, so the rows don't move around between turns. No fight
 // (null) means no rows, and the panel shows only the player.
-// The name is the one the log uses, capitalised because it starts the row:
+// The name is the one the log uses, capitalized because it starts the row:
 // "Demon", "Skeleton 1", and "Mimic" once the mimic is unmasked.
 // Here and not in HealthPanel.tsx, so it can be unit tested without a DOM.
 export function getEnemyHealthRows(
@@ -265,7 +265,7 @@ export function getEnemyHealthRows(
       .filter((entry) => entry.combatant.currentHealth > 0)
       .map((entry) => ({
         id: entry.id,
-        name: capitalise(getName(combat, entry.id)),
+        name: capitalize(getName(combat, entry.id)),
         currentHealth: entry.combatant.currentHealth,
         maxHealth: entry.combatant.maxHealth,
       }))
@@ -454,7 +454,7 @@ export function describeItemReveal(
   seenBefore: boolean,
 ): string {
   const article = seenBefore ? 'the' : indefiniteArticle(itemName)
-  return `${capitalise(`${article} ${itemName}`)} lies to the ${direction}.`
+  return `${capitalize(`${article} ${itemName}`)} lies to the ${direction}.`
 }
 
 // --- Decor (Phase K step 7, Nov 10) ---
@@ -477,9 +477,9 @@ export function describeFeatureReveal(
 ): string {
   const displayName = featureDisplayName(name)
   if (count === 1) {
-    return `${capitalise(`${indefiniteArticle(displayName)} ${displayName}`)} appears to the ${direction}.`
+    return `${capitalize(`${indefiniteArticle(displayName)} ${displayName}`)} appears to the ${direction}.`
   }
-  return `${capitalise(`${displayName}s`)} appear to the ${direction}.`
+  return `${capitalize(`${displayName}s`)} appear to the ${direction}.`
 }
 
 // spawnEnemies only adds a number when a room has two of the same type
@@ -497,15 +497,15 @@ function indefiniteArticle(name: string): string {
   return /^[aeiou]/i.test(name) ? 'an' : 'a'
 }
 
-// The sentence starts with the name, so the first letter is capitalised.
-function capitalise(text: string): string {
+// The sentence starts with the name, so the first letter is capitalized.
+function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
 function nameWithArticle(name: string, seenBefore: boolean): string {
-  if (isNumbered(name)) return capitalise(name)
+  if (isNumbered(name)) return capitalize(name)
   const article = seenBefore ? 'the' : indefiniteArticle(name)
-  return capitalise(`${article} ${name}`)
+  return capitalize(`${article} ${name}`)
 }
 
 // --- Exits (Fri Nov 6) ---
