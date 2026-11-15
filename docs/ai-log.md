@@ -1449,6 +1449,20 @@ Add one entry per meaningful use, newest at the bottom of each sprint. Skip triv
 - **Why:** The explanation of `'locked'` let me decide on my tests knowing what changed, and I can defend the choice. The grid-cell fix keeps the book steady at every text size without a measured number, and keeps the hidden pages out of reach for keyboard and screen reader users. Writing the icon labels down as a known issue was better than a rushed tooltip a day before the freeze. Claude Code was wrong once (the exhaustiveness check) and corrected it itself, and I caught the key-on-the-map mistake in the checks.
 - **How I verified it:** I ran the browser checks myself: the book's height at Normal and Largest text, in a narrow window and in high contrast; Tab only reaches the open page; VoiceOver reads only the open page and its headings. Typecheck, lint, format check, the 762 tests and the build passed locally, and CI passed on #55 before the merge.
 
+#### 2026-11-15 — Safari "Dungeon map" after Start: two fixes for a dev-server problem
+
+- **Tool:** Claude Code
+- **Category:** Accessibility, Coding, Learning
+- **What I asked:** To work on item 4 of my handoff, time-boxed to about an hour: Safari's VoiceOver didn't say "Dungeon map" when Start moved focus to the map (found in the #53 pass on Nov 13). The plan was to test the guess that the room description's announcement cuts off the focus announcement, with a temporary 1 s delay.
+- **What I got:**
+  - The experiment (code by Claude Code): the first batch held back 1 s. It worked once in Safari and Chrome, and Claude Code turned it into a real fix that also combined the batches if the player moves during the wait.
+  - Testing that, Safari skipped many log lines. Claude Code first said the change hadn't caused it (the main folder was on `dev`), then explained that pressing keys while VoiceOver talks skips lines, which is the accepted "Pressing quickly skips lines" issue. When I found that Safari could also be silent for the whole game on `dev`, Claude Code changed its recommendation from "don't ship" to "test the fix again", and then guessed that the live regions were created too late. Its second fix (code by Claude Code) rendered the announcer from page load. Safari was still silent.
+  - Claude Code then rewrote my WCAG note to call it a serious Safari issue. I said it had worked before, and only then did it suggest comparing deployed versions. The deployed Nov 13 version and today's deployed `dev` both worked in Safari, Start and Continue, with "Dungeon map" read first. The problem only existed on the development server (`npm run dev`).
+  - Claude Code undid the wrong WCAG note, marked the known issue as no longer seen, deleted the local branch with both fixes, and rewrote the learning note: test screen readers on a production build, and compare with an older deployed version first.
+- **Outcome:** ❌ rejected (neither fix shipped; nothing needed fixing)
+- **Why:** The code was never broken, so both fixes were for a problem that only the dev server had. Claude Code should have suggested comparing with a deployed version at the start instead of building fixes on a guess; this took about two hours of my last day before the freeze. I caught it by insisting that it had worked before. What I keep is the lesson: VoiceOver results only count from a production build, and a fix that works once isn't confirmed.
+- **How I verified it:** VoiceOver in Safari and Chrome on `localhost`, then on the Vercel deployments of #53 (Nov 13) and of today's `dev`: Start, Continue after a reload, and slow walking with a reveal. Claude Code checked that no file involved in Start, focus or announcing had changed since Nov 13.
+
 ---
 
 ## Agent-built rooms: evaluation
