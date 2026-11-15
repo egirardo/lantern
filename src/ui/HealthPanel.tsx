@@ -1,7 +1,6 @@
 import { useStore } from 'zustand'
 import { getEnemyHealthRows } from '../game/narration'
 import { gameStore } from '../state/game-store'
-import { uiAsset } from './ui-asset'
 
 // The Health panel, in the bottom row beside Inventory and Goal (decided
 // Nov 13): "You: 8 / 12" as text, and a bar. During a fight, one row per
@@ -42,7 +41,6 @@ export function HealthPanel() {
       {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
       <ul className="plain-list health-list" role="list">
         <li>
-          <img className="icon" src={uiAsset('icon-health.png')} alt="" />
           <p className="health-text">
             You: {current} / {max}
           </p>
@@ -52,7 +50,6 @@ export function HealthPanel() {
             keeps each row when the others change or one is defeated. */}
         {enemyRows.map((row) => (
           <li key={row.id}>
-            <img className="icon" src={uiAsset('icon-health.png')} alt="" />
             <p className="health-text">
               {row.name}: {row.currentHealth} / {row.maxHealth}
             </p>
