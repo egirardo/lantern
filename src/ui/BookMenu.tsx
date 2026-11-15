@@ -1,4 +1,10 @@
-import { useEffect, useId, useRef, type KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useId,
+  useRef,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
 import { AccountPanel } from './AccountPanel'
 import { BOOK_TABS, tabForKey, type BookTab } from './book-tabs'
 import { HowToPlay } from './HowToPlay'
@@ -42,13 +48,30 @@ export function BookMenu({ openTab, onSelectTab, onClose }: BookMenuProps) {
 
   const isOpen = openTab !== null
 
-  // Open the dialog when the parent picks a tab. In an effect, because
-  // showModal() needs the real DOM element, which only exists after React
-  // has rendered. The dialog's `open` check makes it safe to run twice
-  // (StrictMode runs effects twice in development).
+  // Open the dialog when the parent picks a tab, and close it when the parent
+  // sets openTab to null. In an effect, because showModal() and close() need
+  // the real DOM element, which only exists after React has rendered. The
+  // dialog's `open` check makes both safe to run twice (StrictMode runs
+  // effects twice in development): the second run finds the dialog already
+  // open, or already closed, and does nothing.
   useEffect(() => {
     const dialog = dialogRef.current
-    if (!dialog || !isOpen || dialog.open) return
+    if (!dialog) return
+
+    if (!isOpen) {
+      // The parent closed the book (the component's contract: the parent
+      // decides). Today App only sets null in onClose, after the dialog has
+      // closed, so dialog.open is already false here and nothing happens.
+      // If the parent ever closes it itself, dialog.close() fires `close`
+      // once, and handleClose runs as for Escape: onClose() sets null again,
+      // which React ignores because the state doesn't change (so no new
+      // render and no loop), and focus goes back to the opener once.
+      // close() sets dialog.open to false at once, so a second run of this
+      // effect can't close it twice.
+      if (dialog.open) dialog.close()
+      return
+    }
+    if (dialog.open) return
 
     // Remember the opener before showModal moves focus into the dialog.
     const active = document.activeElement
@@ -157,7 +180,13 @@ export function BookMenu({ openTab, onSelectTab, onClose }: BookMenuProps) {
           {/* One tabpanel, labelled by the selected tab. How to play has
               nothing focusable inside, so the panel itself takes focus
               (tabIndex 0) and Tab still reaches the text from the tabs; the
-              other pages start with their own controls. */}
+              other pages start with their own controls.
+
+              All three pages are rendered, stacked in the same spot, and
+              only the open one is shown (Nov 15). That keeps the book the
+              same height on every tab: the stack is as tall as its tallest
+              page (How to play), at every text size and window width,
+              without a height written in the CSS. */}
           <div
             role="tabpanel"
             id={panelId}
@@ -165,13 +194,42 @@ export function BookMenu({ openTab, onSelectTab, onClose }: BookMenuProps) {
             className="book-pages"
             tabIndex={openTab === 'help' ? 0 : undefined}
           >
-            {openTab === 'help' && <HowToPlay />}
-            {openTab === 'settings' && <SettingsForm />}
-            {openTab === 'account' && <AccountPage />}
+            <BookSpread isOpen={openTab === 'help'}>
+              <HowToPlay />
+            </BookSpread>
+            <BookSpread isOpen={openTab === 'settings'}>
+              <SettingsForm />
+            </BookSpread>
+            <BookSpread isOpen={openTab === 'account'}>
+              <AccountPage />
+            </BookSpread>
           </div>
         </div>
       )}
     </dialog>
+  )
+}
+
+// One tab's two pages (a "spread"). The ones that aren't open stay on the
+// page only to take up room:
+// - `inert` takes them out of the Tab order and hides them from screen
+//   readers, and nothing in them can be clicked. (React 19 accepts it as a
+//   boolean prop.)
+// - CSS (`.book-spread[inert]` in book.css) hides them with
+//   `visibility: hidden`, which keeps their height. `display: none` (or the
+//   `hidden` attribute) would remove their height too, and the book would
+//   change size again.
+function BookSpread({
+  isOpen,
+  children,
+}: {
+  isOpen: boolean
+  children: ReactNode
+}) {
+  return (
+    <div className="book-spread" inert={!isOpen}>
+      {children}
+    </div>
   )
 }
 

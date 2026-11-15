@@ -3,6 +3,7 @@ import {
   TEXTURES,
   TILESETS,
   SPRITES,
+  isSpriteName,
   type SpriteName,
 } from '../assets/manifest'
 import type { TiledMap } from '../rooms/tiled-schema'
@@ -68,16 +69,6 @@ const DARKNESS_TEXTURE = 'lantern-darkness'
 // show one wrongly.
 const LIGHT_CLEAR_RADIUS = LANTERN_RADIUS - 0.5
 const LIGHT_DARK_RADIUS = LANTERN_RADIUS + 0.5
-
-// Enemy and item types are plain strings in the store, but SPRITES only has
-// keys for the sprites in the manifest. This type guard checks at runtime
-// that the name exists, and tells TypeScript that `name` is a SpriteName
-// after the check.
-// Object.hasOwn instead of `name in SPRITES`, because `in` also finds names
-// every object inherits, like 'toString'.
-function isSpriteName(name: string): name is SpriteName {
-  return Object.hasOwn(SPRITES, name)
-}
 
 export class RoomScene extends Phaser.Scene {
   // The tilemap of the room on screen. Kept so it can be destroyed (with all

@@ -80,11 +80,3 @@ export function loadAtlas(): Promise<Atlas> {
   }
   return atlasPromise
 }
-
-// True if `name` is a sprite in the manifest. Item types are plain strings in
-// the store; an item's sprite has the same name as its type ('gold-key'), as
-// in the Phaser scene. Object.hasOwn instead of `in`, which also finds names
-// every object inherits, like 'toString'.
-export function isSpriteName(name: string): name is SpriteName {
-  return Object.hasOwn(SPRITES, name)
-}
