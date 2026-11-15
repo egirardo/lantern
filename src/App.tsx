@@ -93,6 +93,20 @@ function App() {
           </main>
         </>
       )}
+      {/* A link to the source code, under both screens (Nov 15). A
+          <footer> outside <main> is the page's "contentinfo" landmark, so a
+          screen reader user can jump to it. It's the last Tab stop on the
+          page, so it never gets in the way of playing. The link opens in the
+          same tab: a new tab would need a warning, and the game is saved
+          anyway. */}
+      <footer className="screen site-footer">
+        <p>
+          Lantern was created by Elsa Girardo.{' '}
+          <a href="https://github.com/egirardo/lantern">
+            Source code on GitHub
+          </a>
+        </p>
+      </footer>
       {/* Outside both screens, so it opens the same way from either. */}
       <BookMenu
         openTab={bookTab}
