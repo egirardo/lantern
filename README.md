@@ -1,6 +1,6 @@
 # Lantern
 
-Lantern is a turn-based pixel-art dungeon crawler for the browser, inspired by tabletop RPGs like Dungeons & Dragons. The dungeon is dark, and you only see what your lantern lights up. You fight monsters with dice and follow the adventure in a narrated log. You're locked in: find the key and the way out.
+Lantern is a turn-based pixel-art dungeon crawler for the browser, inspired by tabletop RPGs like Dungeons & Dragons. The dungeon is dark, and you only see what your lantern lights up. You fight monsters with dice and follow the adventure in a narrated log. You're locked in: it's up to you to find your way out.
 
 Lantern is built to be fully playable with the keyboard only and with a screen reader. The target is **WCAG 2.2 AA**. Everything that happens on the canvas is also written as text, so a player who can't see the map gets the same game.
 
