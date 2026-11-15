@@ -238,7 +238,7 @@
   text-align: center;
 }
 
-/* Health: your line now, the enemies' lines in a fight later. */
+/* Health: your line, and the enemies' lines under it during a fight. */
 .health {
   flex: 1 1 15rem;
   min-width: min(15rem, 100%);
@@ -256,7 +256,8 @@
   padding: 0 0.5rem;
 }
 
-/* The icon, "You: 8 / 12" and the bar on one line, centred like the
+/* "You: 8 / 12" and the bar on one line (no icon since Nov 15: the pack's
+   "health" icon is a potion bottle, which didn't fit), centred like the
    Inventory and Goal content; the bar wraps under the text in a narrow
    panel. */
 .health-list li {

@@ -100,12 +100,14 @@ describe('beginCombat', () => {
       'polite',
       'polite',
       'polite',
+      'polite',
     ])
     expect(texts(step)).toEqual([
       'The skeleton attacks you! A fight begins.',
       'The skeleton rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
       'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
       "It's your turn.",
     ])
   })
@@ -195,7 +197,9 @@ describe('playerAttackStep', () => {
     expect(step.combat?.turnIndex).toBe(0) // your turn again
     expect(texts(step)).toEqual([
       'You attack the skeleton: you roll 15 + 3 = 18 against AC 12 and hit for 2 damage.',
+      'The skeleton has 3 out of 5 health.',
       'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
       "It's your turn.",
     ])
   })
@@ -482,6 +486,7 @@ describe('the mimic: unmasking and the carried key (Nov 9)', () => {
       'The mimic rolls initiative: 20 + 0 = 20.',
       'You roll initiative: 2 + 0 = 2.',
       'The mimic attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
       "It's your turn.",
     ])
   })
@@ -579,5 +584,211 @@ describe('the mimic: unmasking and the carried key (Nov 9)', () => {
     const step = playerAttackStep(combat, [skeleton], 'e1', dice)
 
     expect(step.loot).toEqual([])
+  })
+})
+
+describe('health lines after a hit (decided Nov 12–15)', () => {
+  // A fight against one skeleton (5 of 5 health), on the player's turn.
+  function fightWithSkeleton(heroHealth = 12) {
+    const skeleton = makeSkeleton()
+    const combat = makeState({
+      player: makeHero(heroHealth),
+      enemies: [{ id: 'e1', combatant: skeleton.combatant }],
+      turnOrder: [PLAYER_ID, 'e1'],
+    })
+    return { skeleton, combat }
+  }
+
+  // A fight against a skeleton and an orc (both 5 of 5), on the player's turn.
+  function fightWithTwo() {
+    const skeleton = makeSkeleton()
+    const orc = makeStoreEnemy('e2', {
+      type: 'orc',
+      position: { x: 5, y: 3 },
+      combatant: makeCombatant({ name: 'orc' }),
+    })
+    const combat = makeState({
+      player: makeHero(),
+      enemies: [
+        { id: 'e1', combatant: skeleton.combatant },
+        { id: 'e2', combatant: orc.combatant },
+      ],
+      turnOrder: [PLAYER_ID, 'e1', 'e2'],
+    })
+    return { enemies: [skeleton, orc], combat }
+  }
+
+  it("says the player's health, politely, right after a hit on the player", () => {
+    const { skeleton, combat } = fightWithSkeleton()
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(15, 20), // the skeleton's attack hits
+      rollOf(4, 6), // 4 damage: you 12 → 8
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
+      "It's your turn.",
+    ])
+    expect(urgencies(step)).toEqual(['polite', 'polite', 'polite', 'polite'])
+  })
+
+  it('says no health after a miss, by the player or the enemy', () => {
+    const { skeleton, combat } = fightWithSkeleton()
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(2, 20), // the skeleton's attack misses
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 2 + 3 = 5 against AC 12 and misses.',
+      "It's your turn.",
+    ])
+  })
+
+  it('says no health on the hit that kills the player', () => {
+    const { skeleton, combat } = fightWithSkeleton(5)
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(15, 20), // the skeleton's attack hits
+      rollOf(5, 6), // 5 damage: you 5 → 0
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 5 damage.',
+      'You have fallen.',
+      'Defeat. Game over. Press Tab to reach Play again.',
+    ])
+  })
+
+  it('says no plain health line on the hit that sets off the low-health warning', () => {
+    const { skeleton, combat } = fightWithSkeleton(6)
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(15, 20), // the skeleton's attack hits
+      rollOf(4, 6), // 4 damage: you 6 → 2, crossing the threshold of 3
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    // The warning already says the total, so it isn't said twice.
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'Low health warning: you have 2 out of 12 health remaining.',
+      "It's your turn.",
+    ])
+  })
+
+  it('counts down hit by hit when two enemies hit the player in one step', () => {
+    const { enemies, combat } = fightWithTwo()
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(15, 20), // the skeleton's attack hits
+      rollOf(4, 6), // 4 damage: you 12 → 8
+      rollOf(15, 20), // the orc's attack hits
+      rollOf(3, 6), // 3 damage: you 8 → 5
+    )
+
+    const step = playerAttackStep(combat, enemies, 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
+      'The orc attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 3 damage.',
+      'You have 5 out of 12 health.',
+      "It's your turn.",
+    ])
+  })
+
+  it('says the earlier hit but not the one that sets off the warning', () => {
+    const { enemies, combat } = fightWithTwo()
+    const dice = sequence(
+      rollOf(2, 20), // your attack misses
+      rollOf(15, 20), // the skeleton's attack hits
+      rollOf(4, 6), // 4 damage: you 12 → 8
+      rollOf(15, 20), // the orc's attack hits
+      rollOf(6, 6), // 6 damage: you 8 → 2, crossing the threshold of 3
+    )
+
+    const step = playerAttackStep(combat, enemies, 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 2 + 3 = 5 against AC 12 and miss.',
+      'The skeleton attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 4 damage.',
+      'You have 8 out of 12 health.',
+      'The orc attacks you: it rolls 15 + 3 = 18 against AC 12 and hits for 6 damage.',
+      'Low health warning: you have 2 out of 12 health remaining.',
+      "It's your turn.",
+    ])
+  })
+
+  it("says the enemy's health, politely, right after the player hits it", () => {
+    const { skeleton, combat } = fightWithSkeleton()
+    const dice = sequence(
+      rollOf(15, 20), // your attack hits
+      rollOf(2, 6), // 2 damage: skeleton 5 → 3
+      rollOf(2, 20), // the skeleton's attack misses
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 15 + 3 = 18 against AC 12 and hit for 2 damage.',
+      'The skeleton has 3 out of 5 health.',
+      'The skeleton attacks you: it rolls 2 + 3 = 5 against AC 12 and misses.',
+      "It's your turn.",
+    ])
+    expect(urgencies(step)).toEqual(['polite', 'polite', 'polite', 'polite'])
+  })
+
+  it('says no enemy health on the hit that defeats it', () => {
+    const { skeleton, combat } = fightWithSkeleton()
+    const dice = sequence(
+      rollOf(15, 20), // your attack hits
+      rollOf(6, 6), // 6 damage: skeleton 5 → 0, defeated
+    )
+
+    const step = playerAttackStep(combat, [skeleton], 'e1', dice)
+
+    expect(texts(step)).toEqual([
+      'You attack the skeleton: you roll 15 + 3 = 18 against AC 12 and hit for 6 damage.',
+      'The skeleton is defeated.',
+      'Victory. No enemies are left standing.',
+      'You recover 0 health. You have 12 out of 12 health.',
+    ])
+  })
+
+  it('calls the mimic by its real name once it is unmasked', () => {
+    const mimic = makeStoreEnemy('m1', {
+      type: 'mimic',
+      position: { x: 6, y: 5 },
+      combatant: makeCombatant({ name: 'mimic' }),
+    })
+    const combat = makeState({
+      player: makeHero(),
+      enemies: [{ id: 'm1', combatant: mimic.combatant }],
+      turnOrder: [PLAYER_ID, 'm1'],
+    })
+    const dice = sequence(
+      rollOf(15, 20), // your attack hits
+      rollOf(1, 6), // 1 damage: mimic 5 → 4
+      rollOf(2, 20), // the mimic's attack misses
+    )
+
+    const step = playerAttackStep(combat, [mimic], 'm1', dice)
+
+    expect(texts(step)[1]).toBe('The mimic has 4 out of 5 health.')
   })
 })

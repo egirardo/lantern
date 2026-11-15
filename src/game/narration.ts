@@ -2,6 +2,7 @@ import { type Direction, type MoveResult, type BlockedReason } from './movement'
 import {
   PLAYER_ID,
   type Combatant,
+  type CombatEntry,
   type CombatEvent,
   type CombatState,
 } from './combat'
@@ -30,11 +31,17 @@ function getName(state: CombatState, id: string): string {
   if (isPlayer(id)) {
     return state.player.name
   }
+  return getEnemy(state, id).combatant.name
+}
+
+// An enemy's entry in the fight. Defeated enemies stay in the state, so this
+// also finds them. An unknown id is a bug in the caller, so it throws.
+function getEnemy(state: CombatState, id: string): CombatEntry {
   const enemy = state.enemies.find((e) => e.id === id)
   if (!enemy) {
     throw new Error(`No combatant with id ${id}`)
   }
-  return enemy.combatant.name
+  return enemy
 }
 
 function describeRoll(natural: number, total: number): string {
@@ -160,6 +167,27 @@ export function describeLowHealth(player: Combatant): string {
   return `Low health warning: you have ${player.currentHealth} out of ${player.maxHealth} health remaining.`
 }
 
+// The polite line after a hit that leaves the target standing (decided
+// Nov 12–13): "You have 8 out of 12 health." or "The demon has 6 out of 10
+// health." It comes right after the attack line, so a screen reader user
+// hears the total without leaving the log for the Health panel.
+// `currentHealth` is the health right after this hit, passed in because a
+// step can have several hits and `state` only holds the health at the end.
+// The max comes from `state`, which never changes it. Same subject() name as
+// the attack line, so the mimic is "The mimic" here too.
+// When to say it (not after a miss, a killing blow or a low-health warning)
+// is decided in combat-flow.ts; this function only holds the words.
+export function describeHealth(
+  state: CombatState,
+  id: string,
+  currentHealth: number,
+): string {
+  const maxHealth = isPlayer(id)
+    ? state.player.maxHealth
+    : getEnemy(state, id).combatant.maxHealth
+  return `${subject(state, id)} ${verb(id, 'have', 'has')} ${currentHealth} out of ${maxHealth} health.`
+}
+
 // The polite line after a won fight. `player` is the player before healing,
 // and `amountRecovered` is what recoverHealth actually added after the cap
 // (0 to RECOVERY_AMOUNT), so the sentence never claims more than happened.
@@ -207,6 +235,39 @@ export function getAttackOptions(combat: CombatState): AttackOption[] {
       .map((entry) => ({
         id: entry.id,
         label: `Attack ${object(combat, entry.id)}`,
+      }))
+  )
+}
+
+// One enemy row in the Health panel: "Demon: 6 / 10".
+export type EnemyHealthRow = {
+  id: string
+  name: string
+  currentHealth: number
+  maxHealth: number
+}
+
+// The enemy rows for the Health panel (decided Nov 15), one per enemy in the
+// fight that is still standing, in the order of `combat.enemies` like the
+// attack buttons, so the rows don't move around between turns. No fight
+// (null) means no rows, and the panel shows only the player.
+// The name is the one the log uses, capitalised because it starts the row:
+// "Demon", "Skeleton 1", and "Mimic" once the mimic is unmasked.
+// Here and not in HealthPanel.tsx, so it can be unit tested without a DOM.
+export function getEnemyHealthRows(
+  combat: CombatState | null,
+): EnemyHealthRow[] {
+  if (combat === null) return []
+  return (
+    combat.enemies
+      // The same "alive" rule as getAttackOptions: defeated enemies stay in
+      // the state with 0 health, but they're out of the fight.
+      .filter((entry) => entry.combatant.currentHealth > 0)
+      .map((entry) => ({
+        id: entry.id,
+        name: capitalise(getName(combat, entry.id)),
+        currentHealth: entry.combatant.currentHealth,
+        maxHealth: entry.combatant.maxHealth,
       }))
   )
 }

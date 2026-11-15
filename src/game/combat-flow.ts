@@ -1,6 +1,8 @@
 import {
   getCombatStatus,
+  PLAYER_ID,
   type Combatant,
+  type CombatEvent,
   type CombatState,
   type CombatUpdate,
 } from './combat'
@@ -16,6 +18,7 @@ import { crossedLowHealth } from './low-health'
 import {
   describeCombatEvent,
   describeCombatStart,
+  describeHealth,
   describeLoot,
   describeLowHealth,
   describeRecovery,
@@ -86,7 +89,9 @@ export function beginCombat(
 
   // One update for the whole step: the newest state, and the events of both
   // calls in the order they happened.
-  const step = finishStep(player, unmasked, {
+  // started.state is the fight before any attack, with everyone's health
+  // from before the step.
+  const step = finishStep(started.state, unmasked, {
     state: enemyTurns.state,
     events: [...started.events, ...enemyTurns.events],
   })
@@ -120,21 +125,24 @@ export function playerAttackStep(
       ? resolveEnemyTurns(attack.state, random)
       : { state: attack.state, events: [] }
 
-  // `combat.player` is the player before this step, for the low-health check.
-  return finishStep(combat.player, enemies, {
+  // `combat` is the fight before this step, for the low-health check and
+  // the health lines.
+  return finishStep(combat, enemies, {
     state: enemyTurns.state,
     events: [...attack.events, ...enemyTurns.events],
   })
 }
 
 // The cleanup after every combat step, shared by beginCombat and
-// playerAttackStep. `playerBefore` is the player from before the step, so
-// the low-health check can compare before and after.
+// playerAttackStep. `stateBefore` is the fight from before any attack in the
+// step, so the low-health check can compare the player before and after, and
+// the health lines can count down from the health everyone had.
 function finishStep(
-  playerBefore: Combatant,
+  stateBefore: CombatState,
   enemies: StoreEnemy[],
   update: CombatUpdate,
 ): CombatStep {
+  const playerBefore = stateBefore.player
   // 1. Copy health back to the store's player and enemies, and drop the dead.
   const synced = syncFromCombat(enemies, update.state)
 
@@ -148,11 +156,38 @@ function finishStep(
   //    a list, and flatMap joins the lists into one.
   //    The item is looked up in `enemies`, the list from before this step,
   //    because the defeated enemy is gone from the synced list.
+  //    A hit that leaves its target standing also gets a health line right
+  //    after it (decided Nov 12–13): "You have 8 out of 12 health." or "The
+  //    demon has 6 out of 10 health." See healthAfterHits below for the
+  //    numbers and the exceptions.
+  const healthLines = healthAfterHits(stateBefore, update.events)
+  const lowHealthWarning = crossedLowHealth(playerBefore, synced.player)
+  const lastHitOnPlayer = update.events.findLastIndex(
+    (event) =>
+      event.type === 'attack' &&
+      event.targetId === PLAYER_ID &&
+      event.result.hit,
+  )
+
   const loot: string[] = []
-  const lines = update.events.flatMap((event): LogLine[] => {
+  const lines = update.events.flatMap((event, index): LogLine[] => {
     const line: LogLine = {
       text: describeCombatEvent(update.state, event),
       urgency: 'polite',
+    }
+    if (event.type === 'attack') {
+      const health = healthLines.get(index)
+      // The low-health warning at the end of the step already says the
+      // player's total after their last hit ("…you have 2 out of 12 health
+      // remaining."), so that hit gets no plain line: it would say the same
+      // number twice in a row.
+      const saidByWarning = lowHealthWarning && index === lastHitOnPlayer
+      if (health === undefined || saidByWarning) return [line]
+      const healthLine: LogLine = {
+        text: describeHealth(update.state, event.targetId, health),
+        urgency: 'polite',
+      }
+      return [line, healthLine]
     }
     if (event.type !== 'defeated') return [line]
     const carried = enemies.find((e) => e.id === event.combatantId)?.carries
@@ -172,7 +207,7 @@ function finishStep(
   // 3. The low-health warning comes after everything that happened in this
   //    step. `lines` is a new array made by map above, so pushing to it
   //    doesn't change anything that was passed in.
-  if (crossedLowHealth(playerBefore, synced.player)) {
+  if (lowHealthWarning) {
     lines.push({ text: describeLowHealth(synced.player), urgency: 'assertive' })
   }
 
@@ -205,4 +240,39 @@ function finishStep(
   const combat = status === 'ongoing' ? update.state : null
 
   return { player, enemies: synced.enemies, combat, lines, loot }
+}
+
+// The target's health right after each hit in `events`, keyed by the hit's
+// index in the list, for the health lines in finishStep. Only hits that leave
+// the target standing are in the map:
+// - A miss changes nothing, so it gets no line.
+// - A killing blow gets none either: "You have fallen." or "The demon is
+//   defeated." comes right after it and says it better than "0 out of 10".
+// The events only say how much damage each hit did, and the state after the
+// step only has the final health, so this counts down from the health in
+// `stateBefore`, one hit at a time. A step can have several hits (two enemies
+// attacking you), and each line must say the health at that moment.
+function healthAfterHits(
+  stateBefore: CombatState,
+  events: CombatEvent[],
+): Map<number, number> {
+  // A Map from combatant id to health, which this function updates as it
+  // goes. It's a new Map, so `stateBefore` itself never changes.
+  const health = new Map<string, number>([
+    [PLAYER_ID, stateBefore.player.currentHealth],
+    ...stateBefore.enemies.map((entry): [string, number] => [
+      entry.id,
+      entry.combatant.currentHealth,
+    ]),
+  ])
+  const afterHit = new Map<number, number>()
+  events.forEach((event, index) => {
+    if (event.type !== 'attack' || !event.result.hit) return
+    // The same rule as applyDamage in combat.ts: health never goes below 0.
+    const before = health.get(event.targetId) ?? 0
+    const after = Math.max(0, before - event.result.damage)
+    health.set(event.targetId, after)
+    if (after > 0) afterHit.set(index, after)
+  })
+  return afterHit
 }

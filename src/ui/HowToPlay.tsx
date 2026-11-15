@@ -39,8 +39,9 @@ export function HowToPlay() {
         </p>
         <p>
           You and the enemies take turns, and dice decide every hit. The log
-          tells you each roll and the damage. Your health is shown in the Health
-          panel.
+          tells you each roll and the damage, and how much health is left after
+          each hit. The Health panel shows your health, and during a fight the
+          enemies’ health too.
         </p>
         {/* The log writes "AC" to keep the attack lines short (Nov 15), so
             this is where the abbreviation is explained. The rule is the one
