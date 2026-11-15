@@ -2,7 +2,7 @@
    stacked (with a horizontal divider) when the window is narrow. */
 
 /* The start screen's <main>: as tall as the window (minus the body's 1rem
-   padding at the top and bottom), with the panel centred in it vertically
+   padding at the top and bottom), with the panel centered in it vertically
    (decided Nov 13). min-height, not height: in a short window, or with
    large text, the page simply grows and scrolls. 100vh first for older
    browsers; 100dvh follows the visible window when a mobile browser's bars

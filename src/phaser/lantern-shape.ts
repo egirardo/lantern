@@ -24,9 +24,9 @@ export function litOffsets(radius: number): Position[] {
   const grid: Grid = Array.from({ length: size }, () =>
     Array.from({ length: size }, () => 'floor' as const),
   )
-  const centre = { x: reach, y: reach }
-  return getVisibleTiles(grid, centre, radius).map((tile) => ({
-    x: tile.x - centre.x,
-    y: tile.y - centre.y,
+  const center = { x: reach, y: reach }
+  return getVisibleTiles(grid, center, radius).map((tile) => ({
+    x: tile.x - center.x,
+    y: tile.y - center.y,
   }))
 }

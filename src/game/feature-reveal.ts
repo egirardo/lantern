@@ -30,7 +30,7 @@ export type FeaturePiece = {
 // "is this name in it?".
 const ONE_TILE_PER_PIECE = new Set(['crate'])
 
-// The four straight neighbours (no diagonals): two tiles only belong to the
+// The four straight neighbors (no diagonals): two tiles only belong to the
 // same piece if they share an edge.
 const NEIGHBOUR_OFFSETS: Position[] = [
   { x: 0, y: -1 },
@@ -39,13 +39,13 @@ const NEIGHBOUR_OFFSETS: Position[] = [
   { x: -1, y: 0 },
 ]
 
-// Groups a room's features into pieces: tiles that touch (4-neighbour) and
+// Groups a room's features into pieces: tiles that touch (4-neighbor) and
 // have the same name are one piece, except for the names in
 // ONE_TILE_PER_PIECE. The store calls it once per step with the room's
 // features; a room has at most 120 cells, so that costs nothing.
 //
 // How it works (a "flood fill"): take the first feature not yet in a piece,
-// start a new piece with it, then keep adding same-name neighbours of the
+// start a new piece with it, then keep adding same-name neighbors of the
 // piece's tiles until none are left. Repeat until every feature is in a
 // piece. The order of the result follows the features, so the same room
 // always gives the same pieces and keys.
@@ -70,15 +70,15 @@ export function groupFeaturePieces(features: Feature[]): FeaturePiece[] {
         if (tile === undefined) continue
         for (const offset of NEIGHBOUR_OFFSETS) {
           const next = { x: tile.x + offset.x, y: tile.y + offset.y }
-          const neighbour = features.find(
+          const neighbor = features.find(
             (feature) =>
               !used.has(feature) &&
               feature.name === start.name &&
               samePosition(feature.position, next),
           )
-          if (neighbour) {
-            used.add(neighbour)
-            tiles.push(neighbour.position)
+          if (neighbor) {
+            used.add(neighbor)
+            tiles.push(neighbor.position)
           }
         }
       }

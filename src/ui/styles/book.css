@@ -45,7 +45,7 @@
   --focus-ring: var(--ink);
   --error: #8b1e2d;
   /* The pages are light, so native controls (the checkboxes, the select
-     menus) use their light look here: the dark one is a dark grey box that
+     menus) use their light look here: the dark one is a dark gray box that
      looks out of place on parchment. */
   color-scheme: light;
 }
@@ -146,7 +146,7 @@
   height: 1.25rem;
   margin: 0;
   accent-color: var(--plum);
-  /* A thin ring in the text colour around the box. The browser's own grey
+  /* A thin ring in the text color around the box. The browser's own gray
      border is only 3.0:1 on parchment, right at the WCAG 1.4.11 minimum;
      the ring makes the box clear (10:1). A box-shadow, not an outline, so
      the focus ring (an outline) is left alone. */

@@ -9,7 +9,7 @@
    - The book's tabs as text buttons.
    - A yellow focus ring everywhere (19.6:1 on black). */
 
-/* The colour tokens swapped for black and white, so every rule that uses
+/* The color tokens swapped for black and white, so every rule that uses
    them (borders, text) follows without its own override. */
 [data-contrast='high'] {
   --parchment: #fff;
@@ -72,7 +72,7 @@
 [data-contrast='high'] .book-page + .book-page {
   border: 0;
   border-image: none;
-  /* No parchment fallback colour: the black .book-pages shows through.
+  /* No parchment fallback color: the black .book-pages shows through.
      (High contrast turns --parchment white, which would hide white text.) */
   background: none;
 }
@@ -83,7 +83,7 @@
   padding: 0;
   border: 0;
   border-image: none;
-  /* No parchment fallback colour here either (see .book-page above). */
+  /* No parchment fallback color here either (see .book-page above). */
   background: none;
   color: #fff;
 }
@@ -169,7 +169,7 @@
 }
 
 /* The open tab in reverse (black on white), and with a thicker border, so
-   it isn't marked by colour alone: aria-selected says it to screen readers. */
+   it isn't marked by color alone: aria-selected says it to screen readers. */
 [data-contrast='high'] .book-tab[aria-selected='true'] {
   border-width: 4px;
   background: #fff;

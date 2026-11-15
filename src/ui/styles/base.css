@@ -1,4 +1,4 @@
-/* Base: fonts, colours, text size, focus, and the pieces every screen uses
+/* Base: fonts, colors, text size, focus, and the pieces every screen uses
    (panels, banners, buttons). */
 
 @font-face {
@@ -17,7 +17,7 @@
   font-display: swap;
 }
 
-/* The pack's own colours (read from its pieces), as custom properties, so
+/* The pack's own colors (read from its pieces), as custom properties, so
    one change here changes them everywhere, and high contrast can swap them
    (high-contrast.css). */
 :root {
@@ -37,7 +37,7 @@
   --health: #a33b4a;
   --health-light: #c75a66;
 
-  /* The focus ring's colour on the current background. Yellow on the dark
+  /* The focus ring's color on the current background. Yellow on the dark
      backgrounds; panels with a light background set it to ink (below),
      because yellow on parchment would be almost invisible. */
   --focus-ring: var(--focus);
@@ -113,7 +113,7 @@ h3 {
   border: 0;
 }
 
-/* One column for each screen, centred. min() picks the smaller value: the
+/* One column for each screen, centered. min() picks the smaller value: the
    full width on a small window, at most 64rem on a big one. In rem, so it
    grows with the text size. */
 .screen {
@@ -168,10 +168,10 @@ h3 {
 .panel-light {
   border: 20px solid transparent;
   border-image: url('/assets/ui/panel-parchment.png') 10 fill / 20px stretch;
-  /* A plain parchment colour under the art (axe scan, Nov 13). If the
+  /* A plain parchment color under the art (axe scan, Nov 13). If the
      image doesn't load, the ink text would otherwise sit on the dark page
      at 1.14:1; with this it's still readable. When the art loads, its
-     `fill` covers the colour. padding-box keeps the colour inside the
+     `fill` covers the color. padding-box keeps the color inside the
      border, so it doesn't show through the art's rough edges. */
   background-color: var(--parchment);
   background-clip: padding-box;
@@ -209,7 +209,7 @@ h3 {
   /* The same parchment fallback as .panel-light, for the ink text, but
      only behind the text (content-box): the ribbon's bottom fold, in the
      bottom padding, has see-through notches, and with padding-box the
-     colour showed through them as a beige box (Nov 15). */
+     color showed through them as a beige box (Nov 15). */
   background-color: var(--parchment);
   background-clip: content-box;
   color: var(--ink);
@@ -221,7 +221,7 @@ h3 {
 
 /* ---------- Buttons ---------- */
 
-/* The keycap style from the pack, drawn in CSS with its colours: a plum
+/* The keycap style from the pack, drawn in CSS with its colors: a plum
    face with a darker lip at the bottom (an inset shadow). Targets are well
    above the 24×24 px minimum (WCAG 2.5.8). */
 .btn {

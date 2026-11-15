@@ -17,7 +17,7 @@ Raw material for the written WCAG 2.2 AA evaluation (Fri Nov 13). Collected duri
 
 - ✅ **Headings, landmarks and lists:** each panel is a `section` named by its `h2` (Inventory, Goal, Your turn, Adventure log), the game screen has `header` and `main` (#53).
 - 🔧 **Safari drops list semantics** on lists styled with `list-style: none`, so VoiceOver doesn't say "list, n items". Fixed with `role="list"` on the five lists (#53).
-- ✅ **Settings are native, labelled controls** (checkboxes and selects), and the book is a native `<dialog>` with the WAI-ARIA tabs pattern (#53).
+- ✅ **Settings are native, labeled controls** (checkboxes and selects), and the book is a native `<dialog>` with the WAI-ARIA tabs pattern (#53).
 
 - ✅ **The Actions panel is always shown** (decided Nov 12–13, renamed from Your turn). It holds what the player can do now: the attack buttons in a fight, the exit button next to an exit, otherwise a dashed box with "Nothing to do here.", so the visible heading always has content for a screen reader too (rejected: hiding the idle panel with `aria-hidden`, a visible heading screen readers can't reach). The heading stays "Actions" in every state, so it's always found under one name; the log says "It's your turn." in a fight. It's shown at every width (Nov 13; it was first hidden in one column), so the panel and its heading are in the same place at normal size and at 400% zoom. ⏳ Check with VoiceOver.
 - ✅ **Health has its own panel and heading** (Nov 13): "You: 8 / 12" as text, the bar `aria-hidden`, a list so enemies' lines can join it later (with their own log lines, rule 5).
@@ -30,12 +30,12 @@ Raw material for the written WCAG 2.2 AA evaluation (Fri Nov 13). Collected duri
 ### 1.4.1 Use of Color
 
 - ✅ **Health is text** ("You: 8 / 12"); the bar only repeats it and is `aria-hidden` (#53).
-- ✅ **Errors in the account form** keep their "Error:" prefix, never colour alone (#50, #53).
-- ✅ **High contrast lantern:** lit and dark tiles differ in brightness and a hard edge, not colour (#52).
+- ✅ **Errors in the account form** keep their "Error:" prefix, never color alone (#50, #53).
+- ✅ **High contrast lantern:** lit and dark tiles differ in brightness and a hard edge, not color (#52).
 
 ### 1.4.3 Contrast (Minimum)
 
-Ratios computed by Agent K with the WCAG formula from the pack's colours (#53):
+Ratios computed by Agent K with the WCAG formula from the pack's colors (#53):
 
 | Pair | Ratio |
 | --- | --- |
@@ -49,7 +49,7 @@ Ratios computed by Agent K with the WCAG formula from the pack's colours (#53):
 | Error `#8b1e2d` on parchment (book) | 5.97:1 |
 | High contrast: white, yellow `#ff0` and error on black | 21 / 19.56 / 14.39:1 |
 
-- 🔧 **Two mockup colours failed** and were changed by Agent K: the hover `#7a5960` gave 4.05:1 with parchment text (now `#5f434a`), and the error red `#ffb3ab` was 4.28:1 on plum (now `#ffc9c2`).
+- 🔧 **Two mockup colors failed** and were changed by Agent K: the hover `#7a5960` gave 4.05:1 with parchment text (now `#5f434a`), and the error red `#ffb3ab` was 4.28:1 on plum (now `#ffc9c2`).
 - ⚠️ **axe flags the text on parchment** (Nov 13 scan): a false positive, see "Still to test". But it points at a real gap: the parchment panels have no `background-color` under the art, so if the images didn't load, the ink text would be 1.14:1 on the page. A `background-color: var(--parchment)` fallback would fix that (and silence axe). Not done yet.
 - ⏳ Check a few pairs myself with a contrast checker for the evaluation.
 
@@ -101,7 +101,7 @@ Ratios computed by Agent K with the WCAG formula from the pack's colours (#53):
 
 - 🔧 **Start screen: focus is no longer moved at load** (changed Nov 12, replacing decision 9). Moving it to Start made VoiceOver read Start twice and skip the page title. Now a screen reader reads from the top (title, intro, buttons), and Start is the first Tab stop, then How to play, Settings and the account panel. ⏳ Retest in Safari and Chrome.
 - 🔧 **Safari's AutoFill took focus from Start** (found Nov 12). With a saved login, Safari moved focus to the email field as soon as the start screen loaded, even with VoiceOver off, so Enter no longer started the game. Fixed: on the start screen a guest sees Sign in and Create an account, and the form only appears when one is pressed (focus then goes to the form's heading). The book's Account tab shows the form at once. ⏳ Retest in Safari and Chrome.
-- 🔧 **VoiceOver read Start, the title and the intro twice** on load, in Safari and Chrome (Nov 12). The code only moved focus once (checked in headless Chrome), and waiting for the page's load event didn't help, so it's VoiceOver's own behaviour with focus moved at load. Fixed by not moving focus at load (above).
+- 🔧 **VoiceOver read Start, the title and the intro twice** on load, in Safari and Chrome (Nov 12). The code only moved focus once (checked in headless Chrome), and waiting for the page's load event didn't help, so it's VoiceOver's own behavior with focus moved at load. Fixed by not moving focus at load (above).
 - ✅ **Sign in and Create an account on the start screen** move focus to the form's heading, and Tab then reaches the email field with its label read (Chrome, Nov 12).
 - ⚠️ **In Safari, AutoFill moves focus from the heading into the email field** as soon as the form appears (Nov 12), so the heading is skipped and the label is read. Accepted: the player pressed the button, and they land in the first field ready to type. Turning `autocomplete` off would stop it, but would break password managers (3.3.8).
 - ✅ **Start moves focus to the map**, so the arrow keys work at once.
@@ -155,14 +155,14 @@ Ratios computed by Agent K with the WCAG formula from the pack's colours (#53):
 - ✅ **Brief log verbosity** leaves out decor lines but never enemies, exits, items or fights (#52, VoiceOver check Nov 12).
 - ✅ **Account status** ("Signed in", "Signed out") in a status region (#50).
 
-## Known issues (screen reader and browser behaviour)
+## Known issues (screen reader and browser behavior)
 
 - ⚠️ **VoiceOver's hints talk over the live regions** (found Nov 3). With hints on (the default), the long hint for the `role="application"` map and the button hint interrupt log lines. With hints off, everything is read as intended. **Kept `role="application"`** (decided Nov 4): NVDA and JAWS need it to pass the arrow keys to the game, and I can't test those. Recommendation for VoiceOver users: hints off.
 - 🔧 **The start screen's intro needed hints on** (Nov 12): it was read as the Start button's description (`aria-describedby`), which VoiceOver reads as a hint, a conflict with the hints-off advice above. Gone since focus isn't moved at load: the title and intro are read as normal text, and the `aria-describedby` was removed.
 - ⚠️ **Pressing quickly skips lines** (found Nov 3). Each action replaces the announcer's batch, and a key press cuts off speech. Accepted: the player chooses to skip, like skimming, and the whole log can be read afterwards.
 - ⚠️ **At the start of a fight, the button is read before the lines** (Nov 3). Accepted: nothing is lost, and the button names the enemy. Still the same on Nov 13 (#53 VoiceOver pass), now that the attack buttons are in the Actions panel, in both Safari and Chrome: the button first, then the fight's lines.
-- ⚠️ **Safari's AutoFill talks over "Signed out"** (Nov 11). In Chrome the message is read. It's in a status region and the panel shows the new state, so nothing is lost; Safari behaviour can't be changed from the page.
-- ⚠️ **VoiceOver's read-through stopped in the password field** on the start screen (Nov 12). During continuous reading, focus follows the VoiceOver cursor, and VoiceOver stops in a text field so the user can type. Normal VoiceOver behaviour. Since the fix above, the start screen has no form fields at load, so ⏳ check whether the read-through now goes to the end.
+- ⚠️ **Safari's AutoFill talks over "Signed out"** (Nov 11). In Chrome the message is read. It's in a status region and the panel shows the new state, so nothing is lost; Safari behavior can't be changed from the page.
+- ⚠️ **VoiceOver's read-through stopped in the password field** on the start screen (Nov 12). During continuous reading, focus follows the VoiceOver cursor, and VoiceOver stops in a text field so the user can type. Normal VoiceOver behavior. Since the fix above, the start screen has no form fields at load, so ⏳ check whether the read-through now goes to the end.
 - ✅ **After Start, only the map and the room description are read** (Nov 12). Intended: focus is on the map, and the rest of the page is reached with Tab or VO + arrows.
 - ✅ **Safari doesn't say "Dungeon map" after Start** (no longer seen) (#53 VoiceOver pass, Nov 13). Focus does move to the map: the yellow focus ring shows it, and the arrow keys move the player right away. VoiceOver reads the room description but not the map's name. In Chrome both are read, as intended. Likely cause (not confirmed): `App.tsx` moves focus to the map at the same moment the description goes into the live region, and Safari's VoiceOver lets the announcement replace the focus announcement. Nothing is lost for the player: the description says where they are, and the arrow keys work. Not fixed yet. **Nov 15:** on the deployed `dev` (a production build on Vercel), Safari read "Dungeon map" and then the description, after both Start and Continue, and every log line while walking. On the development server (`npm run dev`) the same day, Safari was unreliable: sometimes only the description, sometimes nothing for the whole game. The deployed Nov 13 version (#53) worked too, so the code didn't change; the development build did it (StrictMode runs effects twice, and hot reload swaps code into a running page). VoiceOver results only count from a production build.
 - ⚠️ **Chrome reads plain text as "clickable"** (#53 VoiceOver pass, Nov 13). In Chrome, VoiceOver says "clickable" after the text in the Health, Inventory and Goal panels, the Actions panel and the adventure log lines. Safari doesn't. None of these elements has a click handler. Likely cause (not confirmed): React puts its one click listener on the root element that holds the whole app, and Chrome reports text inside an element with a click listener as clickable, even when the listener is on an ancestor. The text is read correctly and nothing can be clicked there by mistake, so it's extra words, not lost information. React's event listening can't be changed without a big rewrite, so it stays a known issue.

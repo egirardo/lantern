@@ -22,7 +22,7 @@ import { SettingsForm } from './SettingsForm'
 // (dialog.show() would open it without any of this, as a non-modal dialog.)
 //
 // The tabs follow the WAI-ARIA tabs pattern: role="tablist" with role="tab"
-// buttons, and one role="tabpanel" labelled by the selected tab. Only the
+// buttons, and one role="tabpanel" labeled by the selected tab. Only the
 // selected tab is in the Tab order ("roving tabindex": tabIndex 0 on it, -1
 // on the others), and the arrow keys move between tabs (see book-tabs.ts).
 // So Tab goes tab → page, instead of stopping at every tab first.
@@ -177,7 +177,7 @@ export function BookMenu({ openTab, onSelectTab, onClose }: BookMenuProps) {
               })}
             </div>
           </div>
-          {/* One tabpanel, labelled by the selected tab. How to play has
+          {/* One tabpanel, labeled by the selected tab. How to play has
               nothing focusable inside, so the panel itself takes focus
               (tabIndex 0) and Tab still reaches the text from the tabs; the
               other pages start with their own controls.

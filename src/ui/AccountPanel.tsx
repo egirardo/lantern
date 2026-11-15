@@ -215,7 +215,7 @@ export function AccountPanel({
           // Email confirmation is required: no session yet. Switch to the
           // sign-in form and keep what they typed, so after clicking the link
           // they can sign in right here. Focus stays on the submit button:
-          // it's the same element, now labelled "Sign in", so nothing
+          // it's the same element, now labeled "Sign in", so nothing
           // disappears under the player.
           //
           // The message is true whether the account is new or not (found
@@ -324,7 +324,7 @@ export function AccountPanel({
 
   // The form error, shared by the signed-in view (a failed sign out) and the
   // form. tabIndex={-1} lets showErrors focus it without adding it to the
-  // Tab order. The visible "Error:" means the message doesn't rely on colour.
+  // Tab order. The visible "Error:" means the message doesn't rely on color.
   const formError = errors.form ? (
     <p
       ref={formErrorRef}
@@ -399,7 +399,7 @@ export function AccountPanel({
           {isSignIn ? 'Sign in' : 'Create an account'}
         </SubHeading>
         {/* A real <form> with a submit button: Enter in a field sends it,
-            and password managers recognise it as a login form.
+            and password managers recognize it as a login form.
             noValidate: see checkFields above. */}
         <form noValidate onSubmit={handleSubmit}>
           {formError}

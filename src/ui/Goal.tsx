@@ -10,8 +10,8 @@ import { ItemSprite } from './ItemSprite'
 //   so showing it would tell a sighted player more than a screen reader user
 //   (the same rule as the room descriptions: the canvas and the text tell
 //   the same story). It appears once the locked door has asked for a key.
-// - After that, the sprite is greyed out until the key is found, and in
-//   colour (with the step in bold) once it's carried. That's decoration; the
+// - After that, the sprite is grayed out until the key is found, and in
+//   color (with the step in bold) once it's carried. That's decoration; the
 //   sentence says the same in words.
 // - No live region: the log already announces the locked door and finding
 //   the key, and the goal changes at those moments. Like Inventory, it's a

@@ -19,7 +19,7 @@
   text-shadow: 2px 2px 0 var(--ink);
 }
 
-/* The hint sits just left of the buttons. The normal text colour, so its
+/* The hint sits just left of the buttons. The normal text color, so its
    contrast is the page's own. */
 .header-hint {
   margin: 0;
@@ -43,7 +43,7 @@
   align-items: stretch;
 }
 
-/* The map in a plain frame drawn in CSS with the pack's colours.
+/* The map in a plain frame drawn in CSS with the pack's colors.
    align-self: flex-start, so the frame hugs the canvas instead of
    stretching when the log is taller. min-width: 0 lets it shrink below the
    canvas's width in a narrow window (a flex item won't by default). */
@@ -51,7 +51,7 @@
   /* The end card's backdrop is placed over the canvas from here. */
   position: relative;
   align-self: flex-start;
-  /* Centred when the log wraps under it and the map is alone on its line
+  /* Centered when the log wraps under it and the map is alone on its line
      (found Nov 13). Beside the log there's no free space on the line (the
      log grows into it), so the auto margins are 0 and nothing moves. */
   margin-inline: auto;
@@ -225,14 +225,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  /* Centred in the space under the banner. */
+  /* Centered in the space under the banner. */
   margin: auto 0;
   padding: 0 0.25rem 0.25rem;
 }
 
 .actions-options .btn {
   width: 100%;
-  /* .btn is a flex box: justify-content centres its content, and
+  /* .btn is a flex box: justify-content centers its content, and
      text-align the lines if a long label wraps. */
   justify-content: center;
   text-align: center;
@@ -257,7 +257,7 @@
 }
 
 /* "You: 8 / 12" and the bar on one line (no icon since Nov 15: the pack's
-   "health" icon is a potion bottle, which didn't fit), centred like the
+   "health" icon is a potion bottle, which didn't fit), centered like the
    Inventory and Goal content; the bar wraps under the text in a narrow
    panel. */
 .health-list li {
@@ -315,7 +315,7 @@
 .goal-list li {
   display: flex;
   align-items: center;
-  /* Centred in the panel, like the banner above it. */
+  /* Centered in the panel, like the banner above it. */
   justify-content: center;
   text-align: center;
   gap: 0.625rem;
@@ -344,7 +344,7 @@
   text-align: center;
 }
 
-/* Before the key is found, its sprite is greyed out and faded. The text
+/* Before the key is found, its sprite is grayed out and faded. The text
    says the same in words ("Find the gold key."). In the first step
    ("Explore your surroundings.") there is no sprite at all (Goal.tsx). */
 .goal-todo .item-sprite {
@@ -359,7 +359,7 @@
 /* ---------- End card, over the map ---------- */
 
 /* A dark see-through backdrop over the canvas (inside the frame's 4px
-   padding), with the card centred on it. The scene under it is paused
+   padding), with the card centered on it. The scene under it is paused
    (RoomScene), so nothing moves behind the result. */
 .end-overlay {
   position: absolute;

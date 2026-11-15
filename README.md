@@ -51,7 +51,7 @@ Turns have no time limit: the game waits for you.
 
 - **Keyboard only.** Everything is done with the keyboard, and focus is always visible. Focus moves into the attack buttons when a fight starts and back to the map when it ends; closing the menu returns focus to the button that opened it.
 - **Every game event is text.** The adventure log writes everything that happens. New lines are announced through ARIA live regions: polite for normal events, assertive only for the low-health warning.
-- **Never colour alone.** Health, the goal and the inventory are said in words; colours and bars only repeat them.
+- **Never color alone.** Health, the goal and the inventory are said in words; colors and bars only repeat them.
 - **Settings** (the Settings button):
   - **Reduce motion** stops the animations. It starts on if your operating system asks for less motion (`prefers-reduced-motion`).
   - **High contrast** turns off the decorations and uses black and white, a system font in the log, and a hard-edged lantern light.

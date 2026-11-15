@@ -13,7 +13,7 @@ import { z } from 'zod'
 export const settingsSchema = z.strictObject({
   // Sprites stay still: no idle loops, walking frames or sliding.
   reducedMotion: z.boolean(),
-  // Stronger colours, the log in a system font, and a hard lantern edge.
+  // Stronger colors, the log in a system font, and a hard lantern edge.
   highContrast: z.boolean(),
   // Named steps instead of a number, so the dialog can show them as a radio
   // group. TEXT_SCALES says how big each one is.
