@@ -11,6 +11,15 @@ export function PhaserGame() {
       return
     }
 
+    // Enter uses the exit next to the player. The store decides whether
+    // there is one, and logs a line either way.
+    if (event.key === 'Enter') {
+      // Same as the arrow keys: a held Enter is one action, not many.
+      if (event.repeat) return
+      gameStore.getState().takeExit()
+      return
+    }
+
     const direction = keyToDirection(event.key)
     if (!direction) {
       return
@@ -37,17 +46,17 @@ export function PhaserGame() {
     }
   }, [])
 
+  // The label is only the name (decision 9, option B): the controls are
+  // explained in How to play, so they aren't repeated every time the map
+  // gets focus.
   return (
-    <>
-      <p>Use the arrow keys to move.</p>
-      <div
-        id="phaser-game"
-        ref={containerRef}
-        role="application"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        aria-label="Dungeon map. Use the arrow keys to move."
-      />
-    </>
+    <div
+      id="phaser-game"
+      ref={containerRef}
+      role="application"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-label="Dungeon map"
+    />
   )
 }

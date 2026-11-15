@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ZodError } from 'zod'
-import { loadRoom, checkPositions } from './load-room'
-import { validMap, validRoom } from './testing-map'
+import { loadRoom, checkPositions, checkFeatures } from './load-room'
+import { floorLayer, validMap, validRoom, wallsLayer } from './testing-map'
 import type { Grid } from '../game/movement'
 import type { Room } from './room-schema'
 
@@ -155,6 +155,34 @@ describe('checkPositions', () => {
     )
   })
 
+  it('accepts an item on a floor tile', () => {
+    const room: Room = {
+      ...validRoom,
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 2, y: 2 } }],
+    }
+    expect(() => checkPositions(grid, room)).not.toThrow()
+  })
+
+  it('fails when an item is inside a wall', () => {
+    const room: Room = {
+      ...validRoom,
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 2, y: 0 } }],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Item key-1 is inside a wall',
+    )
+  })
+
+  it('fails when an item is outside the grid', () => {
+    const room: Room = {
+      ...validRoom,
+      items: [{ id: 'key-1', type: 'gold-key', position: { x: 1, y: 3 } }],
+    }
+    expect(() => checkPositions(grid, room)).toThrow(
+      'Item key-1 is outside the grid',
+    )
+  })
+
   // The walkable-neighbor tests need grids where walls don't all touch the
   // floor, so they build their own. playerStart is always moved onto a floor
   // tile, otherwise the start check would throw before the exit rule runs.
@@ -222,6 +250,30 @@ describe('checkPositions', () => {
   )
 })
 
+describe('checkFeatures', () => {
+  it('accepts named decor on a blocked tile', () => {
+    const features = [{ position: { x: 1, y: 0 }, name: 'crate' }]
+    expect(() => checkFeatures(grid, features)).not.toThrow()
+  })
+
+  it('fails when named decor is on a walkable tile', () => {
+    const features = [{ position: { x: 0, y: 1 }, name: 'crate' }]
+    expect(() => checkFeatures(grid, features)).toThrow(
+      'Named decor "crate" at (0, 1) is on a walkable tile',
+    )
+  })
+
+  it('checks every feature, not just the first', () => {
+    const features = [
+      { position: { x: 1, y: 0 }, name: 'crate' },
+      { position: { x: 2, y: 2 }, name: 'pillar' },
+    ]
+    expect(() => checkFeatures(grid, features)).toThrow(
+      'Named decor "pillar" at (2, 2)',
+    )
+  })
+})
+
 describe('loadRoom', () => {
   // loadRoom gets both files as raw JSON (unknown), already fetched.
   // Fetching them is Phase E's job, so loadRoom stays pure and easy to test.
@@ -246,6 +298,36 @@ describe('loadRoom', () => {
     const mapWithoutLayers = { ...validMap, layers: [] }
     expect(() => loadRoom(validRoom, mapWithoutLayers)).toThrow(
       'Map is missing a floor layer',
+    )
+  })
+
+  // A decor layer between floor and walls, as in the real maps. Gid 1491 is
+  // the skull (local id 1490, not named), gid 1427 the crate (local id 1426,
+  // named in tile-names.json). Both on the floor tile at (0, 1).
+  function mapWithDecor(decorGid: number) {
+    return {
+      ...validMap,
+      layers: [
+        floorLayer,
+        {
+          ...floorLayer,
+          name: 'decor',
+          data: [0, 0, 0, decorGid, 0, 0, 0, 0, 0],
+        },
+        wallsLayer,
+      ],
+    }
+  }
+
+  it('loads a room with unnamed decor on the floor, and the tile stays walkable', () => {
+    const result = loadRoom(validRoom, mapWithDecor(1491))
+    expect(result.grid).toEqual(grid)
+    expect(result.features).toEqual([])
+  })
+
+  it('fails when named decor is on the decor layer, because it would not block', () => {
+    expect(() => loadRoom(validRoom, mapWithDecor(1427))).toThrow(
+      'Named decor "crate" at (0, 1) is on a walkable tile',
     )
   })
 

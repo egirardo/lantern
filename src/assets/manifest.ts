@@ -67,6 +67,30 @@ const ENEMY_ANIMATIONS = {
   run: { frames: [4, 5, 6, 7], frameRate: 10, repeat: -1 },
 } as const
 
+// Items lie still, so they have one frame and no movement: the "idle"
+// animation is that single frame, played once. It's only there because
+// every sprite in SPRITES has an idle animation (the scene and the manifest
+// test read frames from the animations); the scene draws items with this
+// frame and never plays it.
+const ITEM_ANIMATIONS = {
+  idle: { frames: [0], frameRate: 1, repeat: 0 },
+} as const
+
+// The mimic (decided Nov 9) has 3 frames on the sheet: 0 is a closed chest,
+// 1 has the mouth half open and 2 fully open. Before a fight it must look
+// like a plain, still chest, so its idle animation is the closed frame alone.
+// `unmasked` plays once a fight with it has started: the mouth snaps between
+// fully and half open. The scene picks it when the store says the enemy is
+// no longer disguised (see enemyAnimationName in sprite-motion.ts). With
+// reduced motion the scene shows its first frame only, so the loop starts on
+// the fully open frame (2): the clearest still picture of the unmasking.
+// 4 frames per second is 2 bites a second: a small sprite changing shape, not
+// a flash of light, so it stays far from the flashing limits in WCAG 2.3.1.
+const MIMIC_ANIMATIONS = {
+  idle: { frames: [0], frameRate: 1, repeat: 0 },
+  unmasked: { frames: [2, 1], frameRate: 4, repeat: -1 },
+} as const
+
 // Characters, enemies and items, by logical name (kebab-case).
 export const SPRITES = {
   'hero-girl': {
@@ -94,6 +118,36 @@ export const SPRITES = {
     framePrefix: 'orc-',
     animations: ENEMY_ANIMATIONS,
   },
+  // Local ids 1491–1493 on the sheet (row 23, x 304–336, y 368, 16×16).
+  mimic: {
+    texture: 'dungeon',
+    framePrefix: 'mimic-',
+    animations: MIMIC_ANIMATIONS,
+  },
+  // The gold key from the sheet's item area (16×16, at x 352, y 320). Its
+  // name in the log ("gold key") comes from items.json.
+  'gold-key': {
+    texture: 'dungeon',
+    framePrefix: 'gold-key-',
+    animations: ITEM_ANIMATIONS,
+  },
 } as const satisfies Record<string, SpriteDefinition>
 
 export type SpriteName = keyof typeof SPRITES
+
+// True if `name` is a sprite in the manifest. Enemy and item types are plain
+// strings in the store, but SPRITES only has keys for the sprites listed
+// above. This type guard checks at runtime that the name exists, and tells
+// TypeScript that `name` is a SpriteName after the check. An enemy's or
+// item's sprite has the same name as its type (e.g. 'gold-key'), rule 7.
+//
+// Object.hasOwn instead of `name in SPRITES`, because `in` also finds names
+// every object inherits, like 'toString'.
+//
+// It lives here, next to SPRITES, because both the Phaser scene and the
+// React UI need it, and neither may import from the other (Phaser only
+// renders, React is the accessible layer). The manifest is plain data with
+// no Phaser or React imports, so both can import from it.
+export function isSpriteName(name: string): name is SpriteName {
+  return Object.hasOwn(SPRITES, name)
+}

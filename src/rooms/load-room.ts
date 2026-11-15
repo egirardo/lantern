@@ -7,23 +7,30 @@ import {
 } from '../game/movement'
 import { tiledSchema, type TiledMap } from './tiled-schema'
 import { buildGrid } from './build-grid'
+import { buildFeatures } from './build-features'
+import type { Feature } from '../game/features'
 
 export function loadRoom(
   roomData: unknown,
   mapData: unknown,
-): { grid: Grid; room: Room; tiledMap: TiledMap } {
+): { grid: Grid; features: Feature[]; room: Room; tiledMap: TiledMap } {
   // Parse the JSON data
   const room: Room = roomSchema.parse(roomData)
   const tiledMap: TiledMap = tiledSchema.parse(mapData)
   const grid: Grid = buildGrid(tiledMap)
+  // The named tiles (barrels and so on), next to the grid, not in it
+  // (Phase K, decision 3).
+  const features: Feature[] = buildFeatures(tiledMap)
 
   // Check that the player start and exit positions are valid
   checkPositions(grid, room)
-  return { grid, room, tiledMap }
+  // Check that every named tile blocks (decided Nov 9)
+  checkFeatures(grid, features)
+  return { grid, features, room, tiledMap }
 }
 
 export function checkPositions(grid: Grid, room: Room) {
-  const { playerStart, enemies, exits } = room
+  const { playerStart, enemies, exits, items } = room
 
   // Check player start position
   if (!isInsideGrid(grid, playerStart)) {
@@ -56,6 +63,17 @@ export function checkPositions(grid: Grid, room: Room) {
     }
   }
 
+  // Check item positions. The player picks an item up by stepping on it, so
+  // it must lie on a tile inside the grid that isn't a wall.
+  for (const item of items) {
+    if (!isInsideGrid(grid, item.position)) {
+      throw new Error(`Item ${item.id} is outside the grid`)
+    }
+    if (isWall(grid, item.position)) {
+      throw new Error(`Item ${item.id} is inside a wall`)
+    }
+  }
+
   // Check exit tiles. Exits are doors or ladders the player interacts with,
   // so every tile must be blocked, not walkable.
   for (const exit of exits) {
@@ -73,6 +91,23 @@ export function checkPositions(grid: Grid, room: Room) {
       if (!hasWalkableNeighbor(grid, tile)) {
         throw new Error('Exit tile has no walkable neighbor')
       }
+    }
+  }
+}
+
+// Named decor (a crate, a pillar) must be on a blocked cell. buildFeatures
+// reads every layer, but only the walls layer blocks, so a crate painted on
+// the decor layer would be announced ("A crate appears…") while the player
+// walks straight through it. Failing here, with the position and the fix,
+// catches that in the room file instead of in a playtest. Walk-over decor
+// (skulls, rugs) has no name, so it never reaches this check.
+export function checkFeatures(grid: Grid, features: Feature[]) {
+  for (const feature of features) {
+    if (!isWall(grid, feature.position)) {
+      const { x, y } = feature.position
+      throw new Error(
+        `Named decor "${feature.name}" at (${x}, ${y}) is on a walkable tile. Named decor blocks the path, so it must be on the walls layer.`,
+      )
     }
   }
 }

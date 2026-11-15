@@ -21,8 +21,10 @@ export function AdventureLog() {
   return (
     // The wrapper only exists for the layout: the heading stays at the top,
     // and only the entries box below it scrolls.
-    <div className="adventure-log">
-      <h2 id="adventure-log">Adventure log</h2>
+    <div className="panel-light adventure-log">
+      <h2 id="adventure-log" className="banner">
+        Adventure log
+      </h2>
       {/* The visible log is a named region, not a live region: LiveAnnouncer
           reads new lines aloud, so nothing is announced twice. Screen reader
           users can still jump here ("Adventure log") and read back.
@@ -40,7 +42,11 @@ export function AdventureLog() {
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
       >
-        <ol>
+        {/* role="list" looks redundant, but Safari drops the list
+            semantics of a list styled with list-style: none (.plain-list),
+            and VoiceOver then doesn't say "list, n items". */}
+        {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+        <ol className="plain-list" role="list">
           {log.map((entry) => (
             <li key={entry.id}>{entry.text}</li>
           ))}

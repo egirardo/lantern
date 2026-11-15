@@ -1,3 +1,5 @@
+import type { Feature } from './features'
+
 export type Position = { x: number; y: number }
 
 export type Direction = 'north' | 'south' | 'east' | 'west'
@@ -6,11 +8,25 @@ export type Tile = 'floor' | 'wall'
 
 export type Grid = Tile[][]
 
-export type BlockedReason = 'wall' | 'edge' | 'enemy'
+// 'exit': the tile is part of an exit (a door or ladder). Exits are blocked
+// tiles like walls, but the log must say how to use them instead of "A wall
+// blocks your path".
+// 'feature': a blocked tile with a name from the tile names table, e.g. a
+// barrel, so the log can say "A barrel blocks your path." (Phase K step 3).
+export type BlockedReason = 'wall' | 'edge' | 'enemy' | 'exit' | 'feature'
 
+// A discriminated union: `moved` and `reason` tell the cases apart, and
+// TypeScript only allows `result.name` after checking
+// `result.reason === 'feature'`. Only that case has a name, so the other
+// blocked reasons can't carry a missing or wrong one.
 export type MoveResult =
   | { moved: true; newPosition: Position }
-  | { moved: false; newPosition: Position; reason: BlockedReason }
+  | {
+      moved: false
+      newPosition: Position
+      reason: Exclude<BlockedReason, 'feature'>
+    }
+  | { moved: false; newPosition: Position; reason: 'feature'; name: string }
 
 // Record requires an entry for every Direction, so adding a new direction
 // without an offset is a type error instead of a silent zero-step move.
@@ -21,6 +37,12 @@ export const DIRECTION_OFFSETS: Record<Direction, Position> = {
   west: { x: -1, y: 0 },
 }
 
+// The four directions as a list, in a fixed order, for code that tries every
+// direction in turn (e.g. looking for an exit next to the player). Written out
+// instead of Object.keys(DIRECTION_OFFSETS), because Object.keys returns
+// string[], not Direction[].
+export const DIRECTIONS: Direction[] = ['north', 'south', 'east', 'west']
+
 export function samePosition(a: Position, b: Position): boolean {
   return a.x === b.x && a.y === b.y
 }
@@ -30,6 +52,13 @@ export function movePlayer(
   direction: Direction,
   grid: Grid,
   enemyPositions: Position[] = [],
+  // Every tile of every exit in the room. A default of [] keeps the older
+  // calls (and tests) that don't care about exits working unchanged.
+  exitTiles: Position[] = [],
+  // The named tiles in the room. Like exitTiles, the default keeps the older
+  // calls working. Features never decide *whether* a tile blocks (the grid
+  // does); they only name a wall the player walks into.
+  features: Feature[] = [],
 ): MoveResult {
   // Look up how far one step in this direction moves, then add it to the current position
   const offset = DIRECTION_OFFSETS[direction]
@@ -52,8 +81,29 @@ export function movePlayer(
     return { moved: false, newPosition: playerPosition, reason: 'edge' }
   }
 
-  // Check if the new position is a wall
+  // Check if the new position is an exit. This must come before the wall
+  // check: exit tiles are always walls in the grid (load-room checks that),
+  // so the wall check would catch them first and give the wrong reason.
+  if (exitTiles.some((tile) => samePosition(tile, { x: newX, y: newY }))) {
+    return { moved: false, newPosition: playerPosition, reason: 'exit' }
+  }
+
+  // Check if the new position is a wall. If the wall has a name (a barrel,
+  // a table), the reason is 'feature' with that name instead. A named tile on
+  // a floor cell is never checked here, so it doesn't block: the grid alone
+  // decides what blocks (Phase K, decision 3).
   if (targetRow[newX] === 'wall') {
+    const feature = features.find((f) =>
+      samePosition(f.position, { x: newX, y: newY }),
+    )
+    if (feature) {
+      return {
+        moved: false,
+        newPosition: playerPosition,
+        reason: 'feature',
+        name: feature.name,
+      }
+    }
     return { moved: false, newPosition: playerPosition, reason: 'wall' }
   }
 

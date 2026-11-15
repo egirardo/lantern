@@ -1,10 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { SPRITES, TILESETS } from './manifest'
+import { SPRITES, TILESETS, isSpriteName } from './manifest'
 import dungeonAtlas from '../../public/assets/dungeon/sprites.json'
+import enemiesData from '../game/enemies.json'
+import itemsData from '../game/items.json'
 
 // Each texture's atlas, so the test can look up frame names per texture.
 const atlases = {
   dungeon: dungeonAtlas,
+}
+
+// The types (keys of enemies.json or items.json) that have no sprite of the
+// same name in the manifest. Game code looks a sprite up by the type's name
+// (rule 7: art by logical name), so a type without one would have nothing to
+// draw. Object.hasOwn instead of `in`, so names like 'toString' that every
+// object inherits don't count as sprites.
+function typesWithoutSprite(types: string[]): string[] {
+  return types.filter((type) => !Object.hasOwn(SPRITES, type))
 }
 
 describe('asset manifest', () => {
@@ -48,5 +59,41 @@ describe('asset manifest', () => {
     }
 
     expect(badTilesets).toEqual([])
+  })
+
+  // Catches an enemy added to enemies.json without art: it would fight and be
+  // narrated in the log, but be invisible on the canvas.
+  it('has a sprite for every enemy type', () => {
+    const enemyTypes = Object.keys(enemiesData)
+
+    // Comparing to an empty list makes the test output name the missing types.
+    expect(typesWithoutSprite(enemyTypes)).toEqual([])
+  })
+
+  // Catches an item added to items.json without art: it could be picked up
+  // and named in the log, but nobody could see it lying on the floor.
+  it('has a sprite for every item type', () => {
+    const itemTypes = Object.keys(itemsData)
+
+    expect(typesWithoutSprite(itemTypes)).toEqual([])
+  })
+})
+
+describe('isSpriteName', () => {
+  it('is true for a sprite in the manifest', () => {
+    expect(isSpriteName('gold-key')).toBe(true)
+    expect(isSpriteName('skeleton')).toBe(true)
+  })
+
+  it('is false for a name that has no sprite', () => {
+    expect(isSpriteName('health-potion')).toBe(false)
+    expect(isSpriteName('')).toBe(false)
+  })
+
+  // The reason for Object.hasOwn: `'toString' in SPRITES` is true, because
+  // every object inherits toString, but it isn't a sprite.
+  it('is false for names every object inherits', () => {
+    expect(isSpriteName('toString')).toBe(false)
+    expect(isSpriteName('constructor')).toBe(false)
   })
 })

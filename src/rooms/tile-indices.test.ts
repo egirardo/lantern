@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toTileIndices } from './tile-indices'
+import { toLocalId, toTileIndices } from './tile-indices'
 
 describe('toTileIndices', () => {
   it('splits the list into rows of width', () => {
@@ -58,5 +58,19 @@ describe('toTileIndices', () => {
     const width = 2
     const firstgid = 1
     expect(toTileIndices(data, width, firstgid)).toEqual([])
+  })
+})
+
+describe('toLocalId', () => {
+  it('returns the local id for a plain gid', () => {
+    expect(toLocalId(1100, 1)).toEqual(1099)
+  })
+
+  it('returns the local id for another firstgid', () => {
+    expect(toLocalId(15, 10)).toEqual(5)
+  })
+
+  it('returns the same local id for a flipped gid', () => {
+    expect(toLocalId(1100 | 0x80000000, 1)).toEqual(1099)
   })
 })

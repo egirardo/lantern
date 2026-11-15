@@ -125,10 +125,10 @@ The four settings from the Musts: reduced motion, high contrast, text size and l
 2. **A settings dialog in React.** Real form controls (checkbox, radio group or select), each with a visible label. Opening it moves focus into it, closing returns focus to where it was (same pattern as Phase J).
 3. **Apply them.**
    - *Text size:* a CSS variable on the root, in `rem`, so the browser's own text zoom still works.
-   - *High contrast:* a class or `data-` attribute on the root that swaps the colour variables. Check the lantern's lit and dark areas too.
+   - *High contrast:* a class or `data-` attribute on the root that swaps the color variables. Check the lantern's lit and dark areas too.
    - *Reduced motion:* Phaser reads it from the store and skips any animation (Phase K has none yet, but the player movement may).
    - *Log verbosity:* narration functions take the level and return fewer sentences at "brief" (e.g. skip the roll numbers, only say the result). Pure functions, so they can be tested.
-4. **Never by colour alone** applies to every new control.
+4. **Never by color alone** applies to every new control.
 
 **Pitfalls**
 

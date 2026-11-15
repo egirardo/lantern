@@ -21,3 +21,10 @@ export function recoverHealth(combatant: Combatant, amount: number): Combatant {
   // changed, which is what the "does not change its input" test checks.
   return { ...combatant, currentHealth }
 }
+
+// Returns a copy of `combatant` at full health. Used when the player goes
+// through an exit (decided Nov 3): adding maxHealth always reaches the cap,
+// so this reuses recoverHealth instead of a second healing rule.
+export function healFully(combatant: Combatant): Combatant {
+  return recoverHealth(combatant, combatant.maxHealth)
+}

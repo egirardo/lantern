@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeCombatant } from './test-helpers'
-import { recoverHealth } from './recovery'
+import { healFully, recoverHealth } from './recovery'
 
 describe('recoverHealth', () => {
   it('adds the amount to current health', () => {
@@ -63,5 +63,27 @@ describe('recoverHealth', () => {
     const healed = recoverHealth(player, player.maxHealth)
 
     expect(healed.currentHealth).toBe(12)
+  })
+})
+
+describe('healFully', () => {
+  it('heals a hurt combatant to max health', () => {
+    const player = makeCombatant({ currentHealth: 1, maxHealth: 12 })
+
+    expect(healFully(player).currentHealth).toBe(12)
+  })
+
+  it('keeps a combatant at full health at max health', () => {
+    const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
+
+    expect(healFully(player).currentHealth).toBe(12)
+  })
+
+  it('does not change its input', () => {
+    const player = makeCombatant({ currentHealth: 3, maxHealth: 12 })
+
+    healFully(player)
+
+    expect(player.currentHealth).toBe(3)
   })
 })

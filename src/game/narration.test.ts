@@ -7,9 +7,28 @@ import {
   describeRecovery,
   describeYourTurn,
   getAttackOptions,
+  describeReveal,
+  describeExitInFight,
+  describeNoExitNearby,
+  describeLocked,
+  describeUnlock,
+  describeGoThrough,
+  describeFullHealth,
+  describeEscape,
+  describeAlreadyEscaped,
+  describeExitReveal,
+  describeArrivalExit,
+  exitButtonLabel,
+  describeNextToExit,
+  describePickUp,
+  describeItemReveal,
+  describeLoot,
+  describeFeatureReveal,
+  describeHealth,
+  getEnemyHealthRows,
 } from './narration'
 import { PLAYER_ID, type CombatEvent, type CombatResult } from './combat'
-import { makeCombatant, makeState } from './test-helpers'
+import { makeCombatant, makeState, makeStoreEnemy } from './test-helpers'
 
 describe('describeMove', () => {
   it('describes a successful move', () => {
@@ -44,6 +63,58 @@ describe('describeMove', () => {
     )
     expect(result).toBe(
       'You cannot move to the south. An enemy blocks your path.',
+    )
+  })
+  it('describes walking into an exit: where it is and how to use it', () => {
+    const result = describeMove(
+      { moved: false, newPosition: { x: 1, y: 1 }, reason: 'exit' },
+      'north',
+    )
+    expect(result).toBe('An exit leads north. Press Enter to use it.')
+  })
+
+  it('describes a failed move into a feature with a name', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'barrel',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. A barrel blocks your path.',
+    )
+  })
+
+  it('describes a failed move into a feature with a name starting with a vowel', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'old-statue',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. An old statue blocks your path.',
+    )
+  })
+
+  it('describes a failed move into a feature with a name starting with a vowel and hyphen', () => {
+    const result = describeMove(
+      {
+        moved: false,
+        newPosition: { x: 1, y: 1 },
+        reason: 'feature',
+        name: 'ancient-altar',
+      },
+      'east',
+    )
+    expect(result).toBe(
+      'You cannot move to the east. An ancient altar blocks your path.',
     )
   })
 })
@@ -82,25 +153,25 @@ describe('describeCombatEvent', () => {
   describe('attack', () => {
     it('describes a hit by the player', () => {
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', hit))).toBe(
-        'You hit the skeleton for 3 damage (12 + 2 = 14 against armor class 10).',
+        'You attack the skeleton: you roll 12 + 2 = 14 against AC 10 and hit for 3 damage.',
       )
     })
 
     it('describes a hit by an enemy', () => {
       expect(describeCombatEvent(state, attack('e1', PLAYER_ID, hit))).toBe(
-        'The skeleton hits you for 3 damage (12 + 2 = 14 against armor class 10).',
+        'The skeleton attacks you: it rolls 12 + 2 = 14 against AC 10 and hits for 3 damage.',
       )
     })
 
     it('describes a miss by the player', () => {
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', miss))).toBe(
-        'You miss the skeleton (5 + 2 = 7 against armor class 10).',
+        'You attack the skeleton: you roll 5 + 2 = 7 against AC 10 and miss.',
       )
     })
 
     it('describes a miss by an enemy', () => {
       expect(describeCombatEvent(state, attack('e1', PLAYER_ID, miss))).toBe(
-        'The skeleton misses you (5 + 2 = 7 against armor class 10).',
+        'The skeleton attacks you: it rolls 5 + 2 = 7 against AC 10 and misses.',
       )
     })
 
@@ -162,13 +233,15 @@ describe('describeCombatEvent', () => {
       const negative: CombatResult = { ...miss, naturalRoll: 8, total: 7 }
       expect(
         describeCombatEvent(state, attack(PLAYER_ID, 'e1', negative)),
-      ).toBe('You miss the skeleton (8 - 1 = 7 against armor class 10).')
+      ).toBe(
+        'You attack the skeleton: you roll 8 - 1 = 7 against AC 10 and miss.',
+      )
     })
 
     it('shows a zero bonus with a plus sign', () => {
       const zero: CombatResult = { ...miss, naturalRoll: 8, total: 8 }
       expect(describeCombatEvent(state, attack(PLAYER_ID, 'e1', zero))).toBe(
-        'You miss the skeleton (8 + 0 = 8 against armor class 10).',
+        'You attack the skeleton: you roll 8 + 0 = 8 against AC 10 and miss.',
       )
     })
 
@@ -233,7 +306,7 @@ describe('describeCombatEvent', () => {
     it('describes a defeat', () => {
       expect(
         describeCombatEvent(state, { type: 'combat-ended', outcome: 'defeat' }),
-      ).toBe('Defeat. Game over. Reload the page to try again.')
+      ).toBe('Defeat. Game over. Press Tab to reach Play again.')
     })
   })
 })
@@ -282,6 +355,101 @@ describe('describeRecovery', () => {
 describe('describeYourTurn', () => {
   it('says it is your turn', () => {
     expect(describeYourTurn()).toBe("It's your turn.")
+  })
+})
+
+describe('describeHealth', () => {
+  const state = makeState({
+    player: makeCombatant({ name: 'Hero', currentHealth: 12, maxHealth: 12 }),
+    enemies: [
+      {
+        id: 'e1',
+        combatant: makeCombatant({
+          name: 'demon',
+          currentHealth: 10,
+          maxHealth: 10,
+        }),
+      },
+    ],
+  })
+
+  it('says the player\'s health as "You have …"', () => {
+    expect(describeHealth(state, PLAYER_ID, 8)).toBe(
+      'You have 8 out of 12 health.',
+    )
+  })
+
+  it("says an enemy's health with the same name as the attack line", () => {
+    expect(describeHealth(state, 'e1', 6)).toBe(
+      'The demon has 6 out of 10 health.',
+    )
+  })
+
+  it('uses the health it is given, not the one in the state', () => {
+    // The state says 10, but a step can have several hits, so the caller
+    // passes the health right after the hit.
+    expect(describeHealth(state, 'e1', 3)).toBe(
+      'The demon has 3 out of 10 health.',
+    )
+  })
+})
+
+describe('getEnemyHealthRows', () => {
+  it('returns no rows when there is no fight', () => {
+    expect(getEnemyHealthRows(null)).toEqual([])
+  })
+
+  it('returns one row per living enemy, capitalized, in the order of combat.enemies', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({
+            name: 'demon',
+            currentHealth: 6,
+            maxHealth: 10,
+          }),
+        },
+        {
+          id: 'm1',
+          combatant: makeCombatant({
+            name: 'mimic',
+            currentHealth: 5,
+            maxHealth: 5,
+          }),
+        },
+      ],
+    })
+    expect(getEnemyHealthRows(state)).toEqual([
+      { id: 'e1', name: 'Demon', currentHealth: 6, maxHealth: 10 },
+      { id: 'm1', name: 'Mimic', currentHealth: 5, maxHealth: 5 },
+    ])
+  })
+
+  it('keeps the numbers of numbered enemies, so two skeletons are told apart', () => {
+    const state = makeState({
+      enemies: [
+        { id: 'e1', combatant: makeCombatant({ name: 'skeleton 1' }) },
+        { id: 'e2', combatant: makeCombatant({ name: 'skeleton 2' }) },
+      ],
+    })
+    expect(getEnemyHealthRows(state).map((row) => row.name)).toEqual([
+      'Skeleton 1',
+      'Skeleton 2',
+    ])
+  })
+
+  it('leaves out defeated enemies', () => {
+    const state = makeState({
+      enemies: [
+        {
+          id: 'e1',
+          combatant: makeCombatant({ name: 'skeleton', currentHealth: 0 }),
+        },
+        { id: 'e2', combatant: makeCombatant({ name: 'orc' }) },
+      ],
+    })
+    expect(getEnemyHealthRows(state).map((row) => row.id)).toEqual(['e2'])
   })
 })
 
@@ -401,6 +569,305 @@ describe('describeCombatStart', () => {
     const state = makeState({ enemies: [] })
     expect(() => describeCombatStart(state)).toThrow(
       'A fight needs at least one enemy',
+    )
+  })
+})
+
+describe('describeReveal', () => {
+  // makeStoreEnemy defaults type and name to the same string, so each test
+  // sets them apart: the name must come from combatant.name.
+  function enemyNamed(name: string) {
+    return makeStoreEnemy('e1', {
+      type: 'skeleton',
+      combatant: makeCombatant({ name }),
+    })
+  }
+
+  it('uses "a" the first time an enemy is seen', () => {
+    expect(describeReveal(enemyNamed('skeleton'), 'west', false)).toBe(
+      'A skeleton appears to the west.',
+    )
+  })
+
+  it('uses "an" before a name that starts with a vowel', () => {
+    expect(describeReveal(enemyNamed('orc'), 'south-east', false)).toBe(
+      'An orc appears to the south-east.',
+    )
+  })
+
+  it('uses "the" when the enemy has been seen before', () => {
+    expect(describeReveal(enemyNamed('orc'), 'north', true)).toBe(
+      'The orc appears to the north.',
+    )
+  })
+
+  it('uses no article for a numbered name, the first time', () => {
+    expect(describeReveal(enemyNamed('skeleton 1'), 'north', false)).toBe(
+      'Skeleton 1 appears to the north.',
+    )
+  })
+
+  it('uses no article for a numbered name, when seen before', () => {
+    expect(describeReveal(enemyNamed('skeleton 12'), 'east', true)).toBe(
+      'Skeleton 12 appears to the east.',
+    )
+  })
+
+  it('uses the combatant name, not the type', () => {
+    expect(describeReveal(enemyNamed('demon'), 'west', false)).toBe(
+      'A demon appears to the west.',
+    )
+  })
+
+  describe('a disguised enemy (the mimic)', () => {
+    function mimic(disguise: string, name = 'mimic') {
+      return makeStoreEnemy('m1', {
+        type: 'mimic',
+        combatant: makeCombatant({ name }),
+        disguise,
+      })
+    }
+
+    it('is named by its disguise the first time', () => {
+      expect(describeReveal(mimic('chest'), 'south', false)).toBe(
+        'A chest appears to the south.',
+      )
+    })
+
+    it('uses "the" with its disguise when it comes back into the light', () => {
+      expect(describeReveal(mimic('chest'), 'south', true)).toBe(
+        'The chest appears to the south.',
+      )
+    })
+
+    it('keeps the article rules for the disguise ("an" before a vowel, none for a number)', () => {
+      expect(describeReveal(mimic('urn'), 'east', false)).toBe(
+        'An urn appears to the east.',
+      )
+      expect(describeReveal(mimic('chest 2', 'mimic 2'), 'east', false)).toBe(
+        'Chest 2 appears to the east.',
+      )
+    })
+  })
+})
+
+describe('describeCombatStart with a disguised enemy (the mimic)', () => {
+  const mimicEntry = { id: 'm1', combatant: makeCombatant({ name: 'mimic' }) }
+  const skeletonEntry = {
+    id: 'e1',
+    combatant: makeCombatant({ name: 'skeleton' }),
+  }
+
+  it('unmasks a mimic that fights alone', () => {
+    const state = makeState({ enemies: [mimicEntry] })
+    expect(describeCombatStart(state, [{ id: 'm1', disguise: 'chest' }])).toBe(
+      "The chest springs open. It's a mimic! A fight begins.",
+    )
+  })
+
+  it('unmasks the mimic first, then names every attacker by their real name', () => {
+    const state = makeState({ enemies: [mimicEntry, skeletonEntry] })
+    expect(describeCombatStart(state, [{ id: 'm1', disguise: 'chest' }])).toBe(
+      "The chest springs open. It's a mimic! The mimic and the skeleton attack you! A fight begins.",
+    )
+  })
+
+  it('uses "an" for a real name with a vowel, and no article for a number', () => {
+    const orcInDisguise = makeState({
+      enemies: [{ id: 'o1', combatant: makeCombatant({ name: 'orc' }) }],
+    })
+    expect(
+      describeCombatStart(orcInDisguise, [{ id: 'o1', disguise: 'chest' }]),
+    ).toBe("The chest springs open. It's an orc! A fight begins.")
+
+    const twoMimics = makeState({
+      enemies: [
+        { id: 'm1', combatant: makeCombatant({ name: 'mimic 1' }) },
+        { id: 'm2', combatant: makeCombatant({ name: 'mimic 2' }) },
+      ],
+    })
+    expect(
+      describeCombatStart(twoMimics, [
+        { id: 'm1', disguise: 'chest 1' },
+        { id: 'm2', disguise: 'chest 2' },
+      ]),
+    ).toBe(
+      "The chest 1 springs open. It's mimic 1! The chest 2 springs open. It's mimic 2! A fight begins.",
+    )
+  })
+})
+
+describe('describeLoot', () => {
+  it('says what the enemy drops and that the player picks it up', () => {
+    const state = makeState({
+      enemies: [{ id: 'm1', combatant: makeCombatant({ name: 'mimic' }) }],
+    })
+    expect(describeLoot(state, 'm1', 'gold key')).toBe(
+      'The mimic drops a gold key. You pick it up.',
+    )
+  })
+
+  it('uses "an" before an item name with a vowel', () => {
+    const state = makeState({
+      enemies: [{ id: 'o1', combatant: makeCombatant({ name: 'orc' }) }],
+    })
+    expect(describeLoot(state, 'o1', 'amulet')).toBe(
+      'The orc drops an amulet. You pick it up.',
+    )
+  })
+})
+
+describe('describeExitReveal', () => {
+  it('uses "An" for the first time an exit is seen', () => {
+    expect(describeExitReveal('north', false)).toBe(
+      'An exit appears to the north.',
+    )
+  })
+
+  it('uses "The" when the exit has been seen before', () => {
+    expect(describeExitReveal('north', true)).toBe(
+      'The exit appears to the north.',
+    )
+  })
+
+  it('works for a diagonal direction', () => {
+    expect(describeExitReveal('south-east', false)).toBe(
+      'An exit appears to the south-east.',
+    )
+  })
+})
+
+describe('exit lines', () => {
+  // The exact wording, so a changed line shows up in review.
+  it('has a line for each exit event', () => {
+    expect(describeExitInFight()).toBe("You can't leave during a fight.")
+    expect(describeNoExitNearby()).toBe('There is no exit next to you.')
+    expect(describeLocked()).toBe('The door is locked. You need a key.')
+    expect(describeUnlock('gold key')).toBe(
+      'You unlock the door with the gold key.',
+    )
+    expect(describeGoThrough('north')).toBe(
+      'You go through the exit to the north.',
+    )
+    expect(describeEscape()).toBe(
+      'Victory! You climb out of the dungeon. Press Tab to reach Play again.',
+    )
+    expect(describeAlreadyEscaped()).toBe(
+      'You have already escaped the dungeon.',
+    )
+  })
+
+  it('says the health total after the full heal', () => {
+    const player = makeCombatant({ currentHealth: 12, maxHealth: 12 })
+    expect(describeFullHealth(player)).toBe(
+      'You recover to full health. You have 12 out of 12 health.',
+    )
+  })
+})
+
+describe('describeArrivalExit', () => {
+  it('says the way back is to the south', () => {
+    expect(describeArrivalExit('south')).toBe('The way back is to the south.')
+  })
+
+  it('says the way back is to the north-east', () => {
+    expect(describeArrivalExit('north-east')).toBe(
+      'The way back is to the north-east.',
+    )
+  })
+})
+
+describe('exitButtonLabel', () => {
+  it('says "Go back to the previous room" when isWayBack is true', () => {
+    expect(exitButtonLabel(true, 'north')).toBe('Go back to the previous room')
+  })
+
+  it('says "Use the exit to the north" when isWayBack is false and direction is north', () => {
+    expect(exitButtonLabel(false, 'north')).toBe('Use the exit to the north')
+  })
+
+  it('says "Use the exit to the south-east" when isWayBack is false and direction is south-east', () => {
+    expect(exitButtonLabel(false, 'south-east')).toBe(
+      'Use the exit to the south-east',
+    )
+  })
+})
+
+describe('describeNextToExit', () => {
+  it('names the direction of an exit and the key to use it', () => {
+    expect(describeNextToExit(false, 'north')).toBe(
+      'You are next to the exit to the north. Press Enter to use it.',
+    )
+  })
+
+  it('calls the exit the player arrived through the way back', () => {
+    expect(describeNextToExit(true, 'south')).toBe(
+      'You are next to the way back, to the south. Press Enter to use it.',
+    )
+  })
+})
+
+describe('describePickUp', () => {
+  it('says what the player picks up, with "a"', () => {
+    expect(describePickUp('gold key')).toBe('You pick up a gold key.')
+  })
+
+  it('uses "an" before a name that starts with a vowel', () => {
+    expect(describePickUp('old amulet')).toBe('You pick up an old amulet.')
+  })
+})
+
+describe('describeItemReveal', () => {
+  it('uses "A" the first time an item is seen', () => {
+    expect(describeItemReveal('gold key', 'west', false)).toBe(
+      'A gold key lies to the west.',
+    )
+  })
+
+  it('uses "An" before a name that starts with a vowel', () => {
+    expect(describeItemReveal('old amulet', 'north-east', false)).toBe(
+      'An old amulet lies to the north-east.',
+    )
+  })
+
+  it('uses "The" when the item has been seen before', () => {
+    expect(describeItemReveal('gold key', 'south', true)).toBe(
+      'The gold key lies to the south.',
+    )
+  })
+})
+
+describe('describeFeatureReveal', () => {
+  it('uses "A" for one piece', () => {
+    expect(describeFeatureReveal('pillar', 1, 'north')).toBe(
+      'A pillar appears to the north.',
+    )
+  })
+
+  it('uses "An" before a name that starts with a vowel, with the hyphen as a space', () => {
+    expect(describeFeatureReveal('empty-chest', 1, 'south-west')).toBe(
+      'An empty chest appears to the south-west.',
+    )
+  })
+
+  it('uses the plural with no article for more than one piece', () => {
+    expect(describeFeatureReveal('crate', 2, 'east')).toBe(
+      'Crates appear to the east.',
+    )
+  })
+
+  // All five names in tile-names.json, one and several, so a new name with
+  // an odd article or plural shows up here first.
+  it.each([
+    ['pillar', 'A pillar appears', 'Pillars appear'],
+    ['crate', 'A crate appears', 'Crates appear'],
+    ['empty-chest', 'An empty chest appears', 'Empty chests appear'],
+    ['candlestick', 'A candlestick appears', 'Candlesticks appear'],
+    ['fountain', 'A fountain appears', 'Fountains appear'],
+  ])('words %s right in the singular and plural', (name, one, several) => {
+    expect(describeFeatureReveal(name, 1, 'west')).toBe(`${one} to the west.`)
+    expect(describeFeatureReveal(name, 3, 'west')).toBe(
+      `${several} to the west.`,
     )
   })
 })

@@ -30,3 +30,6 @@ docs/learning-notes.md
 .env
 .env.*
 !.env.example
+
+# Git worktrees made by Claude Code agents (each is a full checkout of another branch)
+.claude/worktrees/

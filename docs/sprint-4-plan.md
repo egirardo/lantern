@@ -39,13 +39,28 @@ Re-planned on **Mon Nov 2**, after Phase I was merged (PR #27). Sprint 3 ran ove
    **Rules for the agents:** they follow the architecture rules in `CLAUDE.md`, write unit tests for new helpers in `src/game/`, and the PR must pass test, lint and typecheck. Agents don't write focus code, and don't change log wording without asking. Agents don't install anything: if a dependency is needed, they stop, and I run the install. Each PR description has a "How it works" walkthrough, so I can explain and defend the code. Agents that touch the same files (`game-store.ts`, `room-scene.ts`) run one after the other, not at the same time.
 
 8. **The goal is a key, and the UI skin is cut (added Nov 4).** The player is locked in the dungeon and must find the way out. The final exit is **locked**, and the key for it lies in **a different room** from the exit. Because agents now take more of the work, I'm bringing back part of the inventory Should, in place of the UI skin. It's more useful for the thesis, because an inventory you can use with the keyboard is accessibility work, and the skin is cosmetic.
-   - **In:** items in the room file (schema and tests), an exit that needs a key (`requires: "<item id>"`), picking up an item by stepping on it, the inventory in the store, and a simple inventory list in React (a heading and a `<ul>`, with no focus moves). Every step has a log line: "You pick up a rusty key." "The door is locked. You need a key." "You unlock the door with the rusty key."
+   - **In:** items in the room file (schema and tests), an exit that needs a key (`requires: "<item id>"`), picking up an item by stepping on it, the inventory in the store, and a simple inventory list in React (a heading and a `<ul>`, with no focus moves). Every step has a log line: "You pick up a gold key." "The door is locked. You need a key." "You unlock the door with the gold key."
    - **The key is used automatically** at the locked exit, so there's no new menu action and the combat menu doesn't change.
    - **First stretch item (decided Nov 4): health potions looted from barrels and crates.** Only built if the reviews are on schedule on Wed Nov 11, by a new Agent F. Otherwise it goes in the report as future work. Design in "Stretch: potions in containers" below. Until then, healing stays as decided (+4 after a won fight, full health per room).
    - **Cut:** the UI skin agent (decision 6). The game works without it, and it was already first in line to cut. The Pixel Operator font stays.
    - **Who:** Agent C adds the item format and the locked exit to its exits work, so both are merged before the room spec on Sun Nov 8. A new **Agent E** builds picking up, the inventory in the store and the list, after Agent C (both change the store). Agent D (saves) starts after E, so the inventory is in the save.
    - **Room spec:** the agents place the key in room 2 and the locked final exit in room 3.
    - **The key is guarded (added Nov 4).** In room 2, the key lies where the player can only reach it by passing next to an enemy (an alcove or a dead-end corridor), so getting out means winning that fight. It's only a rule in the room spec, not new code: a fight already starts when the player steps next to an enemy, and enemies block movement. The spec's checklist says: "every path to the key passes a tile next to an enemy". An enemy that carries the key and drops it when it's defeated would need new code, so it goes in the report as a future improvement.
+
+9. **Supervision feedback (Nov 4, recorded Nov 5).** Two points from the supervisors:
+   - **VoiceOver repeats the map's controls.** Every time focus goes back to the map (after a fight, for example), VoiceOver reads the whole label "Dungeon map. Use the arrow keys to move." again, plus its own hint for `role="application"`. The supervisors asked me to look into options. **Decided Nov 5:**
+     - **With the start screen (option B, changed Nov 5):** the map's label becomes just "Dungeon map". The controls move to the "How to play" button on the start screen, so a player who needs them finds that button among the start screen's buttons. **Structure (Nov 5):** a heading with the game's title, then the buttons in a `<ul>`, with "How to play" right after Start. VoiceOver says "list, 3 items" when focus enters, so the player knows there's more to tab to. No `aria-describedby`: VoiceOver reads a description after a pause on every focus, so the controls would still repeat. Until the start screen exists, the label stays as it is. VoiceOver's own hint still can't be changed from the page.
+     - **In Phase L (option C):** the log verbosity setting also decides the map label. Verbose gives the label with the controls, brief gives "Dungeon map". The player chooses.
+     - **Rejected:** keeping it as it is with only "turn hints off" in the README (the supervisors pointed at exactly this), and removing `role="application"` (VoiceOver would take over the arrow keys, decided Nov 4).
+   - **Add a start screen and an end screen,** so the game feels whole. Partly planned already: game over exists, and victory and "How to play" are in Agent C's brief. New: a **start screen** (title, a short intro, "How to play", a Start button that gets focus, later also Continue and Log in), and **one end screen** for victory and game over with a **Play again** button. Play again needs a store reset action (a pure function with tests), instead of today's "Reload the page". About 2–3 hours plus a VoiceOver check. The hard part is focus: the last log lines must be read before the end screen takes focus (the same problem as game over on Nov 3–4). **Not decided yet:** priority (suggested: a Must, ahead of potions), who builds it (me or an agent), and when (suggested: start screen with Phase L, end screen with Agent C).
+   - **Idea (Nov 6), not a task:** action buttons (exit, combat menu) placed visually *over* the map with CSS, so they feel part of the game. They stay DOM siblings after the map: not drawn in Phaser (a screen reader can't see canvas pixels), and not inside the `role="application"` div (a key press would bubble to the map's `keydown` handler, and VoiceOver's application mode hides them). Risk: an overlay can cover tiles with zoom or large text (WCAG 1.4.4, 1.4.10). Decide in the CSS pass or with the start and end screens.
+
+10. **Sprite animations by Agent G (added Nov 6).** Idle animations for the player and enemies, and a short walking slide with run frames, using frames already in the atlas. It's outside the Musts (the project plan only has animated dice as a Could), but it's Phaser only (rule 3), with no game logic, and it gives the Phase L reduced-motion setting something real to turn off. Until Phase L, one small function reads `prefers-reduced-motion`, and Phase L swaps it for the player's setting. It changes `room-scene.ts`, so Agent E starts after it's merged. If the review shows problems, it's the first thing to cut. **Playtest Nov 6:** works, and Reduce motion was already on on my Mac, which the game respected. A held arrow key still moves one step only (one key press is one turn, kept on purpose so the log doesn't flood a screen reader). **Added after the playtest:** a short translucent red tint on whoever is hit, read from health going down in the store, plus the heroes' own hit frame from the atlas (enemies have none). Skipped with reduced motion. One flash per hit, never blinking (WCAG 2.3.1).
+
+11. **The exit you arrived through is "the way back" (decided Nov 8).** After a room change, the exit back is lit at once. If it were announced as "An exit appears to the south." like any other exit, a player who can't see the canvas can't tell it from the way forward, and could walk back through it and loop between two rooms. So that exit is always announced as **"The way back is to the south."**, both on arrival and each time it comes back into the light, and its button says **"Go back to the previous room"**. Other exits keep "An exit" / "The exit" and the button "Use the exit to the north". The store remembers which exit is the way back (`arrivalExitIndex`) and sets it again on every room load.
+    - **Not "Enter next room" for the other exits:** the game only knows where the player came from, not which way is forward. Walking from room 3 back to room 2 would make the door to the entrance hall the "next room", which is the wrong way. The direction is always true.
+    - **Not room names** ("Go back to the entrance hall"): with more rooms it gets hard to keep track of which room is which, and "previous room" is always clear.
+    - **A line when you step next to an exit (added Nov 8, after my VoiceOver check):** the exit button appears without taking focus, so VoiceOver doesn't read it, and a screen reader user didn't know they could press Enter. Now a step that puts the player next to an exit logs "You are next to the exit to the north. Press Enter to use it." (or "…next to the way back, to the south…"). Only when they weren't next to that exit before, so walking along a two-tile door doesn't repeat it. Not on room load (the way back line is already there) and not when the step starts a fight (the exit can't be used then). Claude Code wrote the helpers and their tests this time, to save time.
 
 **What gives first if a day slips:** the weekend buffer (Nov 14–15), then the UI skin (the game works without it, so it's the first thing to cut; **cut on Nov 4**, decision 8), then the Playwright path, then the inventory list (the key still works without showing a list, if the pickup and unlock lines are in the log), then the room count stays at 3 even if an agent room needs a lot of fixing (fix it rather than build a fourth).
 
@@ -118,7 +133,7 @@ Background in `docs/sprint-3-plan.md`, Phase J. Planned in detail on Nov 2.
 
 **Known issues after testing (Nov 3), for step 7 on Wed:**
 
-- **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** **Decided Nov 4: keep `role="application"`** (see step 7) and accept this as a known issue. VoiceOver's hint text can't be changed from the page. For the README and the WCAG evaluation: VoiceOver users get the best experience with hints off.
+- **VoiceOver's hints talk over the live regions.** With hints on (the default), the long hint for the `role="application"` map ("You are currently on an application…") and the button hint ("to click this button…") interrupt the announcer: the victory line after focus returns to the map, the log lines in a second fight, and repeated wall bumps. **With hints off (VoiceOver Utility → Verbosity → Hints), everything is read as intended.** **Decided Nov 4: keep `role="application"`** (see step 7) and accept this as a known issue. VoiceOver's hint text can't be changed from the page. For the README and the WCAG evaluation: VoiceOver users get the best experience with hints off. **Nov 5:** the supervisors raised the repeated label too. The label will be shortened when the start screen and its "How to play" exist (decision 9).
 - **At the start of a fight, the button is read before the lines** ("Attack the demon, button", then "The demon attacks you!…"). Accepted: nothing is lost, and the button names the enemy.
 - **The first log line is read twice after a reload** (found Nov 4). Confirmed part: reading through the log with VO + right arrow read the last line again after the log, from the announcer's hidden copy. **Fixed:** the announcer clears its batch 7 seconds after it appears. Confirmed in VoiceOver (Nov 4).
 - **Pressing quickly skips lines** (found Nov 3). Each attack replaces the announcer's batch, and a key press cuts off VoiceOver's speech. Accepted: the player chooses to skip, like skimming, and the full log can be read afterwards (it's focusable). A point for the screen reader pass and the evaluation on Nov 12.
@@ -146,18 +161,25 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
 **Steps** (pure helpers: I write the tests, Claude implements. Tiled work, Phaser and the store I do myself.)
 
 1. **Names table and lookup:** `tile-names.json` plus a schema, and a lookup from a map gid to a name. Gotcha: Tiled shows the tile's *local* id (gid minus `firstgid`), and flipped tiles have flag bits set (`gid & 0x1fffffff`, as in `toTileIndices`). The table uses the id Tiled shows. Pure helper.
-   - [ ] Tests written, implemented
+   - [x] Tests written, implemented (Nov 9). `src/assets/tile-names.ts` and `tile-names.json` (`{ "dungeon": {} }` until step 4), with `toLocalId` moved out of `toTileIndices` so the flip-bit step lives in one place, and one shared `kebabCaseSchema(label)` for enemy, item and room ids and tile names.
 2. **`buildFeatures(map)`:** `{ position, name }` for every named tile on any layer, built in `loadRoom` next to the grid and kept in the store. Pure helper.
-   - [ ] Tests written, implemented, wired into the store
+   - **Decided Nov 9:** one feature per cell at most. If two layers have a named tile on the same cell, the top layer wins (the last one, which Tiled draws on top), so step 3 never has to choose. Rugs and floor details are not named: they're cosmetic, don't block movement and can't be used. The store wiring is Claude's (its own store tests), like the last two PRs.
+   - [x] Tests written, implemented, wired into the store (Nov 9). `buildFeatures` in `src/rooms/build-features.ts`, the `Feature` type in `src/game/features.ts`, `loadRoom` returns `features` and the store keeps them. The store tests are in their own file, `game-store-features.test.ts`, because they swap `tile-names.json` for a test table with `vi.mock`.
 3. **Blocked-move text:** walking into a named tile says "A barrel blocks your path." An unnamed blocked tile still says wall. Pure helper (narration).
-   - [ ] Tests written, implemented
+   - **Decided Nov 9:** the full line keeps the wall line's start: "You cannot move to the east. A barrel blocks your path." A new `BlockedReason` `'feature'` carries the name (a discriminated union in `MoveResult`). The grid still decides what blocks: a feature only changes the name of a cell that is already `'wall'`, so a named tile on floor doesn't block, and an exit tile is always an exit. Hyphens in names become spaces ("wooden table"). The store wiring is Claude's.
+   - [x] Tests written, implemented (Nov 9). `movePlayer` takes `features` (default `[]`) and returns `reason: 'feature'` with the name for a named wall; `describeMove` says "You cannot move to the east. A barrel blocks your path."; the store passes `features`. Nothing in the real game says it yet, because `tile-names.json` is still empty until step 4.
 4. **Name the decor (Tiled):** add the barrels, tables and so on to the entrance hall, and their tile ids to the table.
+   - **Decor palette (decided Nov 9):** Claude Code scanned the tileset and proposed 5 kinds of blocking decor; I checked ids 7, 324 and 1426 in Tiled. `tile-names.json` has 38 ids: `pillar` (7, 71, 8, 72), `crate` (1426), `empty-chest` (1364, 1365), `candlestick` (1608–1615, 1672–1679, all animation frames) and `fountain` (260–262, 324–326, 388–390, 452–454, 516–518, built into the wall). Every blocking tile of a piece gets the name, so bumping into any part of it says the same thing. **Changed the same afternoon, after painting the entrance hall:** the parts *in front of or behind* a piece are walkable, so they're not named and go on `decor`: the pillar base (135, 136), because a pillar stands against the wall with its base on the floor in front, and the crate lid (1362), so the player can walk behind a crate. Pillars therefore always stand against a wall (top and middle on `walls`, base on `decor`); freestanding pillars aren't supported, because an unnamed base on `walls` would say "A wall blocks your path". All five names take a plain "s" in the plural, for step 7. **The sheet has no barrel**, so "barrel" in this plan is only an example. Left out on purpose: closed chests, signposts, levers and buttons (they look usable but aren't), full chests and mimics, floor spikes (a trap that does nothing), the skull (floor detail), and wall banners and torches (part of the wall, and torches would flood the reveals). Agents must use names from this table and not add new ones.
+   - **Decided Nov 9, changed the same afternoon: three layers, `floor` → `decor` → `walls`.** I first chose two layers (carpet painted on `floor`), but then skulls and other small decor would replace the stone under them. So walk-over decor goes on `decor`, between floor and walls, drawn over the stone. No engine change was needed: `buildGrid` only reads `floor` and `walls`, and `drawRoom` draws every layer in Tiled's order. Claude Code added a `buildGrid` test that locks in "another layer doesn't block", and `checkFeatures` in `loadRoom`: named decor on a walkable tile fails the room with its name, position and the fix, because a crate on `decor` would be announced but walkable. Rules for rooms: walkable → `floor` or `decor` (never named), blocking → `walls`.
    - [ ] Done
-5. **Render the dark (Phaser), Agent A (decision 7, also step 6):** tiles outside `getVisibleTiles` drawn dark, redrawn on every move.
+5. **Render the dark (Phaser), Agent A (decision 7, also step 6).** **Changed Nov 4 after my playtest:** the radius is 2.5 (rounder than 2, smaller than 3), and the dark is one image with a soft round hole instead of black squares: fully clear up to 2 tiles, black from 3. The high contrast setting will switch to a hard edge (Phase L). The dark is redrawn on every move.
    - [ ] Done
 6. **Enemies in the light (Phaser):** enemies drawn only inside the light, looked up through the asset manifest.
    - [ ] Done
-7. **Reveal narration:** when an enemy, an exit or a named feature enters the light, log it once with a direction ("A barrel appears to the east."). A feature covering several tiles (the two-tile door) is announced once. Pure helper.
+7. **Reveal narration:** when an enemy, an exit or a named feature enters the light, log it with a direction ("A barrel appears to the east."). A feature covering several tiles (the two-tile door) is announced once. Pure helper.
+   - **Changed Nov 4:** an enemy is announced **every time** it comes into the light, not only once, because the player really lost sight of it. The first time it's "A skeleton appears to the east.", after that "The skeleton appears…", so a screen reader user doesn't think it's a second skeleton. Numbered enemies have no article ("Skeleton 1 appears…"). For this the store keeps `seenEnemyIds`, reset in `loadRoom`. It's only used for the wording: `getNewlyLit` still remembers nothing between steps.
+   - **Exits (decided Nov 6, after a playtest):** without this, a player with little or no vision only finds a door by walking into every wall. Same wording and rules as enemies: "An exit appears to the north." the first time, "The exit appears…" after, every time it comes back into the light. An exit is newly lit when at least one of its tiles is lit after the step and none were before, so the two-tile door is announced once. The direction is to its nearest lit tile. The store remembers seen exits by their index in `room.exits` (`seenExitIndexes`, reset in `loadRoom`). Named features come later with steps 1–3.
+   - **Named features (decided Nov 9):** what's named in the table gets revealed, grouped by name in each step: three barrels lit in one step give one line, "Barrels appear to the east." Only name decor that's worth narrating: blocking decor (barrels, tables) yes; walk-over decor (rugs, doormats, floor details) no, since it's cosmetic and can't be used (made firmer in step 2). No reveals at all was rejected, because a screen reader user would only find decor by walking into it (rule 5). Phase L: the brief verbosity setting can skip decor reveals.
    - [ ] Tests written, implemented, wired into the store
 8. - [ ] PR reviewed
 
@@ -165,20 +187,22 @@ Background in `docs/sprint-3-plan.md`, Phase K. Enemies are drawn for the first 
 
 ## Exits and room changes (Fri Nov 6)
 
-The room format already has exits (doors and ladders on blocked tiles with a walkable neighbour). What's missing is using them.
+The room format already has exits (doors and ladders on blocked tiles with a walkable neighbor). What's missing is using them.
 
 **Built by Agent C (decision 7),** after Agent A is merged, because both change `room-scene.ts`. I review the PR and do the VoiceOver check of a room change myself.
 
 **Added Nov 4 (decision 8):** Agent C also adds the **item format** to the room schema (`items: [{ id, type, position }]`, with item types in a Zod-validated table like `enemies.json`) and a **locked exit** (`requires: "<item id>"`). Using a locked exit without the item gives "The door is locked. You need a key." and doesn't leave the room. With the item, it unlocks with a log line. The final exit (step 7) is the locked one. Agent C tests the lock with a fixture inventory. Picking items up comes with Agent E.
 
 1. **Going through an exit.** The player stands next to an exit and uses it (a key, plus a button for the action menu style). This loads the room in the exit's `to`.
-2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbour. `playerStart` is only for the first room of a new game. Pure helper with tests.
+   - **Decided Nov 6:** the key is **Enter** on the map. The button appears after the map while the player is next to an exit, with no focus move (it's reachable with Tab). Walking into an exit tile tells the player it's an exit and how to use it, instead of "A wall blocks your path."
+2. **Arrive at the doorway, not `playerStart`** (decided Nov 2). In the new room, find the exit that leads back to the old room and place the player on its walkable neighbor. `playerStart` is only for the first room of a new game. Pure helper with tests.
 3. **No leaving in a fight.** Moving is already blocked during combat. Using an exit must be blocked too, with a log line.
 4. **Redrawing.** Destroy the old tilemap and player sprite before drawing the new room (two Open reminders in the learning notes).
 5. **Narration and full health.** Entering a room logs its description, as `loadRoom` already does. **Decided Nov 3:** going through an exit also restores the player to full health, with a polite line, because there are no potions and a hard earlier room shouldn't decide a harder later fight. The healing goes in the exit step, not in `loadRoom`, so loading a save later won't heal (the store test that `loadRoom` keeps health stays). Pure helper with tests.
 6. **Tests** use small fixture rooms in the test files. No real second room yet: those are built by the agents.
 7. **The goal: find the way out (decided Nov 2).** The last room has an exit marked `final` (e.g. a ladder up to the surface). Using it wins the game: a victory line in the log, and focus moves to a victory message (same pattern as game over in Phase J). Until now the game could only be lost. About 30 extra minutes.
-8. **"How to play"** as a native `<details>` element above the map, with the rules text below. It opens and closes with the keyboard, and screen readers support it without ARIA. Fill in the door key once it's chosen. About 30 minutes.
+   - **Changed Nov 6:** no focus move, the same as game over (path A): the victory line in the log carries the message, and a visible message is shown like `GameOver.tsx`. The real end screen with Play again comes later (decision 9).
+8. **"How to play"** as a native `<details>` element above the map, with the rules text below. **Changed Nov 6:** not built by Agent C. It moves to the start screen as a button (decision 9), so building it above the map now would be redone. It opens and closes with the keyboard, and screen readers support it without ARIA. Fill in the door key once it's chosen. About 30 minutes.
 
 - [ ] Exits work, tested with fixture rooms
 - [ ] Final exit and victory
@@ -194,7 +218,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Moving.** Focus the dungeon map and use the arrow keys. Each key press is one step. Walls, objects and enemies block your way, and the adventure log tells you what happened.
 
-**Your lantern.** You can only see three tiles around you. When something comes into the light, the log tells you what it is and in which direction.
+**Your lantern.** You can only see about two tiles around you. When something comes into the light, the log tells you what it is and in which direction.
 
 **Fights.** A fight starts when you step next to an enemy. Everyone rolls a 20-sided die for initiative, and the highest roll goes first. You win a tie. On your turn, choose an enemy to attack in the action menu (Tab to move, Enter to choose). You can't move or run away during a fight.
 
@@ -202,7 +226,7 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 **Health.** You have 12 health. After you win a fight, you recover 4 health. When you go through a door into a new room, you recover fully. The game warns you when you're down to 3 or less. At 0 you fall, and the game is over.
 
-**Doors.** [key to be decided] Use a door when you're next to it. You can't leave a room during a fight. A locked door opens if you carry its key.
+**Doors.** Use a door by pressing Enter when you're next to it. You can't leave a room during a fight. A locked door opens if you carry its key.
 
 **Items.** Step onto an item to pick it up. Your inventory lists what you carry.
 
@@ -215,7 +239,21 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 1. **Write "Building rooms (for agents)" in `CLAUDE.md`:** the room data format, the Tiled map rules, enemy and exit rules, narration tone, and the checklist every agent room must pass (schema, tests, keyboard, screen reader, axe).
 2. **Decide the two rooms** (names, how they connect to the entrance hall, which enemies) and give each agent the same kind of prompt.
+   - **Rules from the Agent C review (Nov 6):** every exit needs a matching exit back in the other room, with a free floor tile next to it (otherwise the player lands at `playerStart` and a focused exit button disappears). Maps must be 12×10 tiles, because the canvas has a fixed size. Every room file needs `"items": []` or a list of items.
+   - **Exit markers (decided Nov 8, changed Nov 9):** the sheet has no side-view doors, so **doors only go in the north wall**, where they can be seen. An exit in the east or west wall is a **doorway mat**: a 1-wide rug piece on the edge column, on the walls layer so the player walks into it like a door. An exit that is a ladder or stairs uses that sprite instead, so it looks like what it is. The mat isn't named in the names table: the exit reveal line already says where the exit is (rule 5), or the log would say "A rug appears…" next to the exit line.
 3. **Each room arrives as a PR.** I review it, fix what's needed and log every correction in the evaluation table in `docs/ai-log.md`.
+4. **The mimic (decided Nov 9, my idea): 3.5 rooms.** Entrance hall → dingy basement → (ladder down, guarded by a demon) a small vault → and from the basement a door on to room 3 with the locked final exit. The vault is a normal 12×10 map that is walls except a 4×4 space in the middle, so no engine change is needed for its size. It's empty except for a **mimic** standing in the middle, which carries the gold key.
+   - **Disguise:** before the fight the mimic is announced and drawn as a chest ("A chest appears to the south."), a **still, closed chest** with no animation. When the fight starts, the first line unmasks it ("The chest springs open. It's a mimic! A fight begins."), its open-mouth animation starts, and every line after that says "mimic". Reduced motion keeps it on one frame. A fight can't be left, so the disguise doesn't need saving.
+   - **The key:** `"carries": "gold-key"` on the mimic in the room file. On defeat the key goes straight into the inventory with a log line, not onto the floor, so `inventory` and `defeatedEnemyIds` (which Agent D saves) cover it, and the key can't be taken twice.
+   - **Who:** Claude Code adds the data fields (`disguise` in `enemies.json`, `carries` in the room schema) with tests first, so the spec and the room agents can use them. **Agent H** builds the engine part (unmasking, the drop, the sprite) as its own PR.
+   - **Fallback if Agent H isn't merged by Wed Nov 11:** remove the disguise and put the key on the floor next to the mimic (`items`). Data only, and the dungeon still works.
+   - This replaces "the gold key is in room 2 and guarded".
+5. **Room designs (drafted by Claude Code, approved Nov 9, changed the same day after my review and playtest).** All maps 12×10, layers `floor` → `decor` → `walls`. **No candlesticks in any room** (every candlestick tile has a flame, and the game has no candle light). **Descriptions say only what the player notices on arrival** (where they are, sound, smell, air, the way they came in); exits, enemies and decor come from the reveals, because a sighted player only sees the lantern's circle.
+   - **Dungeon map:** entrance hall (north door) ↔ dingy basement (stairs up). Basement (hatch, south-west corner) ↔ forgotten vault (ladder up). Basement (doorway mat, east wall) ↔ old crypt (carpet out of the south edge). Old crypt: the locked final exit in the north wall.
+   - **`dingy-basement`, "The Dingy Basement":** a hub with three ways out. Exits: one-direction stairs (tile 393) at (0, 2) → `entrance-hall`, with crates at (0, 3) and (0, 4) so the player arrives at their foot, (1, 2); a ladder hatch at (0, 9) → `forgotten-vault`; a doorway mat at (11, 2–3) → `old-crypt`. Enemies: a **demon** at (1, 8), diagonally next to the hatch, with a crate at (1, 9), so the hatch can only be used from (0, 8), right next to the demon; a **skeleton** at (9, 8) near the crates. Decor: crates, an **empty chest** (tile 1365, a hint that chests down here are looted, so the closed one in the vault stands out). Items: none. Description: "Stone steps lead back up to the entrance hall. The basement is low and damp, and water drips somewhere in the dark."
+   - **`forgotten-vault`, "The Forgotten Vault":** black (empty cells) everywhere except a 4×4 floor at x 4–7, y 3–6. Ladder in the north wall at (5, 2) → `dingy-basement`, the only exit; the player arrives at (5, 3). Enemy: `mimic-1`, type `mimic`, at (7, 6), `"carries": "gold-key"`, outside the light on arrival, so the player can move a little before the chest is revealed. No decor, no items. Description: "You climb down the ladder into a small, silent vault. The air is cold and still."
+   - **`old-crypt`, "The Old Crypt" (redesigned after my review):** the way back is a red carpet leading out of the south edge at (5–6, 9) → `dingy-basement`; the player arrives on the carpet at (5, 8). The great door in the north wall at (5–6, 1) has `"final": true` and `"requires": "gold-key"`. Pillars at x 2, 4, 7 and 9, fountains in both north corners. **A crate maze:** two rows of crates, y 6 (gap at x 0–1) and y 4 (gap at x 10–11), so the path winds from side to side with no dead ends (a maze must stay playable by ear). Enemies: an **orc** at (6, 2) in front of the great door and a **skeleton** at (6, 5) in the middle corridor, so both fights can't be avoided. Items: none. Description: "You step into a long, cold crypt that smells of dust and old stone. Water trickles somewhere ahead. The doorway you came through is to the south."
+   - **Fights:** hall 3, basement 2, vault 1 (mini-boss), crypt 2. Checked in my balance pass on Thu Nov 12.
 
 - [ ] Spec written
 - [ ] Room 2 merged, corrections logged
@@ -225,11 +263,15 @@ The room format already has exits (doors and ladders on blocked tiles with a wal
 
 Decision 8. Starts after Agent C is merged, because it builds on the item format and changes the store.
 
-1. **Picking up:** stepping onto an item's tile picks it up, with a log line ("You pick up a rusty key."). The item is no longer drawn. Pure helper with tests.
+1. **Picking up:** stepping onto an item's tile picks it up, with a log line ("You pick up a gold key."). The item is no longer drawn. Pure helper with tests.
 2. **The inventory in the store:** a list of item ids, read by the locked-exit check from Agent C. A room change keeps it, and loading a room doesn't reset it.
-3. **Reveal narration:** an item in the light is announced like a feature ("A rusty key lies to the west."), using the Phase K reveal helper.
+3. **Reveal narration:** an item in the light is announced like a feature ("A gold key lies to the west."), using the Phase K reveal helper.
 4. **Drawing items** in Phaser, only inside the light, looked up through the asset manifest (rule 7).
 5. **`Inventory.tsx`:** a section with an "Inventory" heading and a `<ul>`, "Empty" when there's nothing. Plain HTML, no focus moves. I check it with VoiceOver.
+
+**Decided Nov 9 (Agent E review):**
+- **The key is a gold key** (`gold-key`, "gold key"), because the sprite is gold. Renamed everywhere except past AI log entries.
+- **Taken items and defeated enemies stay gone** when the player comes back to a room. Before, `loadRoom` made them again from the room file, so the key lay there again (and could be picked up twice) and a defeated guard came back. The store keeps `takenItemIds` and `defeatedEnemyIds` as `'room-id/id'` across rooms, and only a new game clears them. **Agent D must save both, together with `inventory`.**
 
 - [ ] Agent E PR reviewed and merged, corrections logged
 
@@ -247,10 +289,20 @@ Decided Nov 4 as the **first stretch item**. **Go or no-go on Wed Nov 11 morning
 
 **Room agents (Sun Nov 8):** they place barrels and crates as named decor as usual. If F goes ahead, I add `containers` to rooms 2 and 3 afterwards. It's only data, so the rooms don't need rebuilding.
 
-- [ ] Go or no-go decided (Wed Nov 11)
+- [x] Go or no-go decided (Wed Nov 11): **no-go.** Phase L had slipped two days, and every new feature needs my VoiceOver time. Potions go in the report as future work; healing stays as it is.
 - [ ] Agent F PR reviewed and merged, VoiceOver check of drinking the last potion
 
-## UI skin (agent): Pixel RPG UI Pack — **cut on Nov 4** (decision 8)
+## UI skin (agent): Pixel RPG UI Pack — **cut on Nov 4** (decision 8), **back on Nov 11**
+
+**Back on Nov 11 (instead of potions and music):** the whole page gets a dungeon look, built by **Agent K** after #50 is merged. The plan below changed in these ways:
+
+- **No hand-slicing:** the sheet has no slices, but every piece stands alone on transparency, so Claude Code cut all 124 pieces with a small script (plain Python, nothing installed). I picked the pieces from an overview page.
+- **A mockup first:** Claude Code built an HTML mockup from the real pieces, and I adjusted it over 11 drafts (layout, centring, tab pieces, the plum panel without its top line, an inventory without boxes). The agent gets it as a reference for the look, not a pixel spec: the CSS must be responsive, and pass 400% zoom (WCAG 1.4.10) even though there's no phone layout.
+- **More than a skin:** a start screen (split, with the account panel; "Continue" when a game is in progress), one end card with **Play again** (reloads the page, since the ended save already makes the next load a new game), a visible **health display**, the inventory as a list with sprites, and a new **Goal** panel ("Find the gold key." → "… Find the great door.").
+- **The book menu:** How to play, Settings and Account are one modal `<dialog>` drawn as the pack's open book, with its tab pieces as ARIA tabs (my idea). The header's three buttons open it on their tab. Account lives there instead of under the game; the label stays "Account" whether signed in or not. Agent K builds it, and I review the focus code (changes decision 7 for the settings dialog).
+- **High contrast** turns the skin off, including the icons (plum on black fails 3:1, WCAG 1.4.11), and the book's tabs show their names as text.
+- **The map label** becomes just "Dungeon map" now that How to play exists (decision 9, option B), so option C in Phase L isn't needed.
+
 
 Kept below for the report ("future improvements"). The font choice stays.
 
@@ -267,7 +319,7 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 **Accessibility rules for the skin** (from Oct 14):
 
 - Frames are decoration around real HTML text. No text in images (WCAG 1.4.5 Images of Text).
-- Text contrast against the frame colours meets AA (checked with axe).
+- Text contrast against the frame colors meets AA (checked with axe).
 - Focus stays clearly visible on styled buttons (a `border-image` can hide the outline).
 - The high contrast setting turns the skin off or overrides it.
 - **Font (decided Nov 3):** Pixel Operator everywhere, at 16px or a whole multiple by default. The high contrast setting also switches the **adventure log** to a plain system font, for players who find a pixel font hard to read in long text. The text size setting isn't limited to 2× steps: in-between sizes are a bit soft, but the player's choice wins (WCAG 1.4.4).
@@ -276,17 +328,19 @@ Decided Nov 3 (decision 6). The pack (immunitys, itch.io) has only one packed sh
 **License safeguards:** commit only the pieces I use, credit the author in the README with a link, note that I asked for permission on the itch.io page and haven't had a reply (keep a screenshot of the comments), and write it in the report as a known risk. The skin is one stylesheet and one folder, so it can be removed quickly if the author says no.
 
 - [x] Font chosen: **Pixel Operator** (Jayvee Enaguas), CC0, Regular and Bold (Nov 3, in `public/assets/fonts/`)
-- [ ] Pieces sliced and exported
-- [ ] Brief written
+- [x] Pieces sliced and exported (all 124, by script, Nov 11)
+- [x] Mockup approved and brief written (Nov 11)
 - [ ] UI skin PR reviewed and merged, corrections logged
 
 ## Phase L: accessibility settings (Sun Nov 8 – Mon Nov 9)
 
 As written in `docs/sprint-3-plan.md`, Phase L. Settings are saved with the save layer on Tue Nov 10.
 
-- [ ] Settings in the store, with the `prefers-reduced-motion` default (tests)
-- [ ] Settings dialog with focus management
-- [ ] Text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin")
+- [x] Settings in the store, with the `prefers-reduced-motion` default (tests)
+- [ ] Settings dialog with focus management: **now the Settings tab of the book menu, built by Agent K** (see "UI skin")
+- [ ] **Split on Nov 11:** reduced motion, the lantern's hard edge and brief verbosity by **Agent L (#52)**, the high contrast and text size CSS by **Agent K**. Was: text size, high contrast, reduced motion and log verbosity applied (verbosity is a pure helper: I write the tests). High contrast also switches the log to a system font (decided Nov 3, see "UI skin"), and draws the lantern light with a hard edge instead of a soft fade (decided Nov 4), so lit and dark tiles are easy to tell apart
+- **Idea (Nov 6), not a task yet: background music with an on/off setting.** When the settings dialog is built, Claude Code suggests a few open-license tracks (CC0 first, e.g. from OpenGameArt, so there's nothing to credit or redistribute wrongly; CC BY only with the credit in the README). Rules if it's added: **off by default** (music talks over the screen reader, and WCAG 1.4.2 requires a way to stop audio that plays by itself), it starts only after the player turns it on (browsers block autoplay anyway), the setting is saved with the others, and there's a volume or at least a clear on/off. Sound cues were moved after submission (decision 4), so this is a stretch item: decide at the Wed Nov 11 go/no-go with potions. **No-go (Nov 11):** future work, together with sound cues.
+- [x] ~~Log verbosity also decides the map's label~~ Not needed: the start screen and the book have How to play, so the label is just "Dungeon map" (option B, Agent K). Was: log verbosity also decides the map's label: verbose gives "Dungeon map. Use the arrow keys to move.", brief gives "Dungeon map" (decision 9, option C). **Check first** whether it's still needed once the start screen has "How to play" (option B)
 - [ ] PR reviewed
 
 ## Saves, accounts and sync (Tue Nov 10 – Wed Nov 11)
@@ -311,3 +365,8 @@ Rule 8: local-first. Saves and settings always go to localStorage; when logged i
 - [ ] README: setup, tech stack, asset credits and licenses
 - [ ] AI log summary and the Result section in `docs/project-plan.md`
 - [ ] Deployed, and the repo and deploy link submitted
+
+## Ideas for after submission (added Nov 11)
+
+- **A death and win count on the account:** shown on the start screen ("You have escaped 3 times and fallen 5 times"). It needs a new column in the saves table (or its own table) with RLS tests, and a local count for guests, so it doesn't fit before the code freeze.
+- **The goal panel with more steps,** if the dungeon gets more goals than the key and the door.

@@ -22,5 +22,14 @@
     "attackBonus": 4,
     "damageDie": 6,
     "initiativeBonus": 0
+  },
+  "mimic": {
+    "displayName": "mimic",
+    "disguise": "chest",
+    "maxHealth": 12,
+    "armorClass": 12,
+    "attackBonus": 3,
+    "damageDie": 6,
+    "initiativeBonus": 0
   }
 }
