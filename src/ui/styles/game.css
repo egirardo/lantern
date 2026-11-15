@@ -344,7 +344,8 @@
 }
 
 /* Before the key is found, its sprite is greyed out and faded. The text
-   says the same in words ("Find the gold key."). */
+   says the same in words ("Find the gold key."). In the first step
+   ("Explore your surroundings.") there is no sprite at all (Goal.tsx). */
 .goal-todo .item-sprite {
   opacity: 0.35;
   filter: grayscale(1);

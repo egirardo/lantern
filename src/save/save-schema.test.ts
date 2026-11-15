@@ -13,6 +13,7 @@ const validSave: Save = {
   enteredFrom: 'entrance-hall',
   health: 7,
   inventory: ['gold-key'],
+  foundLockedExit: true,
   takenItemIds: ['entrance-hall/key-1'],
   defeatedEnemyIds: ['entrance-hall/e1'],
   updatedAt: '2026-11-09T10:00:00.000Z',
@@ -45,6 +46,27 @@ describe('save schema', () => {
     const withoutHealth: Partial<Save> = { ...validSave }
     delete withoutHealth.health
     expect(saveSchema.safeParse(withoutHealth).success).toBe(false)
+  })
+
+  it('loads a save from before foundLockedExit existed, with it false', () => {
+    // Saves written before Nov 13 have no foundLockedExit. They must still
+    // load (same version), with the safe default.
+    const oldSave: Partial<Save> = { ...validSave }
+    delete oldSave.foundLockedExit
+    expect(saveSchema.parse(oldSave)).toEqual({
+      ...validSave,
+      foundLockedExit: false,
+    })
+    // The same through the slot schema, which is what the save code reads.
+    expect(saveSlotSchema.parse(oldSave)).toEqual({
+      ...validSave,
+      foundLockedExit: false,
+    })
+  })
+
+  it('rejects a foundLockedExit that is not true or false', () => {
+    const save = { ...validSave, foundLockedExit: 'yes' }
+    expect(saveSchema.safeParse(save).success).toBe(false)
   })
 
   it('rejects an unknown field (strict)', () => {

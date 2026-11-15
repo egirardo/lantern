@@ -11,6 +11,7 @@ const newGame: SaveSource = {
   enteredFrom: null,
   player: PLAYER,
   inventory: [],
+  foundLockedExit: false,
   takenItemIds: [],
   defeatedEnemyIds: [],
 }
@@ -42,6 +43,14 @@ describe('startButtonLabel', () => {
 
   it('says Continue when the player carries something', () => {
     expect(startButtonLabel({ ...newGame, inventory: ['gold-key'] })).toBe(
+      'Continue',
+    )
+  })
+
+  it('says Continue when the player has found the locked door', () => {
+    // In the real game that happens in another room, so the room already
+    // says Continue; this checks the flag counts as progress on its own.
+    expect(startButtonLabel({ ...newGame, foundLockedExit: true })).toBe(
       'Continue',
     )
   })

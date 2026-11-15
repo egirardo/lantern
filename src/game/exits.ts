@@ -152,12 +152,18 @@ export type ExitStepInput = {
   player: Combatant
 }
 
-// What happens when the player uses an exit. One of three outcomes:
-// - 'stay': nothing changes except the log (in a fight, no exit, locked).
+// What happens when the player uses an exit. One of four outcomes:
+// - 'stay': nothing changes except the log (in a fight, or no exit).
+// - 'locked': the exit needs a key the player doesn't carry. Like 'stay',
+//   the player doesn't move, but it's its own kind so the store can
+//   remember that the player has found the locked door (the Goal panel's
+//   steps, Nov 13). A separate kind instead of checking the line's text,
+//   which would break the day the wording changes.
 // - 'leave': go to room `to`, with the player healed to full health.
 // - 'escape': the final exit. The game is won.
 export type ExitStep =
   | { kind: 'stay'; lines: LogLine[] }
+  | { kind: 'locked'; lines: LogLine[] }
   | { kind: 'leave'; to: string; player: Combatant; lines: LogLine[] }
   | { kind: 'escape'; lines: LogLine[] }
 
@@ -190,7 +196,7 @@ export function exitStep(input: ExitStepInput): ExitStep {
   const lines: LogLine[] = []
   if (exit.requires !== undefined) {
     if (!inventory.includes(exit.requires)) {
-      return { kind: 'stay', lines: [polite(describeLocked())] }
+      return { kind: 'locked', lines: [polite(describeLocked())] }
     }
     lines.push(polite(describeUnlock(itemName(exit.requires))))
   }

@@ -93,6 +93,14 @@ export type GameState = {
   // were picked up. Types, not ids (decided Nov 6): a locked exit checks this
   // list for the type it needs. Kept across room changes, unlike `items`.
   inventory: string[]
+  // True once the player has tried a locked exit without its key and been
+  // told "The door is locked. You need a key." (Nov 13). Until then the
+  // player doesn't know a key is needed: the lantern only says "An exit
+  // appears…", and walking into the door only says "An exit leads…". The
+  // Goal panel reads it to choose its step (describeGoal in src/game/goal.ts).
+  // It stays true for the rest of the game, across rooms, and is saved like
+  // `inventory`.
+  foundLockedExit: boolean
   // True once the player has gone through the final exit and won. Like
   // game over (health 0), nothing can be done after that.
   hasEscaped: boolean
@@ -373,6 +381,7 @@ export function createGameStore(
     currentRoomId: FIRST_ROOM_ID,
     arrivingFrom: null,
     inventory: [],
+    foundLockedExit: false,
     hasEscaped: false,
     pendingExitLines: [],
     enemies: [],
@@ -421,6 +430,7 @@ export function createGameStore(
         // The saved health on top of the player's stats, which never change.
         player: { ...PLAYER, currentHealth: content.health },
         inventory: content.inventory,
+        foundLockedExit: content.foundLockedExit,
         takenItemIds: content.takenItemIds,
         defeatedEnemyIds: content.defeatedEnemyIds,
         // A save is never made after the game has ended or during a fight.
@@ -594,6 +604,12 @@ export function createGameStore(
       switch (step.kind) {
         case 'stay':
           set({ log: [...log, ...lines] })
+          return
+        case 'locked':
+          // The log has just told the player the door is locked and needs a
+          // key, so from now on the goal can ask for the key. Setting it to
+          // true again on a second try changes nothing.
+          set({ foundLockedExit: true, log: [...log, ...lines] })
           return
         case 'escape':
           set({ hasEscaped: true, log: [...log, ...lines] })

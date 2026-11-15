@@ -347,6 +347,7 @@ function contentOf(save: Save): SaveContent {
     enteredFrom: save.enteredFrom,
     health: save.health,
     inventory: save.inventory,
+    foundLockedExit: save.foundLockedExit,
     takenItemIds: save.takenItemIds,
     defeatedEnemyIds: save.defeatedEnemyIds,
   }
