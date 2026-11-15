@@ -101,7 +101,7 @@ function App() {
           anyway. */}
       <footer className="screen site-footer">
         <p>
-          Lantern is a thesis project at Yrgo.{' '}
+          Lantern was created by Elsa Girardo.{' '}
           <a href="https://github.com/egirardo/lantern">
             Source code on GitHub
           </a>
