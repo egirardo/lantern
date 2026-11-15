@@ -206,9 +206,12 @@ h3 {
   border-color: transparent;
   border-width: 2px 36px;
   border-image: url('/assets/ui/banner.png') 1 18 fill / 2px 36px stretch;
-  /* The same parchment fallback as .panel-light, for the ink text. */
+  /* The same parchment fallback as .panel-light, for the ink text, but
+     only behind the text (content-box): the ribbon's bottom fold, in the
+     bottom padding, has see-through notches, and with padding-box the
+     colour showed through them as a beige box (Nov 15). */
   background-color: var(--parchment);
-  background-clip: padding-box;
+  background-clip: content-box;
   color: var(--ink);
   font-size: 1.125rem;
   font-weight: bold;
