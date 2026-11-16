@@ -5,8 +5,10 @@ import { onAuthChange, signIn, signOut, signUp } from '../save/auth'
 import { getSupabaseClient } from '../save/supabase-client'
 import {
   ACCOUNTS_UNAVAILABLE_MESSAGE,
+  INVALID_EMAIL_MESSAGE,
   PASSWORD_REQUIREMENTS,
   describeAuthError,
+  looksLikeEmail,
 } from './auth-messages'
 
 // The account panel: sign in, create an account, sign out.
@@ -38,15 +40,18 @@ type FormErrors = {
   form?: string
 }
 
-// Checks before anything is sent: only that the fields aren't empty. The
-// server checks the rest (email format, password strength), and its errors
-// come back through describeAuthError. We use noValidate on the form and our
+// Checks before anything is sent: that the fields aren't empty, and that the
+// email has the shape of one (looksLikeEmail, added Nov 16 for WCAG 3.3.3).
+// The server checks the rest (the full email format, password strength), and
+// its errors come back through describeAuthError. We use noValidate on the form and our
 // own messages, because the browser's built-in bubbles disappear after a few
 // seconds and aren't linked to the field for screen readers.
 function checkFields(email: string, password: string, mode: Mode): FormErrors {
   const errors: FormErrors = {}
   if (email.trim() === '') {
     errors.email = 'Enter your email address.'
+  } else if (!looksLikeEmail(email)) {
+    errors.email = INVALID_EMAIL_MESSAGE
   }
   if (password === '') {
     errors.password =
