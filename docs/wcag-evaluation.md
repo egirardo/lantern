@@ -57,11 +57,11 @@ Verdicts: **Pass** (tested and meets it, open rechecks noted), **Partial** (meet
 | 1.4.13 Content on Hover or Focus | AA | N/A | Nothing appears on hover or focus: `:hover` only changes a button's color, and there are no tooltips or `title` attributes. Checked by hand Nov 16 (hover and Tab over the buttons). |
 | 2.1.1 Keyboard | A | Pass | The whole game with arrows, Enter and buttons; the book with arrows, Home, End, Escape (VoiceOver pass Nov 13). |
 | 2.1.2 No Keyboard Trap | A | Pass | Tab leaves the `role="application"` map; the modal book always closes with Escape. |
-| 2.1.4 Character Key Shortcuts | A | N/A | No single-character shortcuts: only arrows, Enter, Tab, Escape, Home and End (README key table). (my reading) |
+| 2.1.4 Character Key Shortcuts | A | N/A | No single-character shortcuts: only arrows, Enter, Tab, Escape, Home and End (README key table). |
 | 2.2.1 Timing Adjustable | A | Pass | No time limits; turns and the end card wait for the player, and the last log line says "Press Tab to reach Play again" (#60). |
-| 2.2.2 Pause, Stop, Hide | A | Pass | The idle animations loop, and Reduce motion stops them; it starts on with the OS setting (#36, #52, checked Nov 12). (my reading: Reduce motion is the "stop" mechanism) |
+| 2.2.2 Pause, Stop, Hide | A | Pass | The idle animations loop, and Reduce motion stops them; it starts on with the OS setting (#36, #52, checked Nov 12). Reduce motion is the "stop" mechanism. |
 | 2.3.1 Three Flashes or Below Threshold | A | Pass | The hit flash is one short tint per hit, never blinking, and off with Reduce motion. |
-| 2.4.1 Bypass Blocks | A | Pass | `header`, `main` and `footer` landmarks and a heading per panel (1.3.1); axe landmark and `region` rules pass. No skip link. (my reading, not checked on its own) |
+| 2.4.1 Bypass Blocks | A | Pass | `header`, `main` and `footer` landmarks and a heading per panel (1.3.1); axe landmark and `region` rules pass. No skip link: landmarks and headings let a screen reader user jump past blocks. |
 | 2.4.2 Page Titled | A | Pass | The page title is "Lantern"; axe `document-title` passes. |
 | 2.4.3 Focus Order | A | Pass | Many fixes (start screen, AutoFill, exit button, book, account); all rechecked. ⚠️ Safari AutoFill moves focus into the email field. My own Tab-through of the game screen on Nov 16: the order is correct. |
 | 2.4.4 Link Purpose (In Context) | A | Pass | The only link is in the footer (#65): "Source code on GitHub", underlined, opens in the same tab. VoiceOver reads "Source code on GitHub, link". |
@@ -69,14 +69,14 @@ Verdicts: **Pass** (tested and meets it, open rechecks noted), **Partial** (meet
 | 2.4.6 Headings and Labels | AA | Pass | A heading per panel, "Actions" in every state, labeled settings and form fields (axe `empty-heading`, `label` pass). |
 | 2.4.7 Focus Visible | AA | Pass | 3px yellow `:focus-visible` outline, never hidden by a `border-image`; ink inside the log and book. |
 | 2.4.11 Focus Not Obscured (Minimum) | AA | Pass | Fixed: the attack button is now in view beside the map. Checked by hand on Nov 16 at Largest text, on the game screen and in the book: nothing focused is hidden. |
-| 2.5.1 Pointer Gestures | A | N/A | No multipoint or path gestures: everything is a click or a key. (my reading) |
+| 2.5.1 Pointer Gestures | A | N/A | No multipoint or path gestures: everything is a click or a key. |
 | 2.5.2 Pointer Cancellation | A | Pass | Every action is a native `button` with `onClick`, which fires on release. A click on the map only gives it focus; Phaser's mouse input is off. Checked by hand Nov 16: pressing down on a button and moving off before release does nothing. |
 | 2.5.3 Label in Name | A | Pass | Buttons are named by their visible text ("How to play", "Attack the demon"). The book's tabs and Close have no visible text, so 2.5.3 doesn't apply to them (see Known issues). Checked by hand Nov 16 with macOS Voice Control: saying "Click" and a button's visible text clicks it. This includes the Actions panel: the exit button ("Go back to the previous room") and "Attack the demon" both worked when they were on screen. |
 | 2.5.4 Motion Actuation | A | N/A | Nothing is triggered by moving the device. |
 | 2.5.7 Dragging Movements | AA | N/A | No dragging. |
 | 2.5.8 Target Size (Minimum) | AA | Pass | axe `target-size` passes in every scanned state, on Nov 13 and in my Nov 16 re-scan with WCAG 2.2 AA. |
 | 3.1.1 Language of Page | A | Pass | `<html lang="en">`; axe `html-has-lang` and `html-lang-valid` pass. |
-| 3.1.2 Language of Parts | AA | N/A | All content is in English. (my reading) |
+| 3.1.2 Language of Parts | AA | N/A | All content is in English. |
 | 3.2.1 On Focus | A | Pass | Focus only moves when the player acts; no longer moved at load. |
 | 3.2.2 On Input | A | Pass | Settings apply at once but never change context (no new page, no focus move); the account form does nothing until it's submitted. Checked by hand Nov 16: focus stays on each setting when it changes. |
 | 3.2.3 Consistent Navigation | AA | Pass | How to play and Settings come in the same order on the start screen and the game screen, with Account after them. Checked by hand Nov 16. |
@@ -85,7 +85,7 @@ Verdicts: **Pass** (tested and meets it, open rechecks noted), **Partial** (meet
 | 3.3.1 Error Identification | A | Pass | Account form errors as text, `aria-describedby` and `aria-invalid` (#50). |
 | 3.3.2 Labels or Instructions | A | Pass | Password rule shown and read; hint "Click the map or tab to it to play." added; the end lines say how to reach Play again (#60). The hint checked by hand on Nov 16 at narrow widths, Largest text and high contrast. |
 | 3.3.3 Error Suggestion | AA | Pass | Every account error says what to do (`auth-messages.ts`): the password rule in the weak password message, "Sign in instead" for an existing account, and "Check the email address. It should look like name@example.com." 🔧 An email without "@" got the generic "Something went wrong" until #69 (found and fixed Nov 16). Checked by hand on Nov 16, after the fix: an email without "@" and a weak password. |
-| 3.3.4 Error Prevention (Legal, Financial, Data) | AA | N/A | No legal or financial commitments or test answers; the account form only signs in to or creates the player's own account. (my reading) |
+| 3.3.4 Error Prevention (Legal, Financial, Data) | AA | N/A | No legal or financial commitments or test answers; the account form only signs in to or creates the player's own account. |
 | 3.3.7 Redundant Entry | A | Pass | The fields keep what was typed when switching between Sign in and Create an account, and after signing up the form switches to Sign in with the email still filled in. Checked by hand when the panel was built (#50) and again on Nov 16. |
 | 3.3.8 Accessible Authentication (Minimum) | AA | Pass | Paste allowed, `autocomplete` for password managers, no puzzles; checked with Safari's generated password and pasting (Nov 11). |
 | 4.1.2 Name, Role, Value | A | Pass | Native elements first, ARIA only for the tabs pattern and the map; the map is named "Dungeon map". axe ARIA and `button-name` rules pass. ⚠️ Chrome adds "clickable" to plain text. |
