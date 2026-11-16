@@ -39,6 +39,29 @@ export const ACCOUNTS_UNAVAILABLE_MESSAGE =
 export const PASSWORD_REQUIREMENTS =
   'At least 8 characters, with a lowercase letter, an uppercase letter, a number and a symbol.'
 
+// Shown for an email that clearly isn't one: by the form's own check before
+// sending (looksLikeEmail below), and for the server's email_address_invalid.
+// One constant, so both say the same thing.
+export const INVALID_EMAIL_MESSAGE =
+  'Check the email address. It should look like name@example.com.'
+
+// Whether the text looks like an email address: something, one "@",
+// something, and no spaces. Deliberately loose. Real email rules are complex,
+// and a strict pattern can turn away addresses that work. This only catches
+// what is clearly not an email, such as a missing "@", so the player gets a
+// message that says how to fix it (WCAG 3.3.3). Before this check (found
+// Nov 16), Supabase answered an address without "@" with an error code that
+// isn't in the table below, so the player only got "Something went wrong".
+// The server still checks the rest.
+//
+// The pattern, piece by piece: ^ and $ anchor it to the whole text, and
+// [^\s@]+ means "one or more characters that are neither a space nor @".
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+$/
+
+export function looksLikeEmail(email: string): boolean {
+  return EMAIL_SHAPE.test(email.trim())
+}
+
 const NETWORK_MESSAGE =
   "We can't reach the account server. Check your internet connection and try again. You can keep playing as a guest in the meantime."
 
@@ -90,7 +113,7 @@ const MESSAGES_BY_CODE = new Map<string, AuthErrorInfo>(
       field: 'password',
     },
     email_address_invalid: {
-      message: 'Check the email address. It should look like name@example.com.',
+      message: INVALID_EMAIL_MESSAGE,
       field: 'email',
     },
     // Sign in before clicking the link in the confirmation email.

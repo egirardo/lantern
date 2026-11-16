@@ -7,8 +7,10 @@ import {
 import { describe, expect, it } from 'vitest'
 import {
   ACCOUNTS_UNAVAILABLE_MESSAGE,
+  INVALID_EMAIL_MESSAGE,
   PASSWORD_REQUIREMENTS,
   describeAuthError,
+  looksLikeEmail,
 } from './auth-messages'
 
 // The errors are built with Supabase's own error classes, the same ones
@@ -151,5 +153,53 @@ describe('describeAuthError', () => {
       new AuthApiError('Invalid login credentials', 400, 'invalid_credentials'),
     )
     expect(info.message).not.toContain('Invalid login credentials')
+  })
+})
+
+// The form's own check before anything is sent (WCAG 3.3.3, found Nov 16):
+// an email without "@" got Supabase's generic error, so the player wasn't
+// told how to fix it. The check is deliberately loose: it only catches what
+// is clearly not an email, and the server still checks the rest.
+describe('looksLikeEmail', () => {
+  it('accepts ordinary email addresses', () => {
+    expect(looksLikeEmail('name@example.com')).toBe(true)
+    expect(looksLikeEmail('first.last+lantern@mail.example.org')).toBe(true)
+  })
+
+  it('ignores spaces around the address, like the empty check does', () => {
+    expect(looksLikeEmail('  name@example.com  ')).toBe(true)
+  })
+
+  it('rejects an address without "@"', () => {
+    // The address from the Nov 16 test.
+    expect(looksLikeEmail('elsa.sk2hotmail.com')).toBe(false)
+  })
+
+  it('rejects an address with nothing before or after "@"', () => {
+    expect(looksLikeEmail('@example.com')).toBe(false)
+    expect(looksLikeEmail('name@')).toBe(false)
+    expect(looksLikeEmail('@')).toBe(false)
+  })
+
+  it('rejects more than one "@" and spaces inside the address', () => {
+    expect(looksLikeEmail('name@@example.com')).toBe(false)
+    expect(looksLikeEmail('name@exa@mple.com')).toBe(false)
+    expect(looksLikeEmail('na me@example.com')).toBe(false)
+  })
+})
+
+describe('INVALID_EMAIL_MESSAGE', () => {
+  it('says how to fix the address, and is the same as the server error', () => {
+    expect(INVALID_EMAIL_MESSAGE).toBe(
+      'Check the email address. It should look like name@example.com.',
+    )
+    const info = describeAuthError(
+      new AuthApiError(
+        'Email address is invalid',
+        400,
+        'email_address_invalid',
+      ),
+    )
+    expect(info.message).toBe(INVALID_EMAIL_MESSAGE)
   })
 })
